@@ -1,0 +1,54 @@
+# Local secrets and private runtime data
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+/data/
+/storage/
+/uploads/
+/backups/
+/secrets/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Python environments, caches, and build output
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# JavaScript and generated artifacts
+node_modules/
+.npm-cache/
+.vite/
+.vite-temp/
+dist/
+dist-ssr/
+build/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+*.local
+
+# Keep the reports directory, not generated results
+/backend/eval/reports/*
+!/backend/eval/reports/.gitkeep
+
+# Local editor/OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
