@@ -1,6 +1,6 @@
 # DocWeave — Frontend Design and App Flow
 
-Status: Direction and GitHub extension confirmed and reconciled 2026-10-28. Frontend implementation is unstarted.
+Status: Direction and GitHub extension confirmed and reconciled 2026-10-28. On 2026-10-29, the main workbench was implemented as a labeled synthetic preview; live application flows remain unimplemented.
 Confirmed document scope: frontend design, screens, navigation, interactions, and user-facing app flows.
 Product requirements: [PRD.md](PRD.md). Backend workflows, security enforcement, limits, and evaluation: [architecture.md](architecture.md).
 

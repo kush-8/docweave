@@ -1,10 +1,12 @@
 # DocWeave API guide
 
-Status: draft contract, written 2026-10-29. The backend has no implemented routes. Examples below describe the intended API and cannot yet be run against DocWeave.
+Status: draft feature contract, written 2026-10-29. A runnable FastAPI skeleton reserves all 69 operations: liveness returns 200, readiness returns 503, and the other 67 operations return 501/`not_implemented`. Examples below describe future business behavior. No authentication, request-body processing/validation, persistence, jobs, or AI features are implemented.
 
 [openapi.yaml](../backend/openapi.yaml) is the machine-readable contract, using [OpenAPI 3.1.1](https://spec.openapis.org/oas/v3.1.1.html). Open the file in an OpenAPI 3.1-compatible local viewer to browse operations and schemas. No hosted editor, generated SDK, API server or Swagger UI installation is required by this documentation change. Avoid uploading private specifications or credentials to third-party viewers.
 
 [architecture.md](architecture.md#public-contracts) remains authoritative for behavior and security. This draft makes its route families concrete; field names and the additional lifecycle routes below are proposed implementation defaults. Reconcile changes with this file, the YAML, and affected planning documents before implementing them. The draft version is not a released compatibility promise.
+
+Use the [README run instructions](../README.md#run-the-api-skeleton) to start the local skeleton. Its `/docs` and `/openapi.json` describe the actual 200/503/501 behavior, including safe errors and request IDs. The YAML below remains the target feature contract; registered routes do not imply business implementation or runtime authorization.
 
 ## Base URL and conventions
 

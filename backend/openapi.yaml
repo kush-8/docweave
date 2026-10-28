@@ -4,7 +4,10 @@ info:
   version: 0.1.0-draft
   summary: Planned HTTP contract for the local DocWeave application.
   description: |
-    Design contract, not a running service. No backend routes are implemented yet.
+    Future feature contract. The running HTTP skeleton reserves these routes:
+    liveness returns 200, readiness 503, and all feature operations 501.
+    Business logic, authentication, request-body validation, storage and AI are not implemented.
+    The skeleton's generated /openapi.json describes its current responses.
     architecture.md owns behavior; api.md explains usage and draft wire decisions.
     All paths use the same browser origin. IDs never grant access. Recheck identity,
     workspace membership, ownership, collection grants, processing approvals and,

@@ -3,7 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DocWeave</title>
+    <meta name="theme-color" content="#F7F9FC" />
+    <meta name="description" content="DocWeave project documentation and evidence workbench." />
+    <title>Ask your project · DocWeave</title>
+    <script>
+      (() => {
+        let preference;
+        try { preference = localStorage.getItem('docweave-theme'); } catch {}
+        const theme = preference === 'light' || preference === 'dark'
+          ? preference : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0B1220' : '#F7F9FC';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

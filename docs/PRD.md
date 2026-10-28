@@ -74,6 +74,12 @@ The 29-entry registry remains the verified baseline. Outside it, bounded publish
 
 Unknown/private-index/local-path/Git dependencies stay out of public lookups unless explicitly approved. Never send raw repository configuration, credentials, or private repository URLs to discovery services. Retain normalized dependency facts and minimal redacted provenance; static detection does not prove deployment or active use.
 
+## Future goals
+
+Confirmed on 2026-10-29: introduce a DocWeave Model Context Protocol (MCP) server after the core application workflow is working and evaluated. Compatible assistants should be able to search authorized project knowledge and retrieve evidence with source citations through the same backend used by the web application.
+
+Reuse backend retrieval and authorization, preserving tenant/project isolation, collection grants, current upstream access checks, source revocation/deletion, and applicable external-processing approvals. Define the MCP tool contracts, client authentication, and compatibility checks when this goal is scheduled. This is a future extension, not a current release requirement; it does not replace the web application or change the accepted release criteria. No MCP-specific infrastructure is needed now.
+
 ## Engineering defaults and verification boundaries
 
 Approved stack direction: React/TypeScript, FastAPI, PostgreSQL/pgvector, LangGraph/LangChain, a PostgreSQL-backed durable worker, and Keycloak. [architecture.md](architecture.md) owns exact contracts, model candidates, numeric limits, security, evaluation, and operations. [design.md](design.md) owns frontend appearance and flow.

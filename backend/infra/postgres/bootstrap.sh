@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
+  --set ON_ERROR_STOP=1 \
+  --set migration_password="$PG_MIGRATION_PASSWORD" \
+  --set runtime_password="$PG_RUNTIME_PASSWORD" <<'SQL'
+CREATE ROLE docweave_migrator LOGIN PASSWORD :'migration_password'
+  NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+CREATE ROLE docweave_runtime LOGIN PASSWORD :'runtime_password'
+  NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+REVOKE ALL ON DATABASE :"DBNAME" FROM PUBLIC;
+GRANT CONNECT ON DATABASE :"DBNAME" TO docweave_migrator, docweave_runtime;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO docweave_migrator, docweave_runtime;
+CREATE EXTENSION vector WITH SCHEMA public;
+CREATE SCHEMA app AUTHORIZATION docweave_migrator;
+GRANT USAGE ON SCHEMA app TO docweave_runtime;
+SQL

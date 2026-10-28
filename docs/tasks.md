@@ -6,7 +6,19 @@
 **Architecture:** One modular FastAPI backend, PostgreSQL/pgvector, durable ingestion/turn/scan jobs, protected LangGraph memory, and a React frontend. Deliver the manual small-corpus vertical workflow first; then add optional GitHub stack detection, version-aware source discovery, the full catalog/providers, evaluation, and operations.
 **Tech Stack:** Python/FastAPI/Pydantic/SQLAlchemy/Alembic, PostgreSQL/pgvector/Procrastinate, LangGraph/LangChain, Keycloak, React/TypeScript/Vite, Docker Compose, pytest, Playwright, OpenTelemetry.
 **Spec:** [PRD.md](PRD.md), [architecture.md](architecture.md), and frontend [design.md](design.md).
-**Status:** Plan and GitHub extension reconciled on 2026-10-28. Folder scaffolding, an empty uv backend manifest, and a React/TypeScript/Vite frontend starter are initialized. Product features remain unstarted. No task below is complete solely because its scaffold exists.
+**Status:** Plan and GitHub extension reconciled on 2026-10-28. The frontend preview, tested API skeleton, and PostgreSQL/core-schema foundation are implemented as separately authorized slices. Complete authenticated product workflows remain unimplemented. No full-release task below is complete solely because its infrastructure exists.
+
+On 2026-10-29, backend contract tests were added in `backend/tests/test_openapi.py`, with uv-locked dev dependencies. All 70 tests passed; 12 in-memory contract mutations were detected. This validates the draft contract only; the runtime/security/integration tests and task checkboxes below remain unfinished.
+
+Frontend progress on 2026-10-29: a labeled synthetic Ask workbench now implements citation/evidence interaction, responsive shadcn sheets, Tailwind themes, provider selection, and draft/history protection. Build, lint, and 11 browser checks pass, including automated accessibility scans. This preview has no live backend integration and does not complete any full-release task below. See [workbench slice](superpowers/plans/2026-10-29-workbench.md) for scope and evidence.
+
+The user then clarified that backend work must follow TDD and authorized every draft operation as an HTTP skeleton, with business logic, database and AI deferred. Tests were written and run first (75 runtime failures from the missing app; 70 contract checks passing), then the minimal FastAPI app was added. All 145 checks now pass with warnings treated as errors. Liveness returns 200, readiness 503, and the other 67 operations 501; runtime docs describe those actual responses. A temporary local Uvicorn check passed and was stopped. See the [skeleton plan](superpowers/plans/2026-10-29-api-skeleton.md). Authentication, request-body validation, persistence, and full Task 1 acceptance remain unimplemented; no full-release milestone is complete.
+
+Database progress on 2026-10-29: implemented the user-approved [database foundation](superpowers/plans/2026-10-29-database-foundation.md): pinned PostgreSQL/pgvector Compose services, explicit Alembic migration, core models, SELECT-only runtime role, membership-backed RLS, and transaction-local sessions. Development is migrated at `0001_core` and survived restart; 51 database checks plus the existing 145 checks passed (196 total, warnings as errors). The disposable test service is separate from development and its target guard rejects query overrides. Authentication, application writes, full business authorization, and overall readiness remain deferred. See the [database runbook](runbooks/database.md). Task 1 remains incomplete.
+
+## Future goal outside this release
+
+After the core application workflow works and is evaluated, introduce an MCP server for authorized knowledge search and cited evidence retrieval, reusing the web application's backend retrieval and policy checks. See [Future goals](PRD.md#future-goals). This is not an active implementation task or a dependency of the current release; tool contracts, client authentication, and compatibility checks will be planned when scheduled.
 
 ## Global Constraints
 
@@ -37,7 +49,7 @@
 
 ## File boundaries and execution conventions
 
-The user authorized the folder scaffold, backend manifest, and React/Vite frontend starter, now mapped in [README.md](../README.md). All application paths and commands below are relative to the DocWeave repository root, even though this plan lives in `docs/`. Backend dependencies are empty; frontend starter dependencies are managed with npm. Add further dependencies as each task needs them, using uv for the backend. Product behavior, backend runtime, and Git initialization remain future work.
+The user authorized the scaffold, frontend preview, API skeleton, and database foundation, now mapped in [README.md](../README.md). All application paths and commands below are relative to the DocWeave repository root, even though this plan lives in `docs/`. Backend dependencies are uv-locked; frontend dependencies use npm. Add further dependencies only as their tasks need them. The existing runtime/schema are foundations, not completed authenticated product behavior; Git history and unrelated pending changes must be preserved.
 
 | Location | Responsibility |
 | --- | --- |

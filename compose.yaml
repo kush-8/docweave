@@ -1,0 +1,42 @@
+name: docweave
+
+x-database: &database
+  image: pgvector/pgvector:0.8.7-pg17@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d
+  environment: &database-environment
+    POSTGRES_USER: docweave_admin
+    POSTGRES_PASSWORD: ${PG_ADMIN_PASSWORD:?Set PG_ADMIN_PASSWORD in .env}
+    PG_MIGRATION_PASSWORD: ${PG_MIGRATION_PASSWORD:?Set PG_MIGRATION_PASSWORD in .env}
+    PG_RUNTIME_PASSWORD: ${PG_RUNTIME_PASSWORD:?Set PG_RUNTIME_PASSWORD in .env}
+  healthcheck:
+    test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+    interval: 2s
+    timeout: 3s
+    retries: 30
+
+services:
+  db:
+    <<: *database
+    environment:
+      <<: *database-environment
+      POSTGRES_DB: docweave
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/infra/postgres/bootstrap.sh:/docker-entrypoint-initdb.d/01-bootstrap.sh:ro
+
+  test-db:
+    <<: *database
+    profiles: [test]
+    environment:
+      <<: *database-environment
+      POSTGRES_DB: docweave_test
+    ports:
+      - "127.0.0.1:55433:5432"
+    volumes:
+      - ./backend/infra/postgres/bootstrap.sh:/docker-entrypoint-initdb.d/01-bootstrap.sh:ro
+    tmpfs:
+      - /var/lib/postgresql/data
+
+volumes:
+  pgdata:
