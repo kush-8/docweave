@@ -69,6 +69,8 @@ Each code task follows test -> observed failure -> minimal implementation -> rel
 
 **Interfaces produced:** `Actor(user_id: UUID, workspace_id: UUID)`; `require_actor(request) -> Actor`; `authorize(actor: Actor, action: Literal["read","write","manage","infer"], resource_id: UUID) -> None`; `create_app() -> FastAPI`. Role/grant facts come from current DB state, never client Actor fields.
 
+API documentation now exists as [openapi.yaml](../backend/openapi.yaml) and [api.md](api.md), a draft derived from the confirmed architecture. Reconcile its proposed wire details while implementing each owning task, compare FastAPI's generated contract, and test actual behavior. Structural documentation checks do not complete this or any later implementation task.
+
 - [ ] Read public compatibility/model/source metadata and inspect Docker/reference hardware. Add and lock only this task's required dependencies with uv (backend) or npm (frontend); add later dependencies during their owning tasks. Record candidate versus verified status; do not claim account availability or make inference calls here.
 - [ ] Write `test_cross_workspace_project_is_hidden`, `test_last_owner_cannot_be_removed`, and invitation/session/RLS tests. Minimum boundary assertion:
 

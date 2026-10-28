@@ -72,6 +72,8 @@ Deduplicate same-workspace content/config only; do not disclose another tenant's
 
 All resource routes below are under `/api/v1`. IDs are opaque. Lists use cursor pagination: default 25, maximum 100. Errors have stable code, safe message, and request ID. Mutations enforce sessions, CSRF, roles/grants, and resource ownership.
 
+The [draft OpenAPI contract](../backend/openapi.yaml) and [API usage guide](api.md) make these families concrete. They document planned behavior, not implemented routes. The guide labels proposed wire decisions, including cookie/CSRF names, envelopes, revision guards, default collection creation, and explicit retry shapes. This architecture remains authoritative; reconcile differences before implementation.
+
 | Route family | Contract |
 | --- | --- |
 | `/auth/login?method=email|google|github`, `/auth/callback`, `/auth/logout`, `/me` | OIDC lifecycle and actor; accepted method names are allowlisted |
@@ -91,6 +93,8 @@ All resource routes below are under `/api/v1`. IDs are opaque. Lists use cursor 
 | `/conversations/{c}/turns`, `/turns/{t}` | Append/list and recover turn status/result; append requires a client-generated idempotency key |
 | `/turns/{t}/citations/{citation}` | Exact authorized captured span; no unavailable private metadata leaks |
 | `/projects/{p}/usage`, `/workspaces/{w}/usage` | Own-tenant usage/allowance only; global spend is operator-only |
+
+The draft also spells out lifecycle operations needed by these flows: project processing-policy read/replacement; member/invitation item mutations; source deletion; document metadata/replacement; project job listing; stored discovery candidate reads and user-proposed official-source candidates; scan-analysis deletion; and explicit `/turns/{t}/retry`. A retry after uncertain completion requires acknowledgement of possible prior charges and a new keyed intent/reservation. Candidate proposals create immutable review records, not fetch authority. These are draft API details within the accepted scope.
 
 Project input: name, goal, manually selected technologies or a confirmed stack-review ID, and optional architecture notes/environment/constraints. A scan never invents the project goal. Creation returns project plus approved-source job IDs; project/import insertion is transactional or uses a transactional outbox. Unknown origins, unresolved versions, private lookups, and unaccepted version fallbacks remain pending review rather than bypassing the import gate. No configured budget/provider capacity produces a visible waiting state, not an unauthorized hosted call.
 

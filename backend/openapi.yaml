@@ -1,0 +1,1924 @@
+openapi: 3.1.1
+info:
+  title: DocWeave API
+  version: 0.1.0-draft
+  summary: Planned HTTP contract for the local DocWeave application.
+  description: |
+    Design contract, not a running service. No backend routes are implemented yet.
+    architecture.md owns behavior; api.md explains usage and draft wire decisions.
+    All paths use the same browser origin. IDs never grant access. Recheck identity,
+    workspace membership, ownership, collection grants, processing approvals and,
+    for private repository-derived data, current upstream access on every boundary.
+    Hidden resources return 404 without private labels. Conversations are author-private.
+    Mutations require both the application session and a session-bound CSRF header;
+    OAuth callbacks instead validate single-use state and their provider protocol.
+    JSON request objects reject unknown fields. Times are UTC RFC 3339 strings.
+    Private responses use Cache-Control: no-store. Every response has X-Request-ID.
+servers:
+  - url: /api/v1
+    description: Planned same-origin API base; no port or deployment is assumed.
+security:
+  - sessionCookie: []
+tags:
+  - name: Health
+  - name: Authentication
+  - name: Workspaces
+  - name: Projects
+  - name: Catalog
+  - name: Knowledge
+  - name: GitHub
+  - name: Documentation
+  - name: Jobs
+  - name: Conversations
+  - name: Usage
+paths:
+  /health/live:
+    get:
+      tags: [Health]
+      operationId: getLiveness
+      summary: Check API process liveness
+      security: []
+      responses:
+        '200':
+          description: Process is alive; no dependency details.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+  /health/ready:
+    get:
+      tags: [Health]
+      operationId: getReadiness
+      summary: Check readiness after startup reconciliation
+      description: Ready only after required services and overdue-deletion reconciliation succeed.
+      security: []
+      responses:
+        '200':
+          description: Ready to accept traffic.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        '503': { $ref: '#/components/responses/Error' }
+  /auth/login:
+    get:
+      tags: [Authentication]
+      operationId: startLogin
+      summary: Redirect to Keycloak email, Google or GitHub login
+      description: |
+        Email/password registration, verification, reset and secure linking remain
+        Keycloak flows. No credentials are posted to DocWeave. Generates state,
+        nonce and PKCE; the return location is fixed by the server.
+      security: []
+      parameters:
+        - name: method
+          in: query
+          required: true
+          schema: { type: string, enum: [email, google, github] }
+      responses:
+        '302': { $ref: '#/components/responses/Redirect' }
+        default: { $ref: '#/components/responses/Error' }
+  /auth/callback:
+    get:
+      tags: [Authentication]
+      operationId: finishLogin
+      summary: Validate OIDC callback and establish an application session
+      description: |
+        Require state plus exactly one of code or error. Validate issuer, audience,
+        nonce, PKCE and verified identity. Rotate the session; tokens stay server-side.
+        Redirect only to the configured application path. Query values must not be logged.
+      security: []
+      parameters:
+        - { $ref: '#/components/parameters/OAuthState' }
+        - { $ref: '#/components/parameters/OAuthCode' }
+        - { $ref: '#/components/parameters/OAuthError' }
+      responses:
+        '302':
+          description: Login succeeded; redirect to the application.
+          headers:
+            Location: { schema: { type: string, format: uri-reference } }
+            Set-Cookie:
+              description: Opaque docweave_session; HttpOnly, SameSite=Lax, Path=/, Secure except explicit localhost development.
+              schema: { type: string }
+        default: { $ref: '#/components/responses/Error' }
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      operationId: logout
+      summary: Invalidate the application session and expire its cookie
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '204': { description: Session invalidated and cookie expired. }
+        default: { $ref: '#/components/responses/Error' }
+  /me:
+    get:
+      tags: [Authentication]
+      operationId: getCurrentUser
+      summary: Read the current identity and session-bound CSRF token
+      responses:
+        '200':
+          description: Current actor; never includes provider credentials.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CurrentUser' }
+        default: { $ref: '#/components/responses/Error' }
+  /workspaces:
+    get:
+      tags: [Workspaces]
+      operationId: listWorkspaces
+      summary: List workspaces the actor belongs to
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Membership-filtered page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkspacePage' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Workspaces]
+      operationId: createWorkspace
+      summary: Create a workspace with the actor as owner
+      description: Hosted work waits for an operator-assigned allowance. This operation cannot set a budget cap.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NamedInput' }
+      responses:
+        '201':
+          description: Workspace created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workspace' }
+        default: { $ref: '#/components/responses/Error' }
+  /workspaces/{workspace_id}/members:
+    parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+    get:
+      tags: [Workspaces]
+      operationId: listMembers
+      summary: List membership records as a workspace owner
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Membership page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MembershipPage' }
+        default: { $ref: '#/components/responses/Error' }
+  /workspaces/{workspace_id}/members/{user_id}:
+    parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/UserId' }]
+    patch:
+      tags: [Workspaces]
+      operationId: updateMemberRole
+      summary: Change a member's role as an owner
+      description: The last owner cannot be demoted; returns 409 last_owner.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [role]
+              properties:
+                role: { $ref: '#/components/schemas/Role' }
+      responses:
+        '200':
+          description: Role updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Membership' }
+        '409': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Workspaces]
+      operationId: removeMember
+      summary: Remove a member as an owner
+      description: Revoke access immediately. The last owner cannot be removed.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '204': { description: Membership removed. }
+        '409': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+  /workspaces/{workspace_id}/invitations:
+    parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+    get:
+      tags: [Workspaces]
+      operationId: listInvitations
+      summary: List invitations as an owner without their secret tokens
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Invitation metadata page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitationPage' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Workspaces]
+      operationId: createInvitation
+      summary: Issue a recipient-bound invitation as an owner
+      description: Single use; expires after 48 hours. Return a copyable link once; no invitation email delivery is implied.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InvitationInput' }
+      responses:
+        '201':
+          description: Invitation issued; link is secret and must not be logged.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitationCreated' }
+        default: { $ref: '#/components/responses/Error' }
+  /workspaces/{workspace_id}/invitations/{invitation_id}:
+    parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/InvitationId' }]
+    delete:
+      tags: [Workspaces]
+      operationId: revokeInvitation
+      summary: Revoke an outstanding invitation as an owner
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '204': { description: Invitation revoked. }
+        default: { $ref: '#/components/responses/Error' }
+  /invitations/{token}/accept:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: Secret invitation token; redact this path segment from access logs and traces.
+        schema: { type: string, minLength: 1 }
+    post:
+      tags: [Workspaces]
+      operationId: acceptInvitation
+      summary: Atomically accept as the intended verified recipient
+      description: Invalid, expired, revoked or consumed tokens return the same safe 404 response.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '200':
+          description: Membership created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Membership' }
+        default: { $ref: '#/components/responses/Error' }
+  /workspaces/{workspace_id}/projects:
+    parameters: [{ $ref: '#/components/parameters/WorkspaceId' }]
+    get:
+      tags: [Projects]
+      operationId: listProjects
+      summary: List currently accessible projects
+      description: Omit private GitHub-derived labels/projects without current upstream viewer eligibility.
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Authorized project page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectPage' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Projects]
+      operationId: createProject
+      summary: Create a project and durably queue approved catalog imports as an owner
+      description: |
+        Require a goal and exactly one of a nonempty manual stack or an actor-owned
+        confirmed stack review. Server creates an owner-only default collection.
+        Project and approved import jobs commit atomically/outbox. Unresolved versions,
+        unknown origins and unaccepted fallbacks remain pending. Missing processing
+        approvals or allowance never authorize a hosted call.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectInput' }
+            example:
+              name: Support assistant
+              goal: Build a cited FastAPI support assistant.
+              stack: [{ technology: FastAPI, docs_target: '0.115' }]
+      responses:
+        '201':
+          description: Project committed; jobs may still be waiting for capacity or approval.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectCreated' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      tags: [Projects]
+      operationId: getProject
+      summary: Read authorized project context and its revision
+      responses:
+        '200':
+          description: Current approved context.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [Projects]
+      operationId: updateProject
+      summary: Edit project context as an owner
+      description: |
+        expected_revision prevents lost edits; stale revision returns 409.
+        Omitted fields remain unchanged. Repository stacks change through reviewed
+        apply only. New context applies to the next turn, not an accepted turn.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectPatch' }
+      responses:
+        '200':
+          description: Updated project and incremented context revision.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '409': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/processing-policy:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      tags: [Projects]
+      operationId: getProjectProcessingPolicy
+      summary: Read approved processors for private project context and conversations
+      responses:
+        '200':
+          description: Current policy, including an empty approval list if none.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProcessingPolicy' }
+        default: { $ref: '#/components/responses/Error' }
+    put:
+      tags: [Projects]
+      operationId: replaceProjectProcessingPolicy
+      summary: Replace project processor approvals as an owner
+      description: Revocation pauses dependent conversations. This policy does not override collection approvals.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Policy' }
+      responses:
+        '200': { $ref: '#/components/responses/Policy' }
+        default: { $ref: '#/components/responses/Error' }
+  /catalog:
+    get:
+      tags: [Catalog]
+      operationId: listCatalog
+      summary: List source definitions and honest verification/coverage status
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Public catalog; planned entries are not claimed as supported.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogPage' }
+        default: { $ref: '#/components/responses/Error' }
+  /providers:
+    get:
+      tags: [Catalog]
+      operationId: listProviderProfiles
+      summary: List configured profiles and actual processor identities without keys
+      description: Candidates remain disabled until capability, price and account checks pass.
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Safe profile metadata, including required Gemini retrieval processors.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderPage' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/collections:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      tags: [Knowledge]
+      operationId: listCollections
+      summary: List collections readable by the actor
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Grant-filtered collection page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CollectionPage' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Knowledge]
+      operationId: createCollection
+      summary: Create an owner-only collection as an owner
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NamedInput' }
+      responses:
+        '201':
+          description: Collection created without implicit member access or processing approvals.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Collection' }
+        default: { $ref: '#/components/responses/Error' }
+  /collections/{collection_id}/grants:
+    parameters: [{ $ref: '#/components/parameters/CollectionId' }]
+    get:
+      tags: [Knowledge]
+      operationId: getCollectionGrants
+      summary: Read collection grants as an owner
+      responses:
+        '200':
+          description: Complete grant set.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GrantSet' }
+        default: { $ref: '#/components/responses/Error' }
+    put:
+      tags: [Knowledge]
+      operationId: replaceCollectionGrants
+      summary: Replace collection grants as an owner
+      description: Only workspace members are eligible. Write requires owner/maintainer role. Empty grants restore owner-only access.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GrantSetInput' }
+      responses:
+        '200':
+          description: Grants updated; revoked access applies immediately to history and workers.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GrantSet' }
+        default: { $ref: '#/components/responses/Error' }
+  /collections/{collection_id}/processing-policy:
+    parameters: [{ $ref: '#/components/parameters/CollectionId' }]
+    get:
+      tags: [Knowledge]
+      operationId: getCollectionProcessingPolicy
+      summary: Read collection processor approvals with collection access
+      responses:
+        '200': { $ref: '#/components/responses/Policy' }
+        default: { $ref: '#/components/responses/Error' }
+    put:
+      tags: [Knowledge]
+      operationId: replaceCollectionProcessingPolicy
+      summary: Replace collection processor approvals as an owner
+      description: Approve every actual processor/backend. Gemini embedding/reranking approval is required even for Groq/HF answers.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Policy' }
+      responses:
+        '200': { $ref: '#/components/responses/Policy' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/sources:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      tags: [Knowledge]
+      operationId: listSources
+      summary: List sources in readable collections
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Sources and version/import coverage.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SourcePage' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Knowledge]
+      operationId: importSource
+      summary: Import an approved documentation selection into a writable collection
+      description: Accept server-stored selection IDs only. Never accept a client assertion of trusted URL/scope/version.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [source_selection_id, collection_id]
+              properties:
+                source_selection_id: { $ref: '#/components/schemas/Id' }
+                collection_id: { $ref: '#/components/schemas/Id' }
+      responses:
+        '202': { $ref: '#/components/responses/JobAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+  /sources/{source_id}/refresh:
+    parameters: [{ $ref: '#/components/parameters/SourceId' }]
+    post:
+      tags: [Knowledge]
+      operationId: refreshSource
+      summary: Refresh within the existing approved scope/version with collection write access
+      description: Failed refresh preserves the last good snapshot; cited superseded snapshots remain authorized history.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '202': { $ref: '#/components/responses/JobAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+  /sources/{source_id}:
+    parameters: [{ $ref: '#/components/parameters/SourceId' }]
+    delete:
+      tags: [Knowledge]
+      operationId: deleteSource
+      summary: Tombstone a source and its documents with collection write access
+      description: Immediately removes access and pauses dependent conversations; retained bytes follow the deletion journal.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '202': { $ref: '#/components/responses/DeletionAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+  /collections/{collection_id}/documents:
+    parameters: [{ $ref: '#/components/parameters/CollectionId' }]
+    get:
+      tags: [Knowledge]
+      operationId: listDocuments
+      summary: List documents with collection read access
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Authorized document page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentPage' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Knowledge]
+      operationId: uploadDocument
+      summary: Quarantine one document and durably queue ingestion with collection write access
+      description: |
+        PDF/TXT/Markdown/DOCX, at most 20 MiB per file. Validate actual content as well
+        as MIME/extension. Reject encrypted or image-only PDFs; no OCR. Missing
+        processor approval yields an awaiting_approval job, never an external call.
+        Multipart overhead is excluded from the file byte limit.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Upload' }
+      responses:
+        '202': { $ref: '#/components/responses/DocumentAccepted' }
+        '413': { $ref: '#/components/responses/Error' }
+        '415': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+  /documents/{document_id}:
+    parameters: [{ $ref: '#/components/parameters/DocumentId' }]
+    get:
+      tags: [Knowledge]
+      operationId: getDocument
+      summary: Read document metadata with collection read access
+      responses:
+        '200':
+          description: Authorized document; storage paths are never returned.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Document' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Knowledge]
+      operationId: deleteDocument
+      summary: Tombstone all versions with collection write access
+      description: Access ends immediately, including citations and affected conversation memory.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '202': { $ref: '#/components/responses/DeletionAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+  /documents/{document_id}/versions:
+    parameters: [{ $ref: '#/components/parameters/DocumentId' }]
+    get:
+      tags: [Knowledge]
+      operationId: listDocumentVersions
+      summary: List retained immutable versions with collection read access
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Authorized version page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VersionPage' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Knowledge]
+      operationId: replaceDocument
+      summary: Upload a replacement version with collection write access
+      description: Same validation as initial upload. Publish atomically after success; failure keeps the active good version. Same hash/config is deduplicated.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Upload' }
+      responses:
+        '202': { $ref: '#/components/responses/DocumentAccepted' }
+        '413': { $ref: '#/components/responses/Error' }
+        '415': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+  /documents/{document_id}/reindex:
+    parameters: [{ $ref: '#/components/parameters/DocumentId' }]
+    post:
+      tags: [Knowledge]
+      operationId: reindexDocument
+      summary: Reindex the current document with collection write access
+      description: Uses server-selected current index configuration; stage and activate atomically.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '202': { $ref: '#/components/responses/JobAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+  /connections/github/connect:
+    post:
+      tags: [GitHub]
+      operationId: startGitHubConnection
+      summary: Start separate user-owned read-only GitHub App authorization
+      description: Bind single-use state to the current application identity. No repository access follows from GitHub login alone.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '200':
+          description: Navigate the browser to this fixed-provider authorization URL.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authorization_url]
+                properties:
+                  authorization_url: { type: string, format: uri }
+        default: { $ref: '#/components/responses/Error' }
+  /connections/github/callback:
+    get:
+      tags: [GitHub]
+      operationId: finishGitHubConnection
+      summary: Validate the user authorization callback
+      description: |
+        Require current session, bound state and exactly one of code/error.
+        Verify user/App/repository intersection server-side; never trust callback
+        installation IDs as authority. No external webhook receiver is defined.
+      parameters:
+        - { $ref: '#/components/parameters/OAuthState' }
+        - { $ref: '#/components/parameters/OAuthCode' }
+        - { $ref: '#/components/parameters/OAuthError' }
+      responses:
+        '302': { $ref: '#/components/responses/Redirect' }
+        default: { $ref: '#/components/responses/Error' }
+  /connections/github:
+    get:
+      tags: [GitHub]
+      operationId: getGitHubConnection
+      summary: Read only the current user's connection status
+      responses:
+        '200':
+          description: Safe status; no access/refresh tokens or installation credentials.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GitHubConnection' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [GitHub]
+      operationId: disconnectGitHub
+      summary: Disconnect the actor and immediately erase local credentials
+      description: Pause affected private context/conversations. Independently connected users remain connected. Extracted artifacts follow explicit deletion policy.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '204': { description: Credentials removed and affected actor access revoked. }
+        default: { $ref: '#/components/responses/Error' }
+  /connections/github/repositories:
+    get:
+      tags: [GitHub]
+      operationId: listGitHubRepositories
+      summary: List only current user/App-accessible repositories
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Current accessible repository page; no global installation list.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RepositoryPage' }
+        '503': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+  /connections/github/repositories/{repository_id}/branches:
+    parameters:
+      - name: repository_id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    get:
+      tags: [GitHub]
+      operationId: listGitHubBranches
+      summary: List branches after rechecking repository access
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Branch page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BranchPage' }
+        default: { $ref: '#/components/responses/Error' }
+  /repository-scans:
+    post:
+      tags: [GitHub]
+      operationId: createRepositoryScan
+      summary: Queue a bounded commit-pinned stack scan before project creation
+      description: |
+        Workspace owner only; scan/review belongs to actor and workspace. Default
+        branch is resolved once to a commit. Static allowlisted dependency metadata
+        only; no source-code ingestion, clone, install or configuration execution.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScanInput' }
+      responses:
+        '202':
+          description: Scan and durable ingestion-queue job created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScanAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+  /repository-scans/{scan_id}:
+    parameters: [{ $ref: '#/components/parameters/ScanId' }]
+    get:
+      tags: [GitHub]
+      operationId: getRepositoryScan
+      summary: Read the actor's scan with current workspace and upstream access
+      description: Ineligible actors receive 404; unverifiable upstream eligibility fails closed with safe 503.
+      responses:
+        '200':
+          description: Safe normalized facts, provenance, completeness and optional rescan diff.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RepositoryScan' }
+        '503': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [GitHub]
+      operationId: deleteRepositoryAnalysis
+      summary: Explicitly delete the actor's retained scan analysis
+      description: Tombstone dependent artifacts and pause affected context; disconnect alone does not perform this deletion.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '202': { $ref: '#/components/responses/DeletionAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+  /repository-scans/{scan_id}/review:
+    parameters: [{ $ref: '#/components/parameters/ScanId' }]
+    post:
+      tags: [GitHub]
+      operationId: confirmStackReview
+      summary: Confirm explicit stack selections without overwriting detected facts
+      description: |
+        Actor/workspace-scoped review. Unknown roles/directness need explicit choice;
+        constraint-only entries cannot be selected. Unresolved/multiple versions
+        require a docs target. Partial scans remain partial after review.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StackReviewInput' }
+      responses:
+        '201':
+          description: Immutable confirmed review; no imports yet.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StackReview' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/repository/rescan:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    post:
+      tags: [GitHub]
+      operationId: rescanProjectRepository
+      summary: Queue a manual rescan of the bound repository as an owner
+      description: Uses the bound branch/application. Returns a new scan; approved context stays unchanged until review/apply.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '202':
+          description: Candidate rescan queued.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScanAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/repository/apply:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    post:
+      tags: [GitHub]
+      operationId: applyRepositoryReview
+      summary: Apply an explicitly reviewed rescan diff as an owner
+      description: Require current actor/upstream access and matching project/base revision. Queue only approved docs changes; preserve historical authorized citations.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [review_id, expected_revision]
+              properties:
+                review_id: { $ref: '#/components/schemas/Id' }
+                expected_revision: { $ref: '#/components/schemas/Revision' }
+      responses:
+        '200':
+          description: Context revision advanced; approved jobs durably queued.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectCreated' }
+        '409': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/documentation/discover:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    post:
+      tags: [Documentation]
+      operationId: discoverDocumentation
+      summary: Queue catalog-first documentation discovery as an owner
+      description: |
+        At most 20 project dependency IDs. Private/local/Git/URL/unresolved identifier
+        lookup requires explicit consent for those exact IDs. Send normalized
+        identifiers only; never raw config, credentials or private URLs. Consent
+        is stored with the job and rechecked at dispatch. No content import yet.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DiscoveryInput' }
+      responses:
+        '202': { $ref: '#/components/responses/JobAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+    get:
+      tags: [Documentation]
+      operationId: listDocumentationCandidates
+      summary: Read stored discovery candidates as an owner
+      description: Exposes immutable candidate IDs for review; unavailable dependencies remain explicit.
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Stored proposals; no implicit network lookup.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CandidatePage' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/documentation/approve:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    post:
+      tags: [Documentation]
+      operationId: approveDocumentation
+      summary: Approve immutable source scopes/version fallbacks and queue imports as an owner
+      description: |
+        Each ID must be an available current project candidate; fallback IDs are a
+        subset explicitly accepted by the user. Approval is project-scoped, never
+        a global catalog promotion. Network/robots/quotas and processor policy still apply.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DocumentationApprovalInput' }
+      responses:
+        '202':
+          description: Selections approved and import jobs committed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentationApproved' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/jobs:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      tags: [Jobs]
+      operationId: listProjectJobs
+      summary: List safe project activity visible under current resource grants
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Authorized ingestion/discovery/scan activity; no private turn contents.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JobPage' }
+        default: { $ref: '#/components/responses/Error' }
+  /jobs/{job_id}:
+    parameters: [{ $ref: '#/components/parameters/JobId' }]
+    get:
+      tags: [Jobs]
+      operationId: getJob
+      summary: Read safe job status after authorizing the underlying resource
+      responses:
+        '200':
+          description: Job status; never raw payloads, prompts, stack traces or credentials.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Job' }
+        default: { $ref: '#/components/responses/Error' }
+  /jobs/{job_id}/retry:
+    parameters: [{ $ref: '#/components/parameters/JobId' }]
+    post:
+      tags: [Jobs]
+      operationId: retryJob
+      summary: Explicitly retry an eligible job with resource write authority
+      description: |
+        Recheck all policy/budget/upstream guards. Validation/policy failures are
+        not retryable. Transient automatic retries have at most three total attempts.
+        completion_unknown requires acknowledgement of possible prior charges and
+        a new reservation. Duplicate retry keys return the same accepted job.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Retry' }
+      responses:
+        '202': { $ref: '#/components/responses/JobAccepted' }
+        '409': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/conversations:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      tags: [Conversations]
+      operationId: listConversations
+      summary: List only the actor's conversations in this project
+      description: Never return another author's titles, even to workspace owners.
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Author-private conversation page; blocked entries contain no affected private titles.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversationPage' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Conversations]
+      operationId: createConversation
+      summary: Create an author-private conversation with a fixed answer profile
+      description: |
+        No cross-conversation memory. Require an enabled profile, currently readable
+        selected collections and all actual processors approved for included private
+        context. Omitted collection_ids captures the current eligible readable set;
+        an explicit empty array selects none. Never silently add future collections.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConversationInput' }
+      responses:
+        '201':
+          description: Conversation created with immutable profile ID.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversation' }
+        default: { $ref: '#/components/responses/Error' }
+  /conversations/{conversation_id}:
+    parameters: [{ $ref: '#/components/parameters/ConversationId' }]
+    get:
+      tags: [Conversations]
+      operationId: getConversation
+      summary: Read own conversation metadata or a safe blocked-policy shell
+      description: Revalidate remembered dependencies. A blocked shell omits title and affected content; nonauthors get 404.
+      responses:
+        '200':
+          description: Authorized metadata; turns are fetched separately.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversation' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Conversations]
+      operationId: deleteConversation
+      summary: Tombstone own conversation, turns, summaries and checkpoints
+      description: Removes access immediately. Does not promise to cancel an already-dispatched provider charge.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      responses:
+        '202': { $ref: '#/components/responses/DeletionAccepted' }
+        default: { $ref: '#/components/responses/Error' }
+  /conversations/{conversation_id}/turns:
+    parameters: [{ $ref: '#/components/parameters/ConversationId' }]
+    get:
+      tags: [Conversations]
+      operationId: listTurns
+      summary: Read own authorized full transcript using cursor pagination
+      description: |
+        Stable ascending committed sequence; no arbitrary total-turn cutoff.
+        Model-context summarization does not delete transcript. If remembered
+        dependencies are revoked/deleted, return 409 conversation_blocked without content.
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200':
+          description: Authorized turn page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TurnPage' }
+        '409': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Conversations]
+      operationId: appendTurn
+      summary: Durably accept one message with a client-generated idempotency key
+      description: |
+        Atomically claim (conversation, key) and request hash. Same key/body returns
+        the existing turn reference with 202, including while running or after completion;
+        same key/different body returns 409 idempotency_conflict. Check this before
+        the one-active-turn guard. Keep keys for the retained conversation lifecycle.
+        Different key during an active turn returns 409 turn_in_progress. Server
+        supplies current context revision, authorized evidence and history; no profile
+        override or client history. Navigation/reload never resubmits or cancels work.
+        202 is returned only after durable commit, not after provider completion.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TurnInput' }
+            example:
+              message: How should this service protect its documentation uploads?
+              idempotency_key: 14e1cd41-7463-4ac9-91ce-37b0517ea440
+      responses:
+        '202': { $ref: '#/components/responses/TurnAccepted' }
+        '409': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+  /turns/{turn_id}:
+    parameters: [{ $ref: '#/components/parameters/TurnId' }]
+    get:
+      tags: [Conversations]
+      operationId: getTurn
+      summary: Recover own accepted turn status and validated final result
+      description: |
+        Poll this resource after reload or a lost response. No unvalidated token
+        streaming. Result is exposed only for completed turns with current policy;
+        blocked turns reveal safe status only. Unknown completion never triggers replay.
+      responses:
+        '200':
+          description: Current turn view.
+          headers:
+            Retry-After:
+              description: Optional polling delay in seconds while nonterminal.
+              schema: { type: integer, minimum: 1 }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Turn' }
+        default: { $ref: '#/components/responses/Error' }
+  /turns/{turn_id}/retry:
+    parameters: [{ $ref: '#/components/parameters/TurnId' }]
+    post:
+      tags: [Conversations]
+      operationId: retryTurn
+      summary: Explicitly retry an eligible failed or uncertain turn as its author
+      description: |
+        A new turn records retry_of_turn_id and uses current authorized context and
+        the same fixed profile. completion_unknown requires acknowledge_possible_charge=true.
+        A fresh key/reservation is required; duplicate same-key/body retries recover
+        that same new turn, mismatches return 409. No automatic retry on reload.
+        blocked_policy is not retryable until dependencies have been revalidated.
+      security: [{ sessionCookie: [], csrfToken: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Retry' }
+      responses:
+        '202': { $ref: '#/components/responses/TurnAccepted' }
+        '409': { $ref: '#/components/responses/Error' }
+        default: { $ref: '#/components/responses/Error' }
+  /turns/{turn_id}/citations/{citation_id}:
+    parameters: [{ $ref: '#/components/parameters/TurnId' }, { $ref: '#/components/parameters/CitationId' }]
+    get:
+      tags: [Conversations]
+      operationId: getCitationEvidence
+      summary: Read an exact retained span after author and source-policy checks
+      description: Superseded authorized versions remain readable. Deleted/revoked evidence returns safe denial without filenames, titles or quotes.
+      responses:
+        '200':
+          description: Captured span and locator; never fetched live from the original URL.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CitationEvidence' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{project_id}/usage:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/Month' }]
+    get:
+      tags: [Usage]
+      operationId: getProjectUsage
+      summary: Read authorized project aggregates without conversation content
+      responses:
+        '200':
+          description: Project usage only; no global or other-tenant spending.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsageReport' }
+        default: { $ref: '#/components/responses/Error' }
+  /workspaces/{workspace_id}/usage:
+    parameters: [{ $ref: '#/components/parameters/WorkspaceId' }, { $ref: '#/components/parameters/Month' }]
+    get:
+      tags: [Usage]
+      operationId: getWorkspaceUsage
+      summary: Read own workspace allowance and aggregate usage
+      description: Members cannot change caps. Global capacity shortage uses a generic safe status.
+      responses:
+        '200':
+          description: Workspace-only financial data.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsageReport' }
+        default: { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: docweave_session
+      description: Opaque server-side session; HttpOnly, SameSite=Lax and Secure except explicit localhost development. Browser sends automatically.
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Session-bound token from GET /me. Required with the session on all mutations; also validate the request origin.
+  parameters:
+    Cursor: { name: cursor, in: query, schema: { type: string, minLength: 1 }, description: Opaque continuation bound to actor/resource/filter/order; omit for first page. }
+    Limit: { name: limit, in: query, schema: { type: integer, default: 25, minimum: 1, maximum: 100 } }
+    Month: { name: month, in: query, description: 'YYYY-MM in Asia/Calcutta; defaults to current month.', schema: { type: string, pattern: '^\d{4}-(0[1-9]|1[0-2])$' } }
+    OAuthState: { name: state, in: query, required: true, schema: { type: string, minLength: 1 } }
+    OAuthCode: { name: code, in: query, schema: { type: string, minLength: 1 } }
+    OAuthError: { name: error, in: query, schema: { type: string, minLength: 1 } }
+    WorkspaceId: { name: workspace_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    UserId: { name: user_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    InvitationId: { name: invitation_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    ProjectId: { name: project_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    CollectionId: { name: collection_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    SourceId: { name: source_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    DocumentId: { name: document_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    ScanId: { name: scan_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    JobId: { name: job_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    ConversationId: { name: conversation_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    TurnId: { name: turn_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    CitationId: { name: citation_id, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+  requestBodies:
+    Policy:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ProcessingPolicyInput' }
+    Upload:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [file]
+            properties:
+              file:
+                type: string
+                format: binary
+                description: One file, at most 20971520 bytes; server validates actual bytes and parser resource limits.
+          encoding:
+            file:
+              contentType: application/pdf, text/plain, text/markdown, application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    Retry:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/RetryInput' }
+  responses:
+    Error:
+      description: |
+        Safe error envelope. 400 malformed request; 401 session required; 403 CSRF,
+        role or processor policy denied for a visible resource; 404 hidden/missing;
+        409 state/revision/idempotency conflict; 413 size; 415 format; 422 validation;
+        429 rate/allowance; 503 temporary upstream/application capacity; 500 internal.
+        No private resource identifiers/labels or global budget balance in errors.
+      headers:
+        X-Request-ID: { schema: { type: string } }
+        Retry-After:
+          description: Optional server-provided retry delay in seconds; do not infer a reset time if absent.
+          schema: { type: integer, minimum: 1 }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: not_found, message: Resource not found., request_id: req_example, retryable: false }
+    Redirect:
+      description: Redirect to the configured provider/application; never a client-supplied return URL.
+      headers:
+        Location: { required: true, schema: { type: string, format: uri-reference } }
+    Policy:
+      description: Current processor approval revision.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ProcessingPolicy' }
+    JobAccepted:
+      description: Job durably committed; poll the returned status_url. Acceptance is not successful processing.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/JobAccepted' }
+    DocumentAccepted:
+      description: Quarantined document and ingestion job durably committed.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DocumentAccepted' }
+    TurnAccepted:
+      description: Turn durably accepted or the same submission recovered; poll status_url.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/TurnAccepted' }
+          example:
+            turn_id: 97f0d4a6-86c2-4bec-91cc-329f97d228d2
+            status_url: /api/v1/turns/97f0d4a6-86c2-4bec-91cc-329f97d228d2
+            request_id: req_example
+    DeletionAccepted:
+      description: Access immediately removed; physical cleanup follows retention deadlines and the durable deletion journal.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DeletionAccepted' }
+  schemas:
+    Id: { type: string, format: uuid, description: Opaque application resource ID; never authorization. }
+    Revision: { type: integer, minimum: 1 }
+    Timestamp: { type: string, format: date-time, description: UTC RFC 3339 timestamp. }
+    Money: { type: string, pattern: '^(0|[1-9]\d*)(\.\d+)?$', description: Nonnegative decimal USD string; never binary floating point. }
+    Ids: { type: array, uniqueItems: true, items: { $ref: '#/components/schemas/Id' } }
+    Role: { type: string, enum: [owner, maintainer, member] }
+    NamedInput:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, pattern: '\S' }
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ok] }
+    Error:
+      type: object
+      required: [code, message, request_id, retryable]
+      properties:
+        code: { type: string, minLength: 1, description: Stable machine-readable code; examples and meanings in api.md. }
+        message: { type: string, description: Safe explanation, never raw upstream errors or request content. }
+        request_id: { type: string, minLength: 1 }
+        retryable: { type: boolean, description: Eligible for an explicit guarded retry; never an automatic paid replay instruction. }
+        fields:
+          type: array
+          description: Optional validation locations/codes only, never rejected values.
+          items:
+            type: object
+            required: [path, code]
+            properties:
+              path: { type: string }
+              code: { type: string }
+    CurrentUser:
+      type: object
+      required: [id, display_name, verified_email, csrf_token]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        display_name: { type: string }
+        verified_email: { type: string, format: email }
+        csrf_token: { type: string, minLength: 1, description: Session-bound; memory only, never URL/log/localStorage. }
+    Workspace:
+      type: object
+      required: [id, name, role, created_at]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        name: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        created_at: { $ref: '#/components/schemas/Timestamp' }
+    Membership:
+      type: object
+      required: [workspace_id, user_id, role]
+      properties:
+        workspace_id: { $ref: '#/components/schemas/Id' }
+        user_id: { $ref: '#/components/schemas/Id' }
+        role: { $ref: '#/components/schemas/Role' }
+        display_name: { type: string }
+    InvitationInput:
+      type: object
+      additionalProperties: false
+      required: [email, role]
+      properties:
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+    Invitation:
+      type: object
+      required: [id, workspace_id, email, role, expires_at, status]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        workspace_id: { $ref: '#/components/schemas/Id' }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        expires_at: { $ref: '#/components/schemas/Timestamp' }
+        status: { type: string, enum: [pending, accepted, expired, revoked] }
+    InvitationCreated:
+      type: object
+      required: [invitation, acceptance_url]
+      properties:
+        invitation: { $ref: '#/components/schemas/Invitation' }
+        acceptance_url: { type: string, format: uri-reference, description: One-time secret-bearing link; never included in list responses. }
+    StackEntry:
+      type: object
+      additionalProperties: false
+      required: [technology]
+      properties:
+        technology: { type: string, minLength: 1, pattern: '\S' }
+        docs_target: { type: string, minLength: 1, description: User-selected docs version; omission stays unresolved, never silently latest. }
+    ProjectInput:
+      type: object
+      additionalProperties: false
+      required: [name, goal]
+      properties:
+        name: { type: string, minLength: 1, pattern: '\S' }
+        goal: { type: string, minLength: 1, pattern: '\S' }
+        stack: { type: array, minItems: 1, items: { $ref: '#/components/schemas/StackEntry' } }
+        stack_review_id: { $ref: '#/components/schemas/Id' }
+        architecture_notes: { type: string }
+        environment: { type: string }
+        constraints: { type: string }
+      oneOf:
+        - required: [stack]
+          not: { required: [stack_review_id] }
+        - required: [stack_review_id]
+          not: { required: [stack] }
+    ProjectPatch:
+      type: object
+      additionalProperties: false
+      required: [expected_revision]
+      minProperties: 2
+      properties:
+        expected_revision: { $ref: '#/components/schemas/Revision' }
+        name: { type: string, minLength: 1, pattern: '\S' }
+        goal: { type: string, minLength: 1, pattern: '\S' }
+        stack: { type: array, minItems: 1, items: { $ref: '#/components/schemas/StackEntry' } }
+        architecture_notes: { type: string, description: Empty string clears this optional field. }
+        environment: { type: string }
+        constraints: { type: string }
+    Project:
+      type: object
+      required: [id, workspace_id, name, goal, stack, context_revision, default_collection_id, source_state]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        workspace_id: { $ref: '#/components/schemas/Id' }
+        name: { type: string }
+        goal: { type: string }
+        stack: { type: array, items: { $ref: '#/components/schemas/ProjectDependency' } }
+        context_revision: { $ref: '#/components/schemas/Revision' }
+        default_collection_id: { $ref: '#/components/schemas/Id' }
+        source_state: { type: string, enum: [pending_review, awaiting_approval, waiting_capacity, importing, ready, partial, failed] }
+        architecture_notes: { type: string }
+        environment: { type: string }
+        constraints: { type: string }
+        repository:
+          type: object
+          required: [repository_id, branch, application_path, accepted_scan_id, commit_sha]
+          properties:
+            repository_id: { type: integer, minimum: 1 }
+            branch: { type: string }
+            application_path: { type: string }
+            accepted_scan_id: { $ref: '#/components/schemas/Id' }
+            commit_sha: { type: string }
+    ProjectDependency:
+      type: object
+      required: [id, technology, declared_version, resolved_version, docs_target]
+      properties:
+        id: { $ref: '#/components/schemas/Id', description: Project-owned dependency ID used by documentation discovery. }
+        technology: { type: string }
+        declared_version: { type: [string, 'null'], description: Original declared constraint, when known. }
+        resolved_version: { type: [string, 'null'], description: Lockfile resolution when known; never inferred from a docs target. }
+        docs_target: { type: [string, 'null'], description: Explicit reviewed/user-selected target; null remains unresolved. }
+    ProjectCreated:
+      type: object
+      required: [project, job_ids, pending_dependency_ids]
+      properties:
+        project: { $ref: '#/components/schemas/Project' }
+        job_ids: { $ref: '#/components/schemas/Ids' }
+        pending_dependency_ids: { $ref: '#/components/schemas/Ids' }
+    Processor:
+      type: object
+      required: [id, provider, backend, roles]
+      properties:
+        id: { type: string, minLength: 1, description: Server-issued immutable actual-processor/backend identity, used in approvals. }
+        provider: { type: string, enum: [gemini, groq, huggingface] }
+        backend: { type: string, minLength: 1, description: Actual serving processor; HF backend must be explicitly pinned. }
+        roles: { type: array, items: { type: string, enum: [embedding, reranking, query_resolution, summarization, generation] } }
+    ProviderProfile:
+      type: object
+      required: [id, provider, model, backend, enabled, processors]
+      properties:
+        id: { type: string, minLength: 1, description: Immutable versioned profile; never silently repoint an existing conversation. }
+        provider: { type: string, enum: [gemini, groq, huggingface] }
+        model: { type: string }
+        backend: { type: string }
+        enabled: { type: boolean }
+        disabled_reason: { type: string, description: Safe capability/configuration reason. }
+        processors: { type: array, items: { $ref: '#/components/schemas/Processor' } }
+    CatalogEntry:
+      type: object
+      required: [id, technology, origin, path_prefixes, verification_status, version_coverage]
+      properties:
+        id: { type: string }
+        technology: { type: string }
+        origin: { type: string, format: uri }
+        path_prefixes: { type: array, items: { type: string } }
+        verification_status: { type: string, enum: [planned, imported, verified, unavailable] }
+        version_coverage: { type: array, items: { $ref: '#/components/schemas/VersionCoverage' } }
+    Collection:
+      type: object
+      required: [id, project_id, name, can_write]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        project_id: { $ref: '#/components/schemas/Id' }
+        name: { type: string }
+        can_write: { type: boolean, description: Current actor capability; server still authorizes every mutation. }
+    Grant:
+      type: object
+      additionalProperties: false
+      required: [user_id, access]
+      properties:
+        user_id: { $ref: '#/components/schemas/Id' }
+        access: { type: string, enum: [read, write], description: Write includes read and requires owner/maintainer role. }
+    GrantSetInput:
+      type: object
+      additionalProperties: false
+      required: [expected_revision, grants]
+      properties:
+        expected_revision: { $ref: '#/components/schemas/Revision' }
+        grants: { type: array, items: { $ref: '#/components/schemas/Grant' }, description: Complete replacement; one grant per member. }
+    GrantSet:
+      type: object
+      required: [revision, grants]
+      properties:
+        revision: { $ref: '#/components/schemas/Revision' }
+        grants: { type: array, items: { $ref: '#/components/schemas/Grant' } }
+    ProcessingPolicyInput:
+      type: object
+      additionalProperties: false
+      required: [expected_revision, approved_processor_ids]
+      properties:
+        expected_revision: { $ref: '#/components/schemas/Revision' }
+        approved_processor_ids: { type: array, uniqueItems: true, items: { type: string, minLength: 1 }, description: Complete replacement; empty list revokes all. IDs must match configured actual processors. }
+    ProcessingPolicy:
+      type: object
+      required: [revision, approved_processor_ids]
+      properties:
+        revision: { $ref: '#/components/schemas/Revision' }
+        approved_processor_ids: { type: array, uniqueItems: true, items: { type: string } }
+    VersionCoverage:
+      type: object
+      required: [granularity, publisher_range]
+      properties:
+        granularity: { type: string, enum: [exact, minor, major, rolling, unknown] }
+        publisher_range: { type: [string, 'null'], description: Actual documented coverage; null when unknown. }
+    Source:
+      type: object
+      required: [id, project_id, collection_id, source_selection_id, technology, declared_version, resolved_version, docs_target, coverage, status, accepted_pages]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        project_id: { $ref: '#/components/schemas/Id' }
+        collection_id: { $ref: '#/components/schemas/Id' }
+        source_selection_id: { $ref: '#/components/schemas/Id' }
+        technology: { type: string }
+        declared_version: { type: [string, 'null'] }
+        resolved_version: { type: [string, 'null'] }
+        docs_target: { type: [string, 'null'] }
+        coverage: { $ref: '#/components/schemas/VersionCoverage' }
+        status: { type: string, enum: [queued, awaiting_approval, waiting_capacity, importing, ready, partial, stale, failed, unavailable] }
+        accepted_pages: { type: integer, minimum: 0, maximum: 100 }
+        captured_at: { $ref: '#/components/schemas/Timestamp' }
+        job_id: { $ref: '#/components/schemas/Id' }
+    Document:
+      type: object
+      required: [id, collection_id, title, media_type, status, malware_scan]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        collection_id: { $ref: '#/components/schemas/Id' }
+        title: { type: string }
+        media_type: { type: string }
+        status: { type: string, enum: [quarantined, awaiting_approval, waiting_capacity, processing, ready, partial, stale, failed] }
+        malware_scan: { type: string, enum: [disabled, pending, clean, rejected, unavailable] }
+        active_version_id: { $ref: '#/components/schemas/Id' }
+        job_id: { $ref: '#/components/schemas/Id' }
+    DocumentVersion:
+      type: object
+      required: [id, document_id, captured_at, active, index_configuration_id]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        document_id: { $ref: '#/components/schemas/Id' }
+        captured_at: { $ref: '#/components/schemas/Timestamp' }
+        active: { type: boolean }
+        index_configuration_id: { type: string }
+        source_url: { type: string, format: uri, description: Safe authorized original link, never a private storage path. }
+    JobAccepted:
+      type: object
+      required: [job_id, status_url, request_id]
+      properties:
+        job_id: { $ref: '#/components/schemas/Id' }
+        status_url: { type: string, format: uri-reference }
+        request_id: { type: string }
+    DocumentAccepted:
+      type: object
+      required: [document_id, job_id, status_url, request_id]
+      properties:
+        document_id: { $ref: '#/components/schemas/Id' }
+        job_id: { $ref: '#/components/schemas/Id' }
+        status_url: { type: string, format: uri-reference }
+        request_id: { type: string }
+    DeletionAccepted:
+      type: object
+      required: [deletion_id, access_removed, accepted_at]
+      properties:
+        deletion_id: { $ref: '#/components/schemas/Id' }
+        access_removed: { const: true }
+        accepted_at: { $ref: '#/components/schemas/Timestamp' }
+    GitHubConnection:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [disconnected, connected, approval_required, reauthorization_required, verification_unavailable] }
+        account_login: { type: string, description: Current user's own connected account only. }
+    Repository:
+      type: object
+      required: [id, full_name, private, default_branch]
+      properties:
+        id: { type: integer, minimum: 1 }
+        full_name: { type: string }
+        private: { type: boolean }
+        default_branch: { type: string }
+    Branch:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+    ScanInput:
+      type: object
+      additionalProperties: false
+      required: [workspace_id, repository_id]
+      properties:
+        workspace_id: { $ref: '#/components/schemas/Id' }
+        repository_id: { type: integer, minimum: 1 }
+        branch: { type: string, minLength: 1, description: Omission selects the current repository default branch. }
+        application_path: { type: string, default: '', description: Repository-relative application path; empty means root. Reject absolute paths and traversal. }
+    ScanAccepted:
+      type: object
+      required: [scan_id, job_id, status_url, request_id]
+      properties:
+        scan_id: { $ref: '#/components/schemas/Id' }
+        job_id: { $ref: '#/components/schemas/Id' }
+        status_url: { type: string, format: uri-reference, description: Repository scan URL, not the job URL. }
+        request_id: { type: string }
+    DependencyFact:
+      type: object
+      required: [id, package, ecosystem, role, directness, declaration, resolutions, conditions, provenance, status]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        package: { type: string }
+        ecosystem: { type: string, enum: [python, javascript, typescript, unsupported] }
+        role: { type: string, enum: [runtime, development, optional, peer, constraint_only, unknown] }
+        directness: { type: string, enum: [direct, transitive, unknown] }
+        declaration: { type: [string, 'null'], description: Redacted declared constraint; never credentials/private URLs. }
+        resolutions:
+          type: array
+          items:
+            type: object
+            required: [version, vcs_revision, conditions]
+            properties:
+              version: { type: [string, 'null'] }
+              vcs_revision: { type: [string, 'null'] }
+              conditions: { type: array, items: { type: string } }
+        conditions: { type: array, items: { type: string } }
+        provenance:
+          type: array
+          items:
+            type: object
+            required: [path, field, content_hash]
+            properties:
+              path: { type: string, description: Minimal redacted metadata path, available only with current upstream access. }
+              field: { type: string }
+              content_hash: { type: string }
+        status: { type: string, enum: [resolved, declared_only, ambiguous, unsupported, incomplete] }
+    RepositoryScan:
+      type: object
+      required: [id, workspace_id, job_id, status, completeness, dependency_facts, warnings]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        workspace_id: { $ref: '#/components/schemas/Id' }
+        job_id: { $ref: '#/components/schemas/Id' }
+        status: { type: string, enum: [queued, running, ready, partial, failed, blocked_policy] }
+        commit_sha: { type: string, description: Present once resolved; every fetched file uses this immutable commit. }
+        branch: { type: string }
+        application_path: { type: string }
+        completeness: { type: string, enum: [pending, complete, partial, unsupported] }
+        dependency_facts: { type: array, items: { $ref: '#/components/schemas/DependencyFact' } }
+        warnings: { type: array, items: { type: string }, description: Safe bounded parser/coverage warnings; no raw files. }
+        fetched_files: { type: integer, minimum: 0, maximum: 100 }
+        base_context_revision: { $ref: '#/components/schemas/Revision' }
+        diff:
+          type: array
+          description: Rescan changes relative to accepted context; absent for initial scan.
+          items:
+            type: object
+            required: [change, before_fact_ids, after_fact_ids]
+            properties:
+              change: { type: string, enum: [added, removed, changed] }
+              before_fact_ids: { $ref: '#/components/schemas/Ids' }
+              after_fact_ids: { $ref: '#/components/schemas/Ids' }
+    StackSelection:
+      type: object
+      additionalProperties: false
+      required: [dependency_id, docs_target]
+      properties:
+        dependency_id: { $ref: '#/components/schemas/Id' }
+        docs_target: { type: string, minLength: 1, description: Explicit user choice; never overwrites declared/locked facts. }
+        confirmed_role: { type: string, enum: [runtime, development, optional, peer] }
+        confirmed_directness: { type: string, enum: [direct, transitive] }
+    StackReviewInput:
+      type: object
+      additionalProperties: false
+      required: [selections]
+      properties:
+        selections: { type: array, minItems: 1, items: { $ref: '#/components/schemas/StackSelection' } }
+    StackReview:
+      type: object
+      required: [id, scan_id, selections]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        scan_id: { $ref: '#/components/schemas/Id' }
+        selections: { type: array, items: { $ref: '#/components/schemas/StackSelection' } }
+    DiscoveryInput:
+      type: object
+      additionalProperties: false
+      required: [dependency_ids]
+      properties:
+        dependency_ids: { type: array, minItems: 1, maxItems: 20, uniqueItems: true, items: { $ref: '#/components/schemas/Id' } }
+        identifier_lookup_consent_ids:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/Id' }
+          description: Explicitly consented subset of dependency_ids; omission consents to none. Stored as a revisioned job-bound consent, not blanket future permission.
+        proposed_sources:
+          type: array
+          maxItems: 20
+          description: User-proposed public official documentation; each dependency must be in this batch. Validate URLs and create immutable review candidates without fetching content or granting trust.
+          items:
+            type: object
+            additionalProperties: false
+            required: [dependency_id, seed_url, docs_target]
+            properties:
+              dependency_id: { $ref: '#/components/schemas/Id' }
+              seed_url: { type: string, format: uri, description: Public HTTP(S) URL subject to network/source validation; no private URLs or credentials. }
+              docs_target: { type: string, minLength: 1 }
+    DocumentationCandidate:
+      type: object
+      required: [id, dependency_id, package, declared_version, resolved_version, docs_target, coverage, status, requires_fallback_acceptance, provenance]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        dependency_id: { $ref: '#/components/schemas/Id' }
+        package: { type: string }
+        declared_version: { type: [string, 'null'] }
+        resolved_version: { type: [string, 'null'] }
+        docs_target: { type: [string, 'null'] }
+        coverage: { $ref: '#/components/schemas/VersionCoverage' }
+        status: { type: string, enum: [catalog_verified, pending_scope_approval, pending_version_choice, lookup_consent_required, unavailable] }
+        requires_fallback_acceptance: { type: boolean }
+        origin: { type: string, format: uri }
+        path_prefixes: { type: array, items: { type: string } }
+        seed_urls: { type: array, items: { type: string, format: uri } }
+        provenance: { type: string, enum: [verified_catalog, publisher_linked, user_proposed] }
+        evidence: { type: string, description: Safe publisher relationship/coverage explanation; registry metadata is not independent verification. }
+    DocumentationApprovalInput:
+      type: object
+      additionalProperties: false
+      required: [candidate_ids, accepted_fallback_ids, collection_id]
+      properties:
+        candidate_ids: { type: array, minItems: 1, uniqueItems: true, items: { $ref: '#/components/schemas/Id' } }
+        accepted_fallback_ids: { $ref: '#/components/schemas/Ids', description: Explicitly accepted fallback candidate IDs; subset of candidate_ids. }
+        collection_id: { $ref: '#/components/schemas/Id' }
+    DocumentationApproved:
+      type: object
+      required: [source_selection_ids, approval_revision, job_ids]
+      properties:
+        source_selection_ids: { $ref: '#/components/schemas/Ids' }
+        approval_revision: { $ref: '#/components/schemas/Revision' }
+        job_ids: { $ref: '#/components/schemas/Ids' }
+    Job:
+      type: object
+      required: [id, kind, status, attempts, retryable, request_id, created_at]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        kind: { type: string, enum: [import, upload, refresh, replace, reindex, repository_scan, documentation_discovery] }
+        status: { type: string, enum: [queued, awaiting_approval, waiting_capacity, running, completed, partial, failed, completion_unknown, blocked_policy] }
+        attempts: { type: integer, minimum: 0 }
+        retryable: { type: boolean }
+        request_id: { type: string }
+        stage: { type: string, description: Actual safe worker stage; never fabricated percentage/progress. }
+        error: { $ref: '#/components/schemas/Error' }
+        created_at: { $ref: '#/components/schemas/Timestamp' }
+        finished_at: { $ref: '#/components/schemas/Timestamp' }
+    RetryInput:
+      type: object
+      additionalProperties: false
+      required: [idempotency_key]
+      properties:
+        idempotency_key: { type: string, minLength: 1, description: New client-generated key for this retry intent; reuse it for transport retries. }
+        acknowledge_possible_charge: { type: boolean, default: false, description: Must be true for completion_unknown; a new attempt may incur another charge. }
+    ConversationInput:
+      type: object
+      additionalProperties: false
+      required: [provider_profile_id]
+      properties:
+        provider_profile_id: { type: string, minLength: 1 }
+        collection_ids: { $ref: '#/components/schemas/Ids' }
+    Conversation:
+      type: object
+      required: [id, project_id, provider_profile_id, state, created_at]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        project_id: { $ref: '#/components/schemas/Id' }
+        provider_profile_id: { type: string }
+        state: { type: string, enum: [active, blocked_policy] }
+        title: { type: string, description: Omitted when blocked; never leak revoked source labels. }
+        collection_ids: { $ref: '#/components/schemas/Ids' }
+        active_turn_id: { $ref: '#/components/schemas/Id' }
+        created_at: { $ref: '#/components/schemas/Timestamp' }
+    TurnInput:
+      type: object
+      additionalProperties: false
+      required: [message, idempotency_key]
+      properties:
+        message: { type: string, minLength: 1, pattern: '\S', description: Server token preflight applies architecture's bounded context limits without a turn-count cutoff. }
+        idempotency_key: { type: string, minLength: 1, description: Generate once per send intent, reuse unchanged until acceptance is known. }
+    TurnAccepted:
+      type: object
+      required: [turn_id, status_url, request_id]
+      properties:
+        turn_id: { $ref: '#/components/schemas/Id' }
+        status_url: { type: string, format: uri-reference }
+        request_id: { type: string }
+    Turn:
+      type: object
+      required: [id, conversation_id, sequence, status, request_id, created_at]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        conversation_id: { $ref: '#/components/schemas/Id' }
+        sequence: { type: integer, minimum: 1 }
+        status: { type: string, enum: [queued, running, completed, failed, completion_unknown, blocked_policy] }
+        request_id: { type: string }
+        message: { type: string, description: Omitted if policy blocks this content. }
+        context_revision: { $ref: '#/components/schemas/Revision' }
+        context_updated: { type: boolean }
+        history_summarized: { type: boolean, description: Model-context condensation only; full transcript remains stored. }
+        retry_of_turn_id: { $ref: '#/components/schemas/Id' }
+        result: { $ref: '#/components/schemas/TurnResult' }
+        error: { $ref: '#/components/schemas/Error' }
+        created_at: { $ref: '#/components/schemas/Timestamp' }
+        finished_at: { $ref: '#/components/schemas/Timestamp' }
+      allOf:
+        - if:
+            properties: { status: { const: completed } }
+            required: [status]
+          then: { required: [result, context_revision, finished_at] }
+          else: { not: { required: [result] } }
+        - if:
+            properties: { status: { const: blocked_policy } }
+            required: [status]
+          then: { not: { required: [message] } }
+    TurnResult:
+      type: object
+      required: [kind, text, citations, source_version_ids, profile, usage, duration_ms]
+      properties:
+        kind: { type: string, enum: [answered, needs_clarification, abstained] }
+        text: { type: string, minLength: 1, description: Validated assistant reply; render as untrusted escaped content. }
+        citations: { type: array, items: { $ref: '#/components/schemas/CitationRef' } }
+        source_version_ids: { $ref: '#/components/schemas/Ids' }
+        profile:
+          type: object
+          required: [id, provider, model, backend]
+          properties:
+            id: { type: string }
+            provider: { type: string, enum: [gemini, groq, huggingface] }
+            model: { type: string }
+            backend: { type: string }
+        usage: { $ref: '#/components/schemas/TurnUsage' }
+        duration_ms: { type: integer, minimum: 0 }
+    CitationRef:
+      type: object
+      required: [id, evidence_url, document_version_id]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        evidence_url: { type: string, format: uri-reference }
+        document_version_id: { $ref: '#/components/schemas/Id' }
+    CitationEvidence:
+      type: object
+      required: [id, document_id, document_version_id, chunk_id, quote, locator, captured_at]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        document_id: { $ref: '#/components/schemas/Id' }
+        document_version_id: { $ref: '#/components/schemas/Id' }
+        chunk_id: { $ref: '#/components/schemas/Id' }
+        quote: { type: string, minLength: 1 }
+        locator:
+          type: object
+          required: [char_start, char_end]
+          properties:
+            char_start: { type: integer, minimum: 0, description: Zero-based offset in retained normalized text. }
+            char_end: { type: integer, minimum: 1, description: Exclusive offset; greater than char_start. }
+            page: { type: integer, minimum: 1 }
+            section: { type: string }
+        captured_at: { $ref: '#/components/schemas/Timestamp' }
+        source_url: { type: string, format: uri }
+    TurnUsage:
+      type: object
+      required: [estimated_usd, metered_usd, retained_uncertain_usd]
+      properties:
+        estimated_usd: { $ref: '#/components/schemas/Money' }
+        metered_usd: { anyOf: [{ $ref: '#/components/schemas/Money' }, { type: 'null' }], description: Null means not confirmed; never silently zero. }
+        retained_uncertain_usd: { $ref: '#/components/schemas/Money' }
+        input_tokens: { type: integer, minimum: 0 }
+        output_tokens: { type: integer, minimum: 0 }
+    UsageReport:
+      type: object
+      required: [workspace_id, month, timezone, metered_usd, reserved_usd, retained_uncertain_usd, workspace_allowance_usd, capacity_status]
+      properties:
+        workspace_id: { $ref: '#/components/schemas/Id' }
+        project_id: { $ref: '#/components/schemas/Id' }
+        month: { type: string, pattern: '^\d{4}-(0[1-9]|1[0-2])$' }
+        timezone: { const: Asia/Calcutta }
+        metered_usd: { $ref: '#/components/schemas/Money' }
+        reserved_usd: { $ref: '#/components/schemas/Money' }
+        retained_uncertain_usd: { $ref: '#/components/schemas/Money' }
+        workspace_allowance_usd: { anyOf: [{ $ref: '#/components/schemas/Money' }, { type: 'null' }], description: Null means operator has not assigned an allowance; hosted work waits. }
+        capacity_status: { type: string, enum: [available, allowance_required, workspace_limit, application_capacity_unavailable] }
+    WorkspacePage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Workspace' } }
+        next_cursor: { type: [string, 'null'] }
+    MembershipPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Membership' } }
+        next_cursor: { type: [string, 'null'] }
+    InvitationPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Invitation' } }
+        next_cursor: { type: [string, 'null'] }
+    ProjectPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Project' } }
+        next_cursor: { type: [string, 'null'] }
+    CatalogPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/CatalogEntry' } }
+        next_cursor: { type: [string, 'null'] }
+    ProviderPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/ProviderProfile' } }
+        next_cursor: { type: [string, 'null'] }
+    CollectionPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Collection' } }
+        next_cursor: { type: [string, 'null'] }
+    SourcePage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Source' } }
+        next_cursor: { type: [string, 'null'] }
+    DocumentPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Document' } }
+        next_cursor: { type: [string, 'null'] }
+    VersionPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/DocumentVersion' } }
+        next_cursor: { type: [string, 'null'] }
+    RepositoryPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Repository' } }
+        next_cursor: { type: [string, 'null'] }
+    BranchPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Branch' } }
+        next_cursor: { type: [string, 'null'] }
+    CandidatePage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/DocumentationCandidate' } }
+        next_cursor: { type: [string, 'null'] }
+    JobPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Job' } }
+        next_cursor: { type: [string, 'null'] }
+    ConversationPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Conversation' } }
+        next_cursor: { type: [string, 'null'] }
+    TurnPage:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/Turn' } }
+        next_cursor: { type: [string, 'null'] }

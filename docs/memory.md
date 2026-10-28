@@ -1,10 +1,12 @@
 # DocWeave — Session Memory
 
-Updated: 2026-10-28 (Asia/Calcutta). Phase: folder scaffold, backend manifest, and frontend starter initialized; product features unstarted.
+Updated: 2026-10-29 (Asia/Calcutta). Phase: folder scaffold, backend manifest, frontend starter, and draft OpenAPI documentation present; product features unstarted.
 
 ## Read first
 
 The six planning files live in `docweave/docs/`: [PRD.md](PRD.md), [architecture.md](architecture.md), [design.md](design.md), [rules.md](rules.md), [tasks.md](tasks.md), and this file. [README.md](../README.md) now maps the initialized folders. PRD owns intent, architecture owns system behavior, design is specifically frontend/app flow, rules owns engineering constraints, tasks owns execution state. This summary does not override them.
+
+API documentation is [openapi.yaml](../backend/openapi.yaml) with [api.md](api.md). It is a draft design contract; no backend routes exist. Architecture still owns behavior. The guide labels proposed wire details and the boundary between structural validation and runtime proof. At the user's request, the specification lives in `backend/`; its usage guide remains in `docs/`.
 
 ## Confirmation and authorization
 
@@ -73,6 +75,10 @@ New workspaces require an operator-assigned spending allowance; project/import s
 
 ## Verification and remaining risks
 
+- On 2026-10-29, wrote the draft OpenAPI 3.1.1 contract and API usage guide at the user's request, covering 50 paths/69 operations and 79 schemas. Linked them from README/architecture/tasks. Documented sessions/CSRF, roles/grants/processor policies, private durable turns/retry uncertainty, source/version approvals, GitHub scans/reviews, uploads, citations, own-tenant usage, and deletion. Proposed wire choices remain labeled draft; no backend/application dependency or feature was added, and implementation checkboxes remain unchecked.
+- Official OpenAPI 3.1 structural-schema validation passed, as did duplicate-key/reference/operation-ID/path-parameter/mutation-security/schema checks and 32 valid/invalid payload/example checks. Validation used already-available Python YAML/JSON Schema tooling and a read-only fetch of the official public schema; no project content was uploaded. All 32 local Markdown links in the five affected Markdown files resolved; code fences and whitespace checks passed. No live API, auth, provider, database, browser, or runtime authorization behavior was tested.
+- A clean Git repository with initial commit `c7f1f4d` was already present when this documentation session began. Earlier no-Git notes above describe the earlier scaffold sessions. This session did not initialize Git, commit, push or deploy.
+
 - Prior structural checks covered exactly six filenames, local links, fences, and 29 catalog entries. Theme solid-color contrast was calculated; rendered browser accessibility/performance remains untested.
 - Docker executable exists, but engine readiness/capacity and reference hardware were not verified; CIM hardware inspection was unavailable.
 - Public docs support candidate hosted profiles and token-priced Gemini retrieval. Actual account availability, adapter/tokenizer/output/price behavior, OAuth/SMTP/GitHub App setup, source manifests/license/robots/locators, parser/lock schemas, upstream checks, and documentation-version mappings remain verification gates.
@@ -82,6 +88,6 @@ New workspaces require an operator-assigned spending allowance; project/import s
 
 ## Next action
 
-Folder scaffolding and frontend initialization are complete; continue product/backend/Git work when the user requests the next step. Preserve the confirmed scope and GitHub extension; do not reintroduce current-docs-only/catalog-only discovery, full repository code RAG, shared GitHub credentials, blind version guesses, standalone questions, light-only UI, browser-bound turns, per-turn provider changes, HF cross-encoder requirements, or demo-only tenancy.
+Folder scaffolding, frontend initialization, and draft API documentation are complete; continue product/backend work when the user requests the next step. Review the draft wire contract as the owning backend tasks are implemented. Preserve the confirmed scope and GitHub extension; do not reintroduce current-docs-only/catalog-only discovery, full repository code RAG, shared GitHub credentials, blind version guesses, standalone questions, light-only UI, browser-bound turns, per-turn provider changes, HF cross-encoder requirements, or demo-only tenancy.
 
 After substantive work, update actual task checkboxes/evidence and this handoff. Keep unverified behavior labeled honestly; do not infer implementation from a completed planning session.

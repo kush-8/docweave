@@ -2,7 +2,7 @@
 
 Project-aware technical documentation and knowledge assistant.
 
-Status: React/TypeScript/Vite frontend starter and an empty uv backend manifest are initialized. Product features, backend runtime, migrations, containers, and Git initialization remain future work.
+Status: React/TypeScript/Vite frontend starter and an empty uv backend manifest are initialized. A draft OpenAPI contract is available; product features, backend runtime, migrations, and containers remain future work.
 
 ## Repository structure
 
@@ -12,6 +12,7 @@ docweave/
 ├── backend/
 │   ├── src/docweave/             # Python application and domain modules
 │   ├── pyproject.toml            # uv-managed Python project metadata/dependencies
+│   ├── openapi.yaml              # Draft API contract; no routes implemented
 │   ├── alembic/versions/         # Database migration revisions
 │   ├── tests/fixtures/           # Backend tests and synthetic fixtures
 │   ├── catalog/                 # Versioned documentation-source manifests
@@ -44,6 +45,7 @@ docweave/
 ├── docs/
 │   ├── PRD.md / architecture.md / design.md
 │   ├── rules.md / tasks.md / memory.md
+│   ├── api.md                   # API usage guide
 │   ├── adr/                     # Architecture decisions
 │   └── runbooks/                # Setup, recovery, deletion, operations
 └── .github/workflows/           # Future CI workflows
@@ -63,7 +65,13 @@ docweave/
 
 Read [memory.md](docs/memory.md), [PRD.md](docs/PRD.md), and [rules.md](docs/rules.md), then the relevant [architecture](docs/architecture.md), [frontend design](docs/design.md), and [implementation tasks](docs/tasks.md).
 
-Planning and operational Markdown live in `docs/`; this introduction stays at the project root. The user authorized the folder structure, backend manifest, and frontend starter. None of the implementation milestones are complete.
+Planning, API usage, and operational documentation live in `docs/`; the OpenAPI contract lives in `backend/openapi.yaml`, and this introduction stays at the project root. The user authorized the folder structure, backend manifest, frontend starter, and API documentation. None of the implementation milestones are complete.
+
+## API documentation
+
+Read the [API guide](docs/api.md) for authentication, authorization, project/import flows, durable-turn recovery, citations, GitHub review, errors, usage, and deletion. [openapi.yaml](backend/openapi.yaml) defines the planned `/api/v1` operations and request/response schemas in OpenAPI 3.1.1 format. Open it in a compatible local viewer.
+
+This is a design contract derived from the confirmed architecture. The guide identifies proposed wire-format decisions. No backend API or interactive documentation server exists yet; implementation must verify behavior against the contract.
 
 ## Local development
 
