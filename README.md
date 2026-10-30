@@ -2,7 +2,7 @@
 
 Project-aware technical documentation and knowledge assistant.
 
-Status: The frontend remains a synthetic preview. The backend implements Keycloak OIDC sessions/logout, workspace creation/listing, owner-managed invitations/member roles/removal, atomic recipient acceptance and concurrency-safe last-owner protection. PostgreSQL/pgvector and tenant RLS are set up. Readiness, project workflows, collection grants and AI remain incomplete. Frontend integration is deferred. See the [auth](docs/runbooks/auth.md), [workspace](docs/runbooks/workspaces.md) and [membership](docs/runbooks/memberships.md) runbooks.
+Status: The frontend remains a synthetic preview. The backend implements Keycloak OIDC sessions/logout, workspaces, invitations/member management and manual project creation/list/read/revision-checked editing. Project creation atomically stores an owner-only default collection and pending documentation requests; source approval/import workers are unfinished, so no import job is claimed. PostgreSQL/pgvector and tenant RLS are set up. Readiness, collection grants, GitHub project setup and AI remain incomplete. Frontend integration is deferred. See the [auth](docs/runbooks/auth.md), [workspace](docs/runbooks/workspaces.md), [membership](docs/runbooks/memberships.md) and [project](docs/runbooks/projects.md) runbooks.
 
 ## Repository structure
 

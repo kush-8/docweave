@@ -114,9 +114,9 @@ async def test_runtime_openapi_covers_draft_operations_with_honest_stub_response
         assert operation["operationId"] == operation_id
         if path in ("/auth/login", "/auth/callback"):
             expected_status = "302"
-        elif path in ("/health/live", "/me") or (path == "/workspaces" and method == "get") or operation_id in {"listMembers", "listInvitations", "updateMemberRole", "acceptInvitation"}:
+        elif path in ("/health/live", "/me") or (path == "/workspaces" and method == "get") or operation_id in {"listMembers", "listInvitations", "updateMemberRole", "acceptInvitation", "listProjects", "getProject", "updateProject"}:
             expected_status = "200"
-        elif (path == "/workspaces" and method == "post") or operation_id == "createInvitation":
+        elif (path == "/workspaces" and method == "post") or operation_id in {"createInvitation", "createProject"}:
             expected_status = "201"
         else:
             expected_status = "204" if path == "/auth/logout" or operation_id in {"removeMember", "revokeInvitation"} else "503" if path == "/health/ready" else "501"

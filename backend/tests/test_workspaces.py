@@ -145,7 +145,7 @@ async def test_workspace_guards_hide_outsiders_and_check_current_owner_role(auth
     async with owner.begin() as connection:
         await connection.execute(text("UPDATE app.memberships SET role='member' WHERE workspace_id=:w AND user_id=:u"),
             {"w": WA, "u": UUID(user["id"])})
-    assert (await client.get(f"/api/v1/workspaces/{WA}/projects")).status_code == 501
+    assert (await client.get(f"/api/v1/workspaces/{WA}/projects")).status_code == 200
     for method, path in [("GET", "members"), ("GET", "invitations"), ("POST", "projects"), ("POST", "invitations")]:
         response = await client.request(method, f"/api/v1/workspaces/{WA}/{path}", headers=headers)
         assert response.status_code == 403 and response.json()["code"] == "forbidden"

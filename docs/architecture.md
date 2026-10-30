@@ -1,6 +1,6 @@
 # DocWeave — Architecture
 
-Status: Confirmed direction and GitHub extension, reconciled 2026-10-28. Backend auth, workspaces, member management and recipient-bound invitations are implemented. Project/collection/conversation workflows and broader live compatibility checks remain incomplete. See [auth](runbooks/auth.md), [workspace](runbooks/workspaces.md) and [membership](runbooks/memberships.md) evidence.
+Status: Confirmed direction and GitHub extension, reconciled 2026-10-28. Backend auth, workspaces, member management, invitations and manual project context are implemented. Projects atomically create owner-only default collections and durable pending documentation requests; catalog approval/imports, GitHub setup, collection grants and conversations remain incomplete. See [auth](runbooks/auth.md), [workspace](runbooks/workspaces.md), [membership](runbooks/memberships.md) and [project](runbooks/projects.md) evidence.
 Product: [PRD.md](PRD.md). Frontend: [design.md](design.md). Delivery: [tasks.md](tasks.md).
 Numeric settings are explicit engineering defaults; quality/performance targets below require development baselining before release evaluation.
 

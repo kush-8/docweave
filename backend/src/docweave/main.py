@@ -15,9 +15,10 @@ from docweave.routes import FEATURE_ROUTES
 from docweave.auth import AuthSettings, make_oidc, require_csrf, require_user, router
 from docweave.db import make_engine
 from docweave.settings import database_url
-from docweave.policy import require_actor, require_owner
+from docweave.policy import require_actor, require_owner, require_project_actor
 from docweave.workspaces import router as workspace_router
 from docweave.memberships import router as membership_router
+from docweave.projects import router as project_router
 
 
 class Health(BaseModel):
@@ -50,6 +51,7 @@ EXPECTED_ERRORS = {
     (403, "forbidden"): ("forbidden", "You do not have permission for this operation.", False),
     (409, "last_owner"): ("last_owner", "The last workspace owner cannot be removed or demoted.", False),
     (409, "already_member"): ("already_member", "You already belong to this workspace.", False),
+    (409, "revision_conflict"): ("revision_conflict", "The project changed. Reload it before editing.", False),
 }
 
 
@@ -80,11 +82,11 @@ def create_app(*, auth_settings=None, auth_engine=None, oidc=None) -> FastAPI:
     app = FastAPI(
         title="DocWeave API",
         version="0.1.0",
-        description="Authentication, workspaces, owner-managed memberships/invitations and liveness are implemented. Other domain operations remain reserved.",
+        description="Authentication, workspaces, memberships/invitations, manual project context and liveness are implemented. Documentation imports and other domain operations remain reserved.",
         lifespan=lifespan,
     )
     app.state.auth = (settings, engine, oidc or make_oidc(settings)) if settings else None
-    feature_routers = (router, workspace_router, membership_router)
+    feature_routers = (router, workspace_router, membership_router, project_router)
     for feature_router in feature_routers:
         app.include_router(feature_router)
     implemented_routes = [route for feature_router in feature_routers for route in feature_router.routes]
@@ -128,6 +130,8 @@ def create_app(*, auth_settings=None, auth_engine=None, oidc=None) -> FastAPI:
         if path.startswith("/workspaces/{workspace_id}/"):
             owner_only = "/members" in path or "/invitations" in path or (path.endswith("/projects") and method == "POST")
             dependencies.append(Depends(require_owner if owner_only else require_actor))
+        if path.startswith("/projects/{project_id}/"):
+            dependencies.append(Depends(require_project_actor))
         app.add_api_route(
             f"/api/v1{path}",
             not_implemented,

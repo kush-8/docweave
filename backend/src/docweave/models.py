@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, MetaData, Text, UniqueConstraint, func, text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, MetaData, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -98,6 +98,7 @@ class Invitation(Record, Base):
 class Project(Record, Base):
     __tablename__ = "projects"
     __table_args__ = (
+        UniqueConstraint("id", "workspace_id", name="uq_projects_id_workspace_id"),
         CheckConstraint("name ~ '[^[:space:]]'", name="nonblank_name"),
         CheckConstraint("goal ~ '[^[:space:]]'", name="nonblank_goal"),
         CheckConstraint("context_revision >= 1", name="positive_context_revision"),
@@ -111,3 +112,32 @@ class Project(Record, Base):
     architecture_notes: Mapped[str | None] = mapped_column(Text)
     environment: Mapped[str | None] = mapped_column(Text)
     constraints: Mapped[str | None] = mapped_column(Text)
+
+
+class Collection(Record, Base):
+    __tablename__ = "collections"
+    __table_args__ = (
+        ForeignKeyConstraint(["project_id", "workspace_id"], ["app.projects.id", "app.projects.workspace_id"], ondelete="RESTRICT"),
+        CheckConstraint("name ~ '[^[:space:]]'", name="nonblank_name"),
+        Index("uq_collections_default_project", "project_id", unique=True, postgresql_where=text("is_default")),
+    )
+    workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), index=True)
+    project_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), index=True)
+    name: Mapped[str] = mapped_column(Text)
+    is_default: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+
+
+class DocumentationRequest(Record, Base):
+    __tablename__ = "documentation_requests"
+    __table_args__ = (
+        ForeignKeyConstraint(["project_id", "workspace_id"], ["app.projects.id", "app.projects.workspace_id"], ondelete="RESTRICT"),
+        CheckConstraint("state IN ('pending_review','superseded')", name="valid_state"),
+        CheckConstraint("context_revision >= 1", name="positive_context_revision"),
+        CheckConstraint("reason IN ('version_unresolved','source_catalog_unavailable')", name="valid_reason"),
+    )
+    workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), index=True)
+    project_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), index=True)
+    requested_by: Mapped[UUID] = mapped_column(ForeignKey("app.users.id", ondelete="RESTRICT"))
+    context_revision: Mapped[int] = mapped_column(Integer)
+    state: Mapped[str] = mapped_column(Text)
+    reason: Mapped[str] = mapped_column(Text)
