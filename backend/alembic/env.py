@@ -12,7 +12,8 @@ from docweave.settings import database_url
 
 def run_migrations(connection):
     context.configure(connection=connection, target_metadata=Base.metadata,
-                      include_schemas=True, version_table_schema="app")
+                      include_schemas=True, version_table_schema="app",
+                      include_name=lambda name, kind, parents: kind != "schema" or name != "queue")
     with context.begin_transaction():
         context.run_migrations()
 

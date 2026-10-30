@@ -35,11 +35,15 @@ def assert_error(response, status, code, retryable=False):
 @pytest.mark.parametrize(("method", "path", "operation_id"), [
     operation for operation in OPERATIONS if not operation[1].startswith(("/health/", "/auth/")) and operation[1] != "/me"
 ], ids=lambda value: value)
-async def test_anonymous_feature_operations_are_denied_or_publicly_reserved(client, method, path, operation_id):
+async def test_anonymous_feature_operations_are_denied_or_publicly_reserved(client, app, method, path, operation_id):
     url = re.sub(r"\{[^}]+\}", "97f0d4a6-86c2-4bec-91cc-329f97d228d2", path)
+    if path == "/providers":
+        app.state.auth = None  # This skeleton test must never connect to the persistent development DB.
     response = await client.request(method, f"/api/v1{url}")
 
-    if path in ("/catalog", "/providers"):
+    if path == "/providers":
+        assert_error(response, 503, "not_ready", retryable=True)
+    elif path == "/catalog":
         assert_error(response, 501, "not_implemented")
     else:
         assert_error(response, 401, "unauthenticated")
@@ -114,8 +118,10 @@ async def test_runtime_openapi_covers_draft_operations_with_honest_stub_response
         assert operation["operationId"] == operation_id
         if path in ("/auth/login", "/auth/callback"):
             expected_status = "302"
-        elif path in ("/health/live", "/me") or (path == "/workspaces" and method == "get") or operation_id in {"listMembers", "listInvitations", "updateMemberRole", "acceptInvitation", "listProjects", "getProject", "updateProject", "listCollections", "getCollectionGrants", "replaceCollectionGrants", "getProjectProcessingPolicy", "replaceProjectProcessingPolicy", "getCollectionProcessingPolicy", "replaceCollectionProcessingPolicy"}:
+        elif path in ("/health/live", "/me") or (path == "/workspaces" and method == "get") or operation_id in {"listMembers", "listInvitations", "updateMemberRole", "acceptInvitation", "listProjects", "getProject", "updateProject", "listCollections", "getCollectionGrants", "replaceCollectionGrants", "getProjectProcessingPolicy", "replaceProjectProcessingPolicy", "getCollectionProcessingPolicy", "replaceCollectionProcessingPolicy", "getWorkspaceUsage", "getProjectUsage", "listProviderProfiles", "listSources", "listDocuments", "getDocument", "listDocumentVersions", "listProjectJobs", "getJob"}:
             expected_status = "200"
+        elif operation_id in {"uploadDocument", "replaceDocument", "deleteDocument", "importSource", "refreshSource", "deleteSource"}:
+            expected_status = "202"
         elif (path == "/workspaces" and method == "post") or operation_id in {"createInvitation", "createProject", "createCollection"}:
             expected_status = "201"
         else:

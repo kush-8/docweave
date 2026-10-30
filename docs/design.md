@@ -155,7 +155,7 @@ Show whether malware scanning is enabled. Explain unsupported/encrypted/scanned-
 ### 4. Converse and inspect evidence
 
 1. Open Ask and choose a recent private conversation or **New conversation**. Show the current project goal/stack, ready source coverage, and readable collection selection.
-2. For a new conversation, select Gemini, Groq, or Hugging Face once. Explain required Gemini retrieval processing and any excluded readable collections. Show the fixed provider/model in resumed conversations; switching requires a fresh conversation.
+2. For later backend integration, select an available Groq answer profile once per new conversation. Explain separate Gemini embedding and Groq LLM processing approvals and any excluded readable collections. Show the fixed provider/model in resumed conversations; switching requires a fresh conversation. The 2026-10-30 backend-only direction defers UI implementation; additional providers belong to the future LLM gateway.
 3. Enter the message and select **Send message**. A follow-up uses the project's current context and this conversation's authorized history. After a project edit, show **Project context updated** on the next turn.
 4. Show durable queued/running status after acceptance. Navigating/reloading resumes the same turn; do not resubmit. Show the final validated response, never unvalidated tokens or fabricated stage progress.
 5. Render an answer, focused clarification question, or evidence-based abstention as a distinct assistant reply. User answers to clarification continue the same thread. Announce completion without stealing unrelated focus.

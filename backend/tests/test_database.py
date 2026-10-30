@@ -143,6 +143,11 @@ async def databases(test_urls):
     runtime = make_engine(runtime_url)
     try:
         async with owner.begin() as connection:
+            # Versioned profiles are immutable; this guarded disposable reset names every dependent table.
+            await connection.execute(text("TRUNCATE app.cost_reservations,app.provider_profiles"))
+            await connection.execute(text("DELETE FROM app.workspace_allowances"))
+            await connection.execute(text("TRUNCATE app.ingestion_jobs,app.document_versions,app.documents,app.sources,app.documentation_selections"))
+            await connection.execute(text("TRUNCATE queue.procrastinate_jobs,queue.procrastinate_events,queue.procrastinate_workers RESTART IDENTITY CASCADE"))
             for table in ("auth_sessions", "auth_flows", "auth_rate_limits"):
                 await connection.execute(text(f"DELETE FROM app.{table}"))
             for table in ("collection_processor_approvals", "project_processor_approvals", "collection_grants", "documentation_requests", "collections", "invitations", "projects", "memberships", "workspaces", "users"):

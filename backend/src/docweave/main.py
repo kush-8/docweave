@@ -20,6 +20,9 @@ from docweave.workspaces import router as workspace_router
 from docweave.memberships import router as membership_router
 from docweave.projects import router as project_router
 from docweave.collections import router as collection_router
+from docweave.budget import router as budget_router
+from docweave.providers import router as provider_router
+from docweave.ingestion import router as ingestion_router
 
 
 class Health(BaseModel):
@@ -39,6 +42,7 @@ ERRORS = {
     403: ("csrf_failed", "The request origin or security token is invalid.", False),
     404: ("not_found", "Resource not found.", False),
     405: ("method_not_allowed", "Method not allowed.", False),
+    413: ("upload_too_large", "The upload exceeds the allowed size.", False),
     422: ("invalid_request", "The request is invalid.", False),
     429: ("rate_limited", "Too many sign-in attempts. Try again shortly.", True),
     500: ("internal_error", "An internal error occurred.", False),
@@ -53,6 +57,7 @@ EXPECTED_ERRORS = {
     (409, "last_owner"): ("last_owner", "The last workspace owner cannot be removed or demoted.", False),
     (409, "already_member"): ("already_member", "You already belong to this workspace.", False),
     (409, "revision_conflict"): ("revision_conflict", "The resource changed. Reload it before editing.", False),
+    (409, "ingestion_active"): ("ingestion_active", "Another ingestion is active for this document.", True),
 }
 
 
@@ -83,11 +88,11 @@ def create_app(*, auth_settings=None, auth_engine=None, oidc=None) -> FastAPI:
     app = FastAPI(
         title="DocWeave API",
         version="0.1.0",
-        description="Authentication, workspaces, memberships/invitations, manual projects, collection grants, processor consent and liveness are implemented. Ingestion, conversations and hosted calls remain unavailable.",
+        description="Authentication, workspaces, memberships/invitations, manual projects, collection grants, processor consent, configured answer profiles, financial admission, own-tenant usage and durable bounded TXT/Markdown snapshot preparation are implemented. Retrieval indexing, conversations and hosted calls remain unavailable.",
         lifespan=lifespan,
     )
     app.state.auth = (settings, engine, oidc or make_oidc(settings)) if settings else None
-    feature_routers = (router, workspace_router, membership_router, project_router, collection_router)
+    feature_routers = (router, workspace_router, membership_router, project_router, collection_router, budget_router, provider_router, ingestion_router)
     for feature_router in feature_routers:
         app.include_router(feature_router)
     implemented_routes = [route for feature_router in feature_routers for route in feature_router.routes]

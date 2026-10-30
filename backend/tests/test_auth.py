@@ -237,7 +237,8 @@ async def test_auth_migration_matches_models_and_provisioning_has_no_public_gran
     owner, _ = databases
     async with owner.connect() as connection:
         def compare(sync):
-            context = MigrationContext.configure(sync, opts={"include_schemas": True, "version_table_schema": "app"})
+            context = MigrationContext.configure(sync, opts={"include_schemas": True, "version_table_schema": "app",
+                "include_name": lambda name, kind, parents: kind != "schema" or name != "queue"})
             return compare_metadata(context, Base.metadata)
         assert await connection.run_sync(compare) == []
         row = (await connection.execute(text("""

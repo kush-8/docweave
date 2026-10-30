@@ -29,7 +29,9 @@ GET/PUT these two paths:
 - `/api/v1/projects/{project_id}/processing-policy`: current project members may read; owners replace.
 - `/api/v1/collections/{collection_id}/processing-policy`: current collection readers may read; owners replace.
 
-Each scope begins with its own `{ "revision": 1, "approved_processor_ids": [] }`. PUT requires a positive integer expected revision and the complete unique processor-ID list. Project, collection and grant revisions are independent of project context revision. Approving a processor at one scope does not approve it at another or add missing Gemini retrieval consent automatically. Unknown/disabled/brand-only IDs return 422. Empty lists always revoke all, including when prior IDs have been disabled. Stale revisions return 409. Policy reads keep authorization, revision and IDs in one database snapshot; consumers must revalidate current policy before external calls.
+Each scope begins with its own `{ "revision": 1, "approved_processor_ids": [] }`. PUT requires a positive integer expected revision and the complete unique processor-ID list. Project, collection and grant revisions are independent of project context revision. Approving a processor at one scope does not approve it at another or approve other required processors automatically. Unknown/disabled/brand-only IDs return 422. Empty lists always revoke all, including when prior IDs have been disabled. Stale revisions return 409. Policy reads keep authorization, revision and IDs in one database snapshot; consumers must revalidate current policy before external calls.
+
+The 2026-10-30 target pipeline requires separate Gemini embedding and Groq LLM approvals, including offline judge processing. This does not enable either provider: adapters/profiles and the legacy generation-eligibility migration remain pending. See [tasks.md](../tasks.md#current-backend-task-order--2026-10-30).
 
 There are no conversations/workers to pause yet. Future hosted processing must check current membership/grants, both relevant policies, the exact actual processors, source/repository eligibility and reserved budget before dispatch and after relevant waits. No HTTP response or remembered approval is sufficient authority by itself.
 
@@ -43,7 +45,7 @@ VALUES ('reviewed-processor-id-v1','gemini','reviewed-actual-backend',
         '["embedding"]'::jsonb,true);
 ```
 
-Providers are `gemini`, `groq` or `huggingface`; roles are `embedding`, `reranking`, `query_resolution`, `summarization` and `generation`. Record every actual serving processor, including a pinned Hugging Face backend. Registry identity fields cannot be updated/deleted; disable an ID with `UPDATE app.processors SET enabled=false WHERE id=...` and register a new ID for changed identity. Stored consent never silently follows a repointed ID. Enabling a registry row makes it eligible for consent only: it does not verify account/model capability, price, reservations or hosted-call availability. `/providers` remains reserved until that profile/admission work exists. Tests use synthetic `test:` metadata and no live providers.
+Providers are `gemini`, `groq` or `huggingface`; roles are `embedding`, `reranking`, `query_resolution`, `summarization` and `generation`. Record every actual serving processor, including a pinned Hugging Face backend. Registry identity fields cannot be updated/deleted; disable an ID with `UPDATE app.processors SET enabled=false WHERE id=...` and register a new ID for changed identity. Stored consent never silently follows a repointed ID. Enabling a registry row makes it eligible for consent only. The [budget/profile slice](budget.md) now exposes configured answer profiles and financial reservation, but real account/model capability and prices remain unverified. Tests use synthetic `test:` metadata and no live providers.
 
 ## Storage, failure walkthrough and verification
 
@@ -59,4 +61,4 @@ uv run --project backend --locked --cache-dir backend/.uv-cache pytest backend/t
 docker compose --profile test stop test-db
 ```
 
-Exact results/review are in the [plan](../superpowers/plans/2026-10-30-collection-policy.md). Development volumes were not started or migrated; restore their original credentials and inventory legacy stacks before persistent migration. Downgrading drops grants, approvals and processor registrations: it is not a data-preserving production rollback. Next backend task is budget admission and configured provider profiles, before approved-source ingestion or any paid calls.
+Exact results/review are in the [plan](../superpowers/plans/2026-10-30-collection-policy.md). Development volumes were not started or migrated; restore their original credentials and inventory legacy stacks before persistent migration. Downgrading drops grants, approvals and processor registrations: it is not a data-preserving production rollback. Budget/profile records are now implemented; approved-source ingestion and actual adapter/price/account verification must precede hosted processing.

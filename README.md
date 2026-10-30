@@ -2,7 +2,9 @@
 
 Project-aware technical documentation and knowledge assistant.
 
-Status: The frontend remains a synthetic preview. The backend implements Keycloak OIDC sessions/logout, workspaces, member management, manual project context, grant-filtered collections and separate project/collection processor approvals. Project documentation requests remain pending review; no import job or hosted AI call is claimed. PostgreSQL/pgvector and tenant RLS are set up. Readiness, budget admission, imports, conversations and GitHub project setup remain incomplete. Frontend integration is deferred. See the [auth](docs/runbooks/auth.md), [workspace](docs/runbooks/workspaces.md), [membership](docs/runbooks/memberships.md), [project](docs/runbooks/projects.md) and [collection policy](docs/runbooks/collection-policy.md) runbooks.
+Status: The frontend remains a synthetic preview. The backend implements Keycloak OIDC, workspaces/memberships, manual projects, collection grants, processor consent, configured answer profiles, conservative budgets/usage and durable bounded TXT/Markdown ingestion. Uploads and operator-approved single-page sources prepare immutable local snapshots through a restricted queue worker; indexing and hosted AI remain unavailable. Profiles/prices/account capabilities remain unverified and disabled. Readiness, conversations and GitHub setup remain incomplete; frontend integration is deferred. See the [auth](docs/runbooks/auth.md), [workspace](docs/runbooks/workspaces.md), [membership](docs/runbooks/memberships.md), [project](docs/runbooks/projects.md), [collection policy](docs/runbooks/collection-policy.md), [budget](docs/runbooks/budget.md) and [ingestion](docs/runbooks/ingestion.md) runbooks.
+
+Current RAG plan: Groq-hosted LLMs with Gemini embeddings; compare native full-text/BM25 and filtered exact/HNSW retrieval through an end-to-end RAG evaluation pipeline. These paths remain planned. See the [backend task order](docs/tasks.md#current-backend-task-order--2026-10-30); frontend integration and the future provider-selecting LLM gateway are deferred.
 
 ## Repository structure
 

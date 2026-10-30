@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox syntax for tracking.
 
 **Goal:** Build the confirmed multi-tenant, evidence-grounded, conversational DocWeave release.
-**Architecture:** One modular FastAPI backend, PostgreSQL/pgvector, durable ingestion/turn/scan jobs, protected LangGraph memory, and a React frontend. Deliver the manual small-corpus vertical workflow first; then add optional GitHub stack detection, version-aware source discovery, the full catalog/providers, evaluation, and operations.
+**Architecture:** One modular FastAPI backend, PostgreSQL/pgvector, durable ingestion/turn/scan jobs, protected LangGraph memory, and a React frontend. Build the backend small-corpus RAG workflow and its evaluation pipeline together; then extend source coverage and operations. Frontend implementation/integration remains deferred by the user.
 **Tech Stack:** Python/FastAPI/Pydantic/SQLAlchemy/Alembic, PostgreSQL/pgvector/Procrastinate, LangGraph/LangChain, Keycloak, React/TypeScript/Vite, Docker Compose, pytest, Playwright, OpenTelemetry.
 **Spec:** [PRD.md](PRD.md), [architecture.md](architecture.md), and frontend [design.md](design.md).
 **Status:** Plan and GitHub extension reconciled on 2026-10-28. The frontend preview, tested API skeleton, and PostgreSQL/core-schema foundation are implemented as separately authorized slices. Complete authenticated product workflows remain unimplemented. No full-release task below is complete solely because its infrastructure exists.
@@ -26,15 +26,38 @@ Manual project backend slice implemented 2026-10-30 on `main`: owner create/PATC
 
 Collection access/consent backend slice implemented 2026-10-30 on `main`: owner collection creation, grant-filtered cursor listing, owner grant read/complete replacement and separate project/collection processor-policy read/replacement. Revision `0006_collection_policy` keeps tenant grants/approvals private, uses current role/grant RLS and reconciles demotion/removal without permission resurrection. Immutable operator processor identities can be explicitly approved only when enabled; empty replacement revokes all. Consent does not enable inference, bypass budget admission or implement worker/history pausing. See [plan/evidence](superpowers/plans/2026-10-30-collection-policy.md) and [runbook](runbooks/collection-policy.md). Frontend, real provider/account verification and full Task 1 readiness remain unfinished.
 
+Budget/profile backend slice implemented 2026-10-30 on `main`: immutable versioned profile records and public answer-profile listing, private exact-cost reservation/reconciliation, explicit operator monthly allocations and own-workspace/project usage. Revision `0007_budget` serializes financial changes with a shared advisory lock; retained uncertainty and confirmed charges count toward both tenant allocation and US$20 Asia/Calcutta ceiling. Replays preserve original intent/month/status; observed overruns are recorded and disable the profile. No live profiles/prices/account capabilities, paid calls, adapters or dispatch authority are claimed. See [plan/evidence](superpowers/plans/2026-10-30-budget.md) and [runbook](runbooks/budget.md). Next backend slice is the approved small-corpus ingestion path with explicit adapter/price verification before hosted work.
+
+## Current backend task order — 2026-10-30
+
+The user confirmed two lexical implementations (PostgreSQL native full-text and BM25), two vector strategies (filtered exact nearest neighbours and shared HNSW with database filtering/iterative scans), and an end-to-end RAG evaluation pipeline. Evaluate their four hybrid combinations before choosing production retrieval defaults. None of these paths or quality results is implemented yet.
+
+| Order | Task | Deliverable |
+| --- | --- | --- |
+| 1 | 3A | Durable bounded TXT/Markdown ingestion and frozen FastAPI/PostgreSQL fixtures |
+| 2 | 3B + 10 foundation | Tenant/version-scoped indexing, both lexical/vector strategies, and versioned evaluation cases/run reports |
+| 3 | 3C | Verified embedding/reranking adapters, bounded hybrid retrieval, and the initial retrieval pilot |
+| 4 | 4 + 10 RAG pilot | Groq answers, private conversations/memory, and end-to-end RAG evaluation through the actual backend workflow |
+| 5 | 6–7 backend | Read-only GitHub stack review, reviewed documentation discovery, version selection and rescan APIs |
+| 6 | 8 | Remaining formats, full lifecycle and all 29 verified bounded documentation sources |
+| 7 | 9 | Groq profile/adapter hardening across all hosted LLM roles |
+| 8 | 10 release | Calibrated, frozen 150-scenario RAG benchmark and held-out quality gates |
+| 9 | 11–12 backend | Operations, recovery/deletion/load drills and reproducible release evidence |
+
+Task 5 and frontend portions of Tasks 6–8/12 remain in the full roadmap but are not active backend work or prerequisites for backend CLI evaluation. Tasks 1–2 have implemented slices documented above; remaining full-release acceptance and the processor-mapping follow-up below are still open. Exact model IDs below are verification candidates, not account-verified or measured choices.
+
 ## Future goal outside this release
 
 After the core application workflow works and is evaluated, introduce an MCP server for authorized knowledge search and cited evidence retrieval, reusing the web application's backend retrieval and policy checks. See [Future goals](PRD.md#future-goals). This is not an active implementation task or a dependency of the current release; tool contracts, client authentication, and compatibility checks will be planned when scheduled.
+
+The user also confirmed a future **LLM gateway** that chooses between providers. Do not build routing/gateway infrastructure now. Groq is the current release's sole hosted LLM provider; Gemini is the explicitly approved embedding-only exception. Earlier Gemini/Hugging Face answer-provider and three-provider comparison requirements are superseded for this release; historical profiles/ledger identities must remain intact.
 
 ## Global Constraints
 
 - Workspace is the tenant; conversations are author-private and project-bound.
 - Google, GitHub, verified email/password; owner-issued recipient-bound invitations.
-- Gemini embeddings and bounded Gemini LLM reranking; Gemini/Groq/HF hosted answer providers.
+- Gemini embeddings only; Groq-hosted LLMs for answers, reranking, required query resolution, summaries and offline judging. Candidate roles: `gemini-embedding-2` at 768 dimensions; Groq `openai/gpt-oss-120b` for answers/judging and the conversation's fixed answer model for summaries; Groq `openai/gpt-oss-20b` for reranking/query resolution. Verify before enabling.
+- Implement native full-text and BM25 lexical retrieval plus exact and HNSW vector retrieval; select defaults from development RAG evaluation, never held-out tuning. Tenant isolation and version correctness are mandatory for every configuration.
 - Each conversation fixes its answer provider; no silent fallback or local-inference substitution.
 - Persist full transcripts; summarize model context; no arbitrary chat-length cutoff.
 - Answer input ceiling 24,000 tokens, including at most 12,000 memory tokens, using the selected model tokenizer.
@@ -121,28 +144,42 @@ async def test_cross_workspace_project_is_hidden(owner_a, project_b):
 - [ ] Add assertions that missing pricing rejects admission, uncertain execution retains its reservation, a new month uses Asia/Calcutta boundaries, and a tenant cannot read/raise another allowance.
 - [ ] Run `uv run --project backend pytest backend/tests/test_budget.py -q`; verify failure before adding budget logic.
 - [ ] Implement transactional reservation/reconciliation, operator-only workspace caps, own-tenant usage endpoints, initial profile capability/price records, and no-cap waiting behavior. New workspaces need an assigned allowance; global capacity is not a reserved tenant entitlement.
+- [ ] Before enabling new adapters, replace the implemented Gemini-reranker requirement in generation eligibility with the actual Gemini-embedding/Groq-LLM pipeline requirements. Add a migration and role-specific consent/admission regressions; preserve immutable historical profiles and charges.
 - [ ] Run tests and migration upgrade/downgrade on the disposable test DB; expect no double settlement, race overspend, float drift, or tenant financial disclosure.
 - [ ] Commit as `feat: enforce tenant and global inference budgets`.
 
 **Learning/completion:** Explain reservation versus final billing and uncertain usage. Fake-priced operations prove the boundary before any paid embedding, summary, or model call exists.
 
-## Task 3 — Small-corpus ingestion and scoped retrieval
+## Task 3 — Small-corpus ingestion, retrieval experiments and evaluation foundation
 
-**Files:** Create `ingestion.py`, `sources.py`, `retrieval.py`, restricted parser entrypoint/container, first FastAPI/PostgreSQL manifests in `backend/catalog/`, storage/index migrations, and `backend/tests/test_ingestion.py` / `test_retrieval.py`.
+**Files:** Create ingestion/source/retrieval modules, restricted parser entrypoint/container, first FastAPI/PostgreSQL manifests, storage/index migrations and ingestion/retrieval tests. Start Task 10's evaluator, fixtures and reports here rather than creating a separate benchmark framework.
 
 **Consumes:** Actor/policy, budget boundary, profile records.
 **Produces:** `submit_document(actor: Actor, collection_id: UUID, upload: UploadFile) -> JobRef`; `import_source(actor: Actor, project_id: UUID, source_selection_id: UUID) -> JobRef`; `retrieve(actor: Actor, project_id: UUID, query: str, collection_ids: list[UUID], processor_ids: list[str], index_generation: str) -> list[Evidence]`. Evidence includes chunk/document/version IDs, exact quote/locator, source URL, and collection/provenance IDs.
 
-- [ ] Write ingestion tests for a synthetic TXT runbook and small frozen official-doc fixtures. Assert ready jobs have immutable locators, duplicate content does not add a version, wrong-tenant/private-unapproved text never reaches a fake embedder, and deletion during publication cannot reactivate a document.
-- [ ] Write retrieval tests for lexical/vector candidates, RRF `k=60`, grants/tombstones/active generation, deterministic duplicate handling, and recorded source spans.
-- [ ] Run both test files; observe missing pipeline/retrieval failures.
-- [ ] Implement the shared bounded parse/normalize/hash/chunk/embed/stage/publish path, job/outbox transaction, safe worker leases, budget-aware batches, and source allowlist/redirect checks. Seed DocumentationSelection records from the two catalog fixtures with explicit package/docs target/coverage; imports consume these approved selection IDs. Begin with TXT/Markdown; full catalog support is not yet claimed.
-- [ ] Add Gemini embedding/LLM-reranking adapters. After implementation authorization and Task 2's admission boundary, run tiny synthetic budget-reserved compatibility probes: dimensions, normalization, tokenizer/input limits, structured ranking output, billing identity, and prices. Missing keys/access do not block fake tests, but cannot pass this live gate.
-- [ ] Implement full-text/vector fusion, at most 20 bounded rerank candidates, and final eight-chunk/6,000-token evidence budget. Freeze IDs/configuration; no silent token truncation.
-- [ ] Run `uv run --project backend pytest backend/tests/test_ingestion.py backend/tests/test_retrieval.py -q`; expect passing pipeline/isolation/ranking tests.
-- [ ] Commit as `feat: ingest a bounded corpus and retrieve authorized evidence`.
+### 3A — Durable ingestion
 
-**Learning/completion:** Explain hashes/version activation, lexical versus vector retrieval, RRF, and LLM reranking. The small corpus is indexable/retrievable; end-to-end answer support is not claimed until Tasks 4–5.
+- [ ] Write failing ingestion tests for a synthetic FastAPI-to-PostgreSQL connection/access runbook and frozen official fixtures: a dated rolling FastAPI snapshot and PostgreSQL 17 docs. Label FastAPI coverage honestly; do not claim exact package-version coverage.
+- [ ] Implement bounded TXT/Markdown parse/normalize/hash/chunk/stage/publish, transactional jobs/outbox, worker leases/recovery, private storage and source allowlist/redirect checks. Seed approved DocumentationSelection records; imports accept their IDs, not client-asserted trusted URLs. Use fake embedding transport until 3C verifies hosted profiles.
+- [ ] Test same-content/config idempotency, failed replacement retaining the last good snapshot, immutable locators, post-wait authority and deletion during publication. Wrong-tenant or unapproved private text must never reach even a fake embedder.
+
+### 3B — Scoped indexes and evaluation foundation
+
+- [ ] Add workspace/collection-owned chunk/embedding storage and RLS with transaction-local actor context. Enforce current grants, project-approved technology/docs selections, active snapshots, tombstones and compatible embedding generations in both retrieval channels. Never mix incompatible embedding spaces or broaden an empty authorized scope.
+- [ ] Implement PostgreSQL native full-text and BM25 as alternative lexical paths. Choose/pin the BM25 implementation after checking PostgreSQL 17 compatibility, tokenization and corpus-statistics isolation; shared statistics influenced by unreadable documents must not silently bypass the privacy gate. Cover literal error codes/identifiers and explicit version metadata.
+- [ ] Implement metadata filtering followed by exact distance ranking without an ANN index, and shared HNSW candidate search with database RLS/metadata filtering and bounded iterative scans. Ordinary metadata indexes remain available to the exact path. Verify execution plans distinguish the paths; record HNSW settings and scan limits.
+- [ ] Start Task 10's backend evaluation CLI/data/report format with 10 labeled answerable development questions and separate denial, no-evidence and version cases. Freeze corpus snapshots, source spans, scenario/family IDs and configurations; these pilot cases remain development-only.
+- [ ] Build baseline/report plumbing with fake or recorded embeddings; register native-only, BM25-only, exact-vector-only and HNSW-vector-only baselines plus the four hybrid configurations executed in 3C. Record candidate IDs/ranks, SQL plans, latency, index size/build time, underfilled results and HNSW Recall@k against exact results; distinguish this ANN recall from labeled supporting-passage recall. Fake vectors prove behavior, not semantic quality.
+
+### 3C — Hosted compatibility, bounded fusion and retrieval pilot
+
+- [ ] Reconcile Task 2's processor requirements, then add Gemini embedding and Groq LLM-reranking adapters. Verify model-specific query/document configuration, dimensions, normalization, tokenizers, strict ranking schemas, returned-ID membership, billed reasoning/output limits and actual price/account compatibility.
+- [ ] Run initial synthetic compatibility probes under reservations with a **US$0.25 total cap**. Pin eligible profiles only after evidence; missing credentials/prices/access keep hosted work waiting while fake-provider tests continue. Determine a working bounded Groq ranking output allowance rather than inheriting the old Gemini 512-token assumption.
+- [ ] Implement up to 30 candidates/channel, deterministic deduplication and RRF `k=60`; rerank at most 20 bounded candidates with Groq, returning at most eight chunks/6,000 evidence tokens. Revalidate consent/access before external calls and evidence release; validate exact spans and source/version state.
+- [ ] Embed the frozen corpus/queries through verified profiles, reuse compatible vectors within the authorized evaluation scope and execute all registered baselines/four hybrid configurations on identical inputs. Run the retrieval pilot without reranking and then with fixed Groq reranking. At least one pilot configuration must retrieve supporting passages in the final eight for 9/10 answerable questions; report failed variants explicitly and require isolation/version/no-evidence checks for every configuration. Do not select a production winner from ten questions alone.
+- [ ] Run `uv run --project backend pytest backend/tests/test_ingestion.py backend/tests/test_retrieval.py backend/tests/test_evaluation_protocol.py -q`; record actual execution plans and results. Deliver 3A/3B/3C as separate reviewable checkpoints without claiming completion of unfinished stages.
+
+**Learning/completion:** Explain hashes/version activation, RLS versus physical ANN filtering, exact versus approximate recall, native ranking versus BM25, RRF and LLM reranking. Task 4 adds backend answers and the end-to-end RAG pilot; frontend Task 5 is deferred.
 
 ## Task 4 — Persistent private conversations and durable graph turns
 
@@ -162,6 +199,7 @@ assert fake_provider.operation_count("answer") == 1
 - [ ] Add failure tests: crash after dispatch produces `completion_unknown`; resume does not call the provider again; revoked/deleted context blocks checkpoint/summary replay; normal refresh preserves old authorized citations. Test private approval before every helper/model call.
 - [ ] Run the three test files and confirm meaningful failures before implementation.
 - [ ] Implement the graph/context compiler and protected persistent checkpointer, provenance/dependency tracking, fixed-provider policy, 24,000/12,000-token allocation, bounded summaries and query resolution, and structured answer/clarification/abstention.
+- [ ] Use verified Groq profiles for answers and required ambiguous-follow-up resolution; summarize with the conversation's fixed answer model. Extend Task 10's evaluator to execute actual backend turns and capture retrieved/reranked evidence, answers, citations, memory behavior and per-stage usage. Score correctness, faithfulness, relevance, citation support, abstention and privacy, not retrieval alone.
 - [ ] Implement HTTP 202 durable turns, separate turn queue, per-conversation ordering/idempotency, operation dispatch ledger, polling/status recovery, current-access finalization, and uncertain-execution handling. No unvalidated token streaming or blind checkpoint replay.
 - [ ] Run `uv run --project backend pytest backend/tests/test_conversations.py backend/tests/test_memory.py backend/tests/test_turn_recovery.py -q`; restart API/worker between accepted and completed fixture turns and expect the same recoverable result.
 - [ ] Commit as `feat: persist contextual conversations with recoverable turns`.
@@ -170,16 +208,18 @@ assert fake_provider.operation_count("answer") == 1
 
 ## Task 5 — Complete frontend vertical workflow and both themes
 
-**Files:** Create frontend package/routes, `src/app.tsx`, `src/app/` routing/bootstrap, `src/styles/theme.css`, feature-owned project/Ask/source/document/activity/settings pages and shared UI controls; `frontend/tests/vertical-flow.spec.ts`, `theme.spec.ts`, `conversation-recovery.spec.ts`.
+**Deferred:** The user currently authorizes backend work only. Retain this milestone for later integration; no UI implementation or browser gate blocks Tasks 3–4 or the backend RAG evaluator.
+
+**Files:** Extend the existing frontend app/routes, shared theme/UI controls and feature-owned setup/chat/source/document/activity/settings flows; add vertical-flow/theme/conversation-recovery browser tests. Follow design.md's current simple-chat direction rather than its superseded workbench layout.
 
 **Consumes:** API/resource/state contracts from Tasks 1–4 and design.md.
 **Produces:** Keyboard-accessible complete small-corpus workflow; stable tenant/project/conversation/turn/citation navigation.
 
-- [ ] Write Playwright checks: two isolated users; create project queues selected imports; upload a runbook; start Gemini conversation; answer a follow-up; open exact evidence; reload during a pending turn without a second POST.
+- [ ] Write Playwright checks: two isolated users; create project queues selected imports; upload a runbook; start a Groq conversation; answer a follow-up; open exact evidence; reload during a pending turn without a second POST.
 - [ ] Add theme assertions: no override follows OS; toggle persists per device; both native controls and evidence dialog use the active theme; dark accent buttons use canvas-colored labels. Test storage failure, mobile sheet focus restoration, safe unavailable evidence, and no private content in URL/localStorage.
 - [ ] Run `npm --prefix frontend exec -- playwright test`; observe missing app/flow failures.
-- [ ] Implement the evidence-first workbench, recent-conversation picker within Ask, fixed provider badge, complete sign-in/invitation states, processing approvals, own-workspace allowance, automatic import states, clarification, condensed-context disclosure, and durable turn recovery.
-- [ ] Preserve the existing layout arithmetic: 224px rail, 480px discussion, 360px inspector fit at desktop; compact evidence becomes modal below 1,200px. Do not add an always-visible extra history rail.
+- [ ] Integrate the existing simple chatbot: toggleable sidebar with New chat, workspaces/nested chats and recent chats; source drawer on citation selection; fixed model under Chat options; sign-in/invitations, processing approvals, own-workspace allowance, import states, clarification, condensed-context disclosure and durable recovery.
+- [ ] Preserve current responsive sidebar/source-drawer behavior, empty-chat state, keyboard focus and draft protection. The old permanent project rail/adjacent evidence inspector is superseded by design.md's current direction.
 - [ ] Run Playwright plus the frontend production build. Expect all flow/state tests passing, keyboard usability, no cross-tenant flashes, and a usable 320px/200%-zoom layout.
 - [ ] Commit as `feat: deliver the conversational evidence workbench`.
 
@@ -189,7 +229,7 @@ assert fake_provider.operation_count("answer") == 1
 
 **Files:** Create `github.py`, `dependencies.py`, connection/scan/dependency/StackReview migrations, `backend/tests/test_github_access.py`, `test_dependency_scan.py`; frontend account connections, repository/branch/application picker, stack preview; `frontend/tests/github-setup.spec.ts`.
 
-**Consumes:** Actor/policy/session, durable ingestion job infrastructure, project/context revision and existing frontend.
+**Consumes:** Actor/policy/session, durable ingestion job infrastructure and project/context revision. Backend scan APIs do not depend on deferred frontend integration; browser steps resume only with frontend work.
 **Produces:** `request_repository_scan(actor: Actor, repository_id: int, branch: str, application_path: str) -> ScanRef`; `read_repository_scan(actor: Actor, scan_id: UUID) -> ScanView`; `parse_dependencies(files: dict[str, bytes], application_path: str) -> DependencyScan`; `confirm_stack(actor: Actor, scan_id: UUID, selections: list[StackSelection]) -> StackReviewRef`. DependencyScan contains facts, safe warnings, and completeness. Facts separate package/ecosystem/role/directness/path/field, declaration, resolution/revision, conditions, status. StackSelection records selected dependency and optional user-chosen docs target without overwriting detected facts.
 
 - [ ] Write authorization tests using fake GitHub transport: user/app intersection, organization approval, expired/revoked tokens, private derived project-list/scan denial, cross-tenant review IDs, current-viewer access, background authority recheck, and no shared installation-token bypass. Example:
@@ -249,36 +289,40 @@ assert fake_github.fetched_paths == []
 
 **Learning/completion:** Explain source provenance/coverage versus whole-site claims; demonstrate failed refresh retaining a good snapshot and deletion resisting retry resurrection.
 
-## Task 9 — Groq and Hugging Face answer profiles
+## Task 9 — Groq hosted-role profiles and adapter hardening
 
-**Files:** Extend providers/profile configuration, `backend/tests/test_provider_contracts.py`, `backend/eval/provider-compare.yaml`, frontend new-conversation profile selection.
+**Files:** Extend providers/profile configuration, `backend/tests/test_provider_contracts.py` and evaluation configuration manifests. Frontend profile integration remains deferred.
 
-**Consumes:** Existing Gemini retrieval, budget, memory/answer contracts.
-**Produces:** Explicit compatible Gemini/Groq/HF generation profiles with immutable conversation selection.
+**Consumes:** Task 3's Gemini embedding/Groq reranking adapters and Task 4's Groq conversation/helper roles, budget and dispatch contracts.
+**Produces:** Verified pinned Groq LLM-role profiles and Gemini embedding profiles; fixed conversation model selection and no automatic routing.
 
-- [ ] Write parameterized adapter contracts for schema output, total billed output accounting, timeouts, tokenizers, fixed provider, missing-price refusal, and no silent HF backend routing/fallback.
-- [ ] Run `uv run --project backend pytest backend/tests/test_provider_contracts.py -q`; verify absent adapters fail.
-- [ ] Implement Groq and HF hosted generation only; do not reintroduce local HF inference or HF cross-encoder retrieval. Keep summaries on the conversation's approved provider, while Gemini retrieval approvals remain required.
-- [ ] Run tiny synthetic reserved account probes for each exact model/backend. Record available structured-output behavior, billed reasoning/output bounds, request schemas, tokenizer windows, current rates, and latency; lock supported profiles. Unsupported candidates are not counted as verified.
-- [ ] Run adapter tests and a shared authorized follow-up/citation scenario through all three providers; expect compatible final responses and clear failures without changing provider.
-- [ ] Commit as `feat: verify three hosted answer providers`.
+- [ ] Write parameterized adapter contracts for schema/ID validation, total billed reasoning/output accounting, timeouts, tokenizers, role-specific processor consent, fixed conversation models and missing-price refusal.
+- [ ] Run `uv run --project backend pytest backend/tests/test_provider_contracts.py -q`; verify the new hardening cases fail before changing the existing adapters.
+- [ ] Harden the existing adapters across answer, rerank, query-resolution, summary and offline-judge roles, including strict output bounds, refusals, retries and uncertain execution. Preserve historical profiles/charges; do not add Gemini/HF answer adapters or the future LLM gateway.
+- [ ] Restrict newly enabled LLM profiles/dispatch to Groq and embedding profiles/dispatch to Gemini. Historical identities remain readable for usage/history; provider enums alone do not authorize a new call outside the selected pipeline.
+- [ ] Reuse the initial compatibility evidence and reserve any further required exact-model/account checks. Record schema support, billed reasoning/output bounds, request configuration, tokenizer windows, rates and latency; unsupported candidates stay unavailable.
+- [ ] Run adapter tests and authorized follow-up/citation/revocation cases through the selected Groq profiles, including independently accounted helper/judge calls and Gemini embedding consent.
+- [ ] Commit as `feat: verify Groq hosted-role contracts`.
 
-**Learning/completion:** Explain model publisher versus serving provider, adapter versus model guarantees, and why comparisons freeze retrieval/history.
+**Learning/completion:** Explain model publisher versus serving provider, role-specific consent/billing, adapter guarantees and why comparisons freeze generation/history settings.
 
-## Task 10 — Versioned benchmark and uncontaminated quality gates
+## Task 10 — End-to-end RAG evaluation pipeline and held-out quality gates
 
 **Files:** Create `evaluation.py`, `backend/eval/scenarios.jsonl`, labels/split/family/config manifests and reports, `backend/tests/test_evaluation_protocol.py`.
 
-**Consumes:** All catalog/profiles and architecture's 150-scenario allocation.
-**Produces:** CLI `python -m docweave.evaluation --split development|held-out --config <path>`; machine-readable reports with corpus/profile/config/hash/date/cost provenance.
+**Consumes:** Start with Task 3's corpus/retrieval fixtures, add Task 4's complete backend RAG turns, then expand to all catalog sources and architecture's 150-scenario allocation. This is ongoing evaluation work, not a final-stage-only retrieval benchmark.
+**Produces:** CLI `python -m docweave.evaluation --split development|held-out --config <path>` driving actual authorized backend RAG services; per-case and aggregate JSON/CSV reports with corpus/profile/config/prompt/hash/date/cost provenance and captured evidence, answers and citations.
 
-- [ ] Write protocol tests: 150 scenarios, 100/50 split, no family overlap, 29 development coverage checks, separate human-rating samples, and no provider-selection/calibration use of held-out cases.
-- [ ] Add metric assertions for known Recall/MRR/nDCG labels, unanswerable/clarification cases, follow-up decisions, source/upstream revocation, summary leakage, and representative GitHub-derived/version-mismatch scenarios within the existing 150 allocation. Multi-turn scenarios expose both scenario and turn counts.
+- [ ] Start the versioned scenario/config/report schema in Task 3 and connect complete RAG execution in Task 4. Each case records question/ordered history, actor/project/source/version scope, expected supporting passages/required facts, expected answer/clarification/abstention behavior and prohibited disclosures. Use synthetic private fixtures and protect captured evaluation content from ordinary logs/cross-tenant access.
+- [ ] Write staged protocol tests: the initial 10-question development pilot, then the complete 150 scenarios/100 development/50 held-out split, no family overlap, 29 development coverage checks and separate human-rating samples. Held-out cases never select retrieval defaults, models, prompts or judges.
+- [ ] Add deterministic metric tests for labeled context precision/recall, Recall/MRR/nDCG where labels support them, ANN Recall@k versus exact search, underfill and structural citation/span checks. Add semantic answer correctness/required-fact coverage, faithfulness to supplied evidence, response relevance and citation-to-claim support; faithfulness is not a substitute for correctness.
+- [ ] Evaluate abstention/clarification, follow-ups, summary continuity, version/staleness/conflicts, adversarial documents, source/upstream revocation and tenant/conversation isolation. Security failures disqualify a configuration rather than being averaged into its quality score. Record scenario and turn counts separately.
 - [ ] Run `uv run --project backend pytest backend/tests/test_evaluation_protocol.py -q`; observe missing evaluator/protocol failures.
-- [ ] Implement the report/CLI; create and human-verify the labeled corpus. Compare four retrieval configurations, then three answer providers on 30 development scenarios with identical authorized context.
+- [ ] Implement the CLI/report runner incrementally and human-verify reference labels. Compare native full-text/BM25 crossed with exact/HNSW vectors plus lexical-only/vector-only baselines, first at retrieval and then through complete generation with the same Groq answer profile, prompts/history, reranker settings, evidence budgets and query embeddings. Choose defaults using broader development end-to-end quality, latency/cost and operational complexity; prefer the simpler path when results are effectively tied.
+- [ ] Assess Ragas for semantic metrics without committing to it before Groq compatibility/cost validation. Configure all hosted judge LLM calls explicitly through Groq, with Gemini used only for any required embeddings; no framework-default provider calls. Capture per-stage/end-to-end p50/p95, token/cost totals, query plans, HNSW settings, index build time/size, machine identity, failures and configuration differences.
 - [ ] Human-review 30 development outputs to calibrate any automated judge; freeze rubric/prompts/profiles/targets. Budget the actual turn/summary/reranking/judging workload, not just 150 generation calls.
 - [ ] Run deterministic metric/regression tests; then the separately budget-reserved held-out run and distinct 30-output human release review. Publish denominators, failures, costs, and source/model versions.
-- [ ] Commit as `test: establish reproducible conversation and retrieval evaluation`.
+- [ ] Commit as `test: establish reproducible end-to-end RAG evaluation`.
 
 **Learning/completion:** Explain development versus held-out evidence, summary-memory evaluation, judge disagreement, and one actual failure. Missing thresholds remain failures; only the user can approve a reduced bar.
 
@@ -304,7 +348,7 @@ assert fake_github.fetched_paths == []
 **Files:** Complete repository README, API/setup/demo/threat-model/runbook/architecture-decision documentation and learning evidence; update these planning files/memory with actual results.
 
 - [ ] Reproduce the synthetic integration scenario from a clean checkout, including all logins, two tenants, manual and GitHub setup, private uploads, reviewed/version-aware imports, unknown-source fallback, remembered clarification/follow-up, citations, rescan/revocation/delete/recovery, and both themes.
-- [ ] Confirm all 29 catalog entries, all three answer providers, human review, CI, security boundaries, budget gates, retention, and recovery evidence have passed. Mark account/model/source limitations honestly.
+- [ ] Confirm all 29 catalog entries, selected Groq LLM/Gemini embedding profiles, the end-to-end RAG benchmark/human review, CI, security boundaries, budget gates, retention and recovery evidence have passed. Mark account/model/source limitations honestly; the future LLM gateway is not a release gate.
 - [ ] Have a fresh reviewer assess implementation correctness, isolation/memory privacy, evaluation claims, and original-brief coverage; resolve actionable findings and rerun affected checks.
 - [ ] Record the short demonstration and milestone learning explanations; verify another engineer can reproduce setup from the independent repository without private fixtures/secrets.
 - [ ] Commit as `docs: publish reproducible DocWeave portfolio evidence`.
@@ -313,6 +357,6 @@ assert fake_github.fetched_paths == []
 
 ## Plan self-review and execution boundary
 
-This sequence repairs the old circular gates: public candidate selection does not claim account verification; the budget boundary precedes live probes; final source-answer checks follow a working answer/citation path. Conversational memory/summary, async recovery, three login methods, optional GitHub scans, reviewed version-aware discovery, dark mode, own-tenant cost visibility, and restore-safe deletion are explicitly assigned. Tasks 6–7 consume the working manual path and share its approval/import contract; the 29-entry completion gate follows them.
+Public candidate selection does not claim account verification; budget/consent admission precedes live probes. Evaluation begins with retrieval in Task 3, exercises full backend RAG in Task 4 and expands to the frozen release benchmark in Task 10. Native/BM25 and exact/HNSW choices stay experimental until development evidence selects defaults. Backend Tasks 6–7 consume the manual backend workflow; all frontend steps remain deferred. The 29-source, memory/privacy, budget, recovery and unchanged held-out quality gates remain required, with Groq as the sole current LLM service and Gemini as the embedding-only exception.
 
 All checkboxes above remain unchecked. This is a plan, not executed code or proof of passing tests. When the user later requests implementation, select the execution method then and use the corresponding Superpowers execution workflow. Do not start implementation merely because the written design is confirmed.

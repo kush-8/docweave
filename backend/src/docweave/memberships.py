@@ -76,6 +76,7 @@ async def membership_session(request, actor_id, workspace_id=None):
     except DBAPIError as error:
         mapped = {"P0002": (404, None), "42501": (403, "forbidden"), "DW001": (409, "last_owner"),
                   "DW002": (409, "already_member"), "DW003": (409, "revision_conflict"),
+                  "DW004": (409, "ingestion_active"),
                   "22023": (422, None)}.get(getattr(error.orig, "sqlstate", None))
         if mapped:
             raise HTTPException(mapped[0], detail=mapped[1]) from None

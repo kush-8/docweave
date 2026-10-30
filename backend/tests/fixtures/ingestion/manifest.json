@@ -1,0 +1,43 @@
+{
+  "captured_at": "2026-10-30T20:16:04.289643+00:00",
+  "documents": [
+    {
+      "file": "synthetic-runbook.md",
+      "sha256": "4961e087d8a12719ed1fc299182ed3cdf2ab0ba7ae3159f03d4f43d089e22b7a",
+      "media_type": "text/markdown",
+      "source_url": null,
+      "coverage": {
+        "granularity": "unknown",
+        "publisher_range": null
+      },
+      "attribution": "DocWeave synthetic fixture",
+      "transformation": "none"
+    },
+    {
+      "file": "fastapi-sql-2026-10-31.md",
+      "sha256": "a090bb4174b12a5d7bbc84a7e7c3d8d4461d02b23501c59abbed2d894460df9f",
+      "media_type": "text/markdown",
+      "source_url": "https://raw.githubusercontent.com/fastapi/fastapi/1c83302d783783d4c9703df94b823dd39e545b63/docs/en/docs/tutorial/sql-databases.md",
+      "coverage": {
+        "granularity": "rolling",
+        "publisher_range": null
+      },
+      "attribution": "FastAPI documentation, MIT; https://github.com/fastapi/fastapi/blob/1c83302d783783d4c9703df94b823dd39e545b63/LICENSE",
+      "transformation": "raw Markdown; includes remain literal; no exact FastAPI package coverage",
+      "source_commit": "1c83302d783783d4c9703df94b823dd39e545b63"
+    },
+    {
+      "file": "postgresql17-hba.txt",
+      "sha256": "e9aa74845a42587948b43f78d50fb6ce406a3d1d069d31301ba101d7172ec3ae",
+      "media_type": "text/plain",
+      "source_url": "https://www.postgresql.org/docs/17/auth-pg-hba-conf.html",
+      "coverage": {
+        "granularity": "major",
+        "publisher_range": "17"
+      },
+      "attribution": "PostgreSQL Global Development Group; PostgreSQL License; https://www.postgresql.org/about/licence/",
+      "transformation": "HTML text extraction for a frozen parser fixture, not a live HTML adapter",
+      "upstream_sha256": "ca82a3e972fa5528e07c3c99321d89dff9d03d113afb5167fbcdc967eca5f382"
+    }
+  ]
+}

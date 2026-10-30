@@ -5,17 +5,25 @@ info:
   summary: Planned HTTP contract for the local DocWeave application.
   description: |
     Authentication, workspaces, member management, invitations, manual project context,
-    collection create/list/grants, project/collection processor consent and liveness are implemented.
+    collection create/list/grants, processor consent, configured answer profiles,
+    private financial admission/reconciliation, own-tenant usage and liveness are implemented.
+    Durable bounded TXT/Markdown upload/replacement, approved single-page imports,
+    local immutable snapshots, deletion and ingestion job status are implemented.
     Other domain feature contracts remain planned.
     Readiness returns 503. Private reserved operations enforce sessions and mutation
-    origin/CSRF checks before returning 501; public catalog/provider stubs return 501.
+    origin/CSRF checks before returning 501; the public source catalog still returns 501.
     Manual projects atomically create owner-only default collections and local pending
     documentation requests; source_state is pending_review and job_ids is empty until
     source approval/import admission exists. GitHub reviewed-stack creation returns 501.
     Collection reads require current grants/ownership; write also requires an eligible role.
     Consent IDs must match enabled operator-configured immutable processor identities.
     Registration/consent does not verify model availability, prices or inference admission.
-    Other domain request-body processing, import workers and AI remain unimplemented.
+    Profiles start empty/disabled; no live price/account/capability verification is claimed.
+    Financial reservations use exact USD and a shared US$20 Asia/Calcutta monthly ceiling.
+    Local preparation jobs can complete while documents await approval/capacity;
+    this does not claim searchable indexes or hosted inference. Owner source review
+    remains planned; initial selections are operator-seeded. HTML/PDF/DOCX,
+    reindex/explicit job retry and AI remain unimplemented.
     Generated /openapi.json describes the current runtime responses.
     architecture.md owns behavior; api.md explains usage and draft wire decisions.
     All paths use the same browser origin. IDs never grant access. Recheck identity,
@@ -399,7 +407,7 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }]
       responses:
         '200':
-          description: Safe profile metadata, including required Gemini retrieval processors.
+          description: Safe profile metadata, including the configured required processing identities. Eligibility mappings remain subject to the documented pipeline migration.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ProviderPage' }
@@ -479,7 +487,7 @@ paths:
       tags: [Knowledge]
       operationId: replaceCollectionProcessingPolicy
       summary: Replace collection processor approvals as an owner
-      description: Approve every actual processor/backend. Gemini embedding/reranking approval is required even for Groq/HF answers.
+      description: Approve every actual processor/backend. The planned pipeline requires Gemini embedding and Groq LLM approvals; enabling it also requires the documented processor-eligibility migration.
       security: [{ sessionCookie: [], csrfToken: [] }]
       requestBody: { $ref: '#/components/requestBodies/Policy' }
       responses:
@@ -1164,7 +1172,7 @@ components:
               file:
                 type: string
                 format: binary
-                description: One file, at most 20971520 bytes; server validates actual bytes and parser resource limits.
+                description: One file, at most 20971520 bytes; current runtime supports strict UTF-8 TXT/Markdown only, with two million characters and 10000 chunks. PDF/DOCX remain planned.
           encoding:
             file:
               contentType: application/pdf, text/plain, text/markdown, application/vnd.openxmlformats-officedocument.wordprocessingml.document
@@ -1485,7 +1493,7 @@ components:
         media_type: { type: string }
         status: { type: string, enum: [quarantined, awaiting_approval, waiting_capacity, processing, ready, partial, stale, failed] }
         malware_scan: { type: string, enum: [disabled, pending, clean, rejected, unavailable] }
-        active_version_id: { $ref: '#/components/schemas/Id' }
+        active_version_id: { anyOf: [{ $ref: '#/components/schemas/Id' }, { type: 'null' }] }
         job_id: { $ref: '#/components/schemas/Id' }
     DocumentVersion:
       type: object

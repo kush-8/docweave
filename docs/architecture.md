@@ -1,10 +1,12 @@
 # DocWeave — Architecture
 
-Status: Confirmed direction and GitHub extension, reconciled 2026-10-28. Backend auth, workspaces, memberships/invitations, manual projects, collection grants and separate processor-consent policies are implemented. Documentation requests remain pending; budget admission, catalog approval/imports, GitHub setup and conversations remain incomplete. See [auth](runbooks/auth.md), [workspace](runbooks/workspaces.md), [membership](runbooks/memberships.md), [project](runbooks/projects.md) and [collection policy](runbooks/collection-policy.md) evidence.
+Status: Confirmed direction and GitHub extension, reconciled 2026-10-28. Backend auth/workspaces/memberships, manual projects, collection grants, processor consent, configured answer profiles and financial admission/usage are implemented. Documentation requests remain pending; real profile/account verification, adapters, approved imports, GitHub setup and conversations remain incomplete. See [auth](runbooks/auth.md), [workspace](runbooks/workspaces.md), [membership](runbooks/memberships.md), [project](runbooks/projects.md), [collection policy](runbooks/collection-policy.md) and [budget](runbooks/budget.md) evidence.
 Product: [PRD.md](PRD.md). Frontend: [design.md](design.md). Delivery: [tasks.md](tasks.md).
 Numeric settings are explicit engineering defaults; quality/performance targets below require development baselining before release evaluation.
 
-Physical folder boundaries are mapped in [README.md](../README.md). Backend-owned catalog manifests, evaluation data/reports, and service configuration live in `backend/catalog/`, `backend/eval/`, and `backend/infra/`. The folder scaffold exists; the runtime components below remain unimplemented.
+RAG planning updated 2026-10-30: Groq is the sole current hosted LLM service, with Gemini as the embedding-only exception. Native full-text/BM25 and exact/HNSW retrieval are competing implementations evaluated inside the same end-to-end RAG harness. These are planned paths, not implemented behavior. The future provider-selecting LLM gateway is outside this release; frontend work remains deferred.
+
+Physical folder boundaries are mapped in [README.md](../README.md). Backend-owned catalog manifests, evaluation data/reports, and service configuration live in `backend/catalog/`, `backend/eval/`, and `backend/infra/`. The foundations in the status/runbooks exist; later domain workflows below remain planned unless their evidence says otherwise.
 
 ## Approach and runtime
 
@@ -20,7 +22,7 @@ PostgreSQL owns metadata, application sessions, tenant policies, full-text/vecto
 | Workers | Procrastinate-backed ingestion and turn queues; bounded GitHub scan/discovery job kinds reuse ingestion infrastructure |
 | Parser | Restricted container/supervisor; per-file subprocess, bounded resources, no secrets or external egress |
 | Identity | Keycloak OIDC application; Google/GitHub brokers plus verified email/password |
-| Providers | Gemini embedding/reranking; Gemini/Groq/HF answer adapters; no unrecorded automatic routing |
+| Providers | Gemini embeddings only; Groq answers/reranking/query resolution/summaries/offline judging; fixed conversation model, no automatic routing |
 | Storage | Private named volume for uploads/normalized content/snapshots; generated internal paths |
 | Observability | Safe structured logs and OpenTelemetry; local Prometheus/Grafana/Tempo compose profile |
 | Development email | Local mail-capture SMTP for verification/reset tests; configured delivering SMTP for actual inboxes |
@@ -195,10 +197,12 @@ Resolve ambiguous follow-up references against authorized conversation/project c
 Graph: authorize/revalidate -> load current context/history -> summarize if needed -> resolve query or clarify -> retrieve -> rerank -> build context -> generate -> validate -> persist/finalize. Every provider-bound step uses ordinary server policy and budget code; the model has no browser, shell, deployment, or policy-changing tools.
 
 - Apply workspace/project/collection/processor grants, technology selection, active version, and tombstones in both lexical and vector queries before any candidate leaves the database.
-- Retrieve up to 30 candidates/channel; deduplicate by chunk; reciprocal-rank fusion `k=60`; send the best 20 to Gemini listwise LLM reranking. PostgreSQL native full-text ranking is the lexical baseline, not BM25.
+- Implement PostgreSQL native full-text ranking and true BM25 as alternative lexical paths. Pin a PostgreSQL 17-compatible BM25 implementation only after verifying row access, technical-identifier tokenization and corpus-statistics isolation from unreadable documents. Native `ts_rank`/`ts_rank_cd` must not be labeled BM25.
+- Implement two vector paths: metadata/RLS filtering followed by exact nearest-neighbour ranking without an ANN index, and shared HNSW candidate search followed by database RLS/metadata filtering with bounded iterative scans. Exact search may use ordinary metadata indexes. Verify actual query plans; SQL filters do not make a shared HNSW graph tenant/library-specific. Record scan limits, underfill and ANN recall; never broaden an empty authorized scope. Partitioned/partial ANN indexes remain a possible later measured optimization, not a third required implementation now.
+- Retrieve up to 30 candidates/channel; deduplicate by chunk; reciprocal-rank fusion `k=60`; send the best 20 to Groq listwise LLM reranking. Cross native full-text/BM25 with exact/HNSW in evaluation, holding snapshots, query embeddings, access/version scope, budgets and generation settings fixed.
 - Chunking starts at 350 tokens with 50-token fallback overlap, preserving headings/code/locators. Respect actual embedding-model limits; fail rather than silently truncate.
 - Embedding candidate: Gemini Embedding 2, 768 dimensions and normalized vectors; changing model/dimensions/chunking creates a new index generation. Its tokenizer/input limit is separate from chat limits.
-- Reranking is a separate Gemini request: up to 12,000 input/512 billed output tokens, containing the resolved query and at most 20 bounded passages/IDs. Do not apply the final 6,000-token evidence allowance to all 20 candidates. Validate returned IDs/order, duplicates, count, schema, grants, and source state. Generated relevance labels are not calibrated confidence.
+- Reranking is a separate Groq request with at most 12,000 input tokens and 20 bounded passages/IDs. Verify and pin a working billed-output bound including reasoning before enabling a profile; the former Gemini 512-token output assumption is not a verified Groq limit. Do not apply the final 6,000-token evidence allowance to all 20 candidates. Validate returned IDs/order, duplicates, count, schema, grants and source state. Generated relevance labels are not calibrated confidence.
 - Retain up to eight reranked chunks within the answer evidence allowance. Calibrate relevance/abstention on development data.
 - Generate structured claims/citation references or clarification/abstention. Schema-validate native structured output or parsed JSON; no unbounded repair loop.
 - Validate citation membership, exact span/quote, retained version, current access, and source status. Structural citation validity does not prove semantic truth; evaluate correctness/grounding separately.
@@ -210,7 +214,7 @@ The answer provider is fixed for a conversation. Starting a conversation with an
 
 ## Privacy, revocation, and deletion
 
-Owner approvals cover every external processor that will see private project context/documents/history. Gemini approval is required for private embeddings/reranking even when the answer provider is Groq/HF. Resolve the actual HF backend, not only the HF brand. User-authored messages sent through a chosen conversation are private application data and are covered by its project processing policy.
+Owner approvals cover every external processor that will see private project context/documents/history: Gemini for embeddings and Groq for LLM steps, including offline judging. User-authored messages sent through a chosen conversation are private application data and are covered by its project processing policy. The implemented generation-eligibility function still assumes Gemini reranking; reconcile that requirement through a migration and role-specific tests before enabling the new pipeline, preserving historical profiles/charges.
 
 Revalidate before each external call and final result/evidence release, including after queue waits. For private GitHub-derived context, also verify the actor's current repo access through the user/App access intersection; workspace grants and installation tokens alone are insufficient. Preserve the provenance and policy dependencies of messages, summaries, checkpoints, and citations. A deleted/revoked source must not reappear through remembered assistant text.
 
@@ -244,20 +248,22 @@ Limits: 100 accepted pages/entry, 1,000/project, two MiB decompressed/response, 
 
 Global API ceiling: US$20/month, Asia/Calcutta calendar boundaries; store timestamps in UTC. Operator-configured workspace caps must be set before hosted work. New workspaces wait for a configured allowance; project/import creation remains durable and visibly waits for budget. Caps are limits, not a promise of reserved global capacity. Workspace users see only their own usage/allowance; operator-only tooling sees global totals. No commercial billing UI.
 
-Before every hosted batch/call—including probes, query resolution, summaries, embedding, reranking, generation, and automated judging—atomically reserve conservative maximum cost against both workspace and global balances. Include framing, billed reasoning/output, retry allowances, and provider fees. Reconcile confirmed usage; retain conservative charges for uncertain execution. Missing/unbounded pricing disables that profile. Do not provision idle-billed HF endpoints or rely on free credits.
+The implemented financial boundary serializes reserve/settle/operator cap changes through one transaction advisory lock, charges an exact-numeric ledger and uses the Asia/Calcutta admission month after waits. Explicit per-month workspace allocations start absent. Uncertain execution retains at least the conservative maximum, confirmed reconciliation is idempotent and actual overruns are recorded while disabling the underbounded profile. Immutable UUID profile versions pin model/backend/processor IDs, price card and token/attempt bounds; mutable operator eligibility flags do not repoint identity. Public metadata exposes answer profiles only; internal role reservations cover other hosted steps. No browser finance mutations, actual adapters, live profile/pricing verification or paid calls are implemented by this slice. Consumers still need content policy and dispatch journaling; financial admission alone is not inference authority.
+
+Before every hosted batch/call—including probes, query resolution, summaries, embedding, reranking, generation, and automated judging—atomically reserve conservative maximum cost against both workspace and global balances. Include framing, billed reasoning/output, retry allowances and provider fees. Initial synthetic compatibility probes have a US$0.25 total cap; later ingestion/evaluation workloads need their own estimates/reservations under the existing caps. Reconcile confirmed usage; retain conservative charges for uncertain execution. Missing/unbounded pricing disables that profile; do not rely on free credits.
 
 Candidate generation profiles from public research, not verified account access:
 
 | Role | Initial candidate |
 | --- | --- |
-| Default Gemini generation/reranking | `gemini-3.5-flash-lite` |
-| Groq alternative | `openai/gpt-oss-20b`, served by Groq |
-| HF alternative | `Qwen/Qwen3-8B` with explicitly pinned `nscale` backend |
+| Groq answers / offline judge | `openai/gpt-oss-120b`, served by Groq |
+| Groq reranking / required query resolution | `openai/gpt-oss-20b`, served by Groq |
+| Groq summaries | The conversation's fixed answer model |
 | Embeddings | `gemini-embedding-2`, 768 dimensions |
 
 Pin exact API/SDK versions, model/backend IDs, tokenizers, output/structured capabilities, and price cards after account-compatible, budget-reserved synthetic probes. Public metadata may select candidates before implementation; it cannot prove availability. Build/test the reservation boundary with fake providers before any probe. A replacement must stay within approved provider/feature/budget boundaries and be recorded; unsupported profile/scope changes return to the user.
 
-No HF-hosted embedding/cross-encoder is required: the approved replacement is token-priced Gemini embedding plus LLM reranking. It changes ranking semantics, latency, and prompt sensitivity; evaluate it rather than claiming cross-encoder behavior.
+Current LLM work stays on Groq; Gemini is the embedding-only exception. No HF-hosted embedding/cross-encoder or additional answer provider is required. LLM reranking changes ranking semantics, latency and prompt sensitivity; evaluate it rather than claiming cross-encoder behavior. Provider selection through a future LLM gateway is deferred.
 
 Log actor/resource/request/job IDs, stage timings, outcomes, provider/model/config identity, and usage. Do not log prompts, source text, answers, summaries, tokens/cookies/headers/secrets. Dashboards cover ingestion, retrieval/turn latency, errors, tokens/cost, budget status, and queue recovery; alerts flag repeated failures, provider spikes, and budget thresholds.
 
@@ -280,9 +286,15 @@ Freeze 150 scenario IDs/families, labels, corpus snapshots, and the split before
 
 Include at least one development smoke scenario for each of the 29 entries. Keep representative GitHub-derived follow-ups/version conflicts within the 150 scenarios, and add deterministic connector/parser/discovery/security cases outside the scored benchmark; these do not require expanding the agreed human-review samples. Keep paraphrase/follow-up families together; do not leak held-out variants into tuning. Synthetic private fixtures are labeled as synthetic.
 
-Compare lexical-only, vector-only, fused hybrid, and hybrid plus Gemini LLM reranking on identical snapshots/query representations. Report Recall@10, MRR@10, and nDCG@10 only when labels support them. Evaluate required facts, unsupported claims, grounding, citation validity, clarification/abstention, remembered decisions, summary continuity, cross-thread isolation, current project context, and revocation.
+Build one backend RAG evaluation pipeline incrementally: Task 3 starts versioned fixtures/configurations and retrieval reports; Task 4 executes complete authorized backend turns and captures retrieved/reranked evidence, generated answers, citations and memory behavior; Task 10 expands and freezes release evidence. Begin with 10 answerable development questions plus separate denial/no-evidence/version tests. At least one pilot configuration must retrieve supporting passages in the final eight for 9/10; report failed variants and require security/version checks for every configuration. This is a smoke gate, not a sufficient sample to establish a winner; pilot families stay in development.
 
-Choose 30 shared provider-comparison scenarios from development; give all three answer models identical authorized evidence/history and budgets. Human review 30 development outputs to calibrate judges; choose a separate stratified 30-output release sample from held-out results. Freeze models/prompts/reranking/rubrics before the held-out run. Human verification of labels and outputs is separate work; do not count one review twice.
+Compare native full-text/BM25 × filtered exact/shared HNSW hybrid configurations plus lexical-only/vector-only baselines, first before reranking and then through fixed Groq reranking/generation. Verify plans really exercise exact or HNSW search. Report labeled context precision/recall, Recall/MRR/nDCG only where labels support them, ANN Recall@k against exact neighbours, underfilled results, index build time/size and per-stage/end-to-end p50/p95 latency/cost on recorded hardware. Keep query embeddings, snapshots, filters, prompts/history and evidence budgets identical. Choose production defaults from broader development end-to-end quality and operating cost/complexity; prefer simplicity when results tie.
+
+Record which stage each metric scores: candidate rankings support Recall@10 before the final eight-chunk context limit, while final-context recall/precision use the evidence actually supplied to generation. Empty eligible corpora and fewer-than-k eligible rows have explicit denominators; do not report them as ANN failures or divide by zero.
+
+Score answer correctness/required-fact coverage, response relevance, faithfulness to supplied evidence, structural citations and citation-to-claim support, abstention/clarification, remembered decisions, summary continuity, source/version conflicts and adversarial inputs. Faithfulness alone does not establish correctness. Access/version/revocation/conversation-isolation violations are mandatory failures, not trade-offs averaged into a quality score. Evaluate Ragas as a metric component after Groq compatibility/cost checks; explicitly configure Groq judges and Gemini-only embeddings rather than accepting framework defaults. Evaluation content is synthetic or authorized and stays in protected artifacts, not ordinary logs.
+
+Choose 30 shared configuration-comparison scenarios from development, with fixed Groq answer/rerank profiles and identical authorized history/budgets. Human review 30 development outputs to calibrate Groq judges; choose a separate stratified 30-output release sample from held-out results. Freeze models/prompts/retrieval/reranking/rubrics before the held-out run. Human verification of labels and outputs is separate work; do not count one review twice. Three-provider answer comparisons are superseded by the user's current Groq-only LLM scope.
 
 Initial release targets: held-out Recall@10 >=0.85, required-fact coverage >=0.80 on answerable cases, abstention recall >=0.90 on unanswerable cases, 100% structural citation validity, and zero severe unsupported operational/security claims in human release review. Security tests allow zero unauthorized content in responses, inference, memory, checkpoints, or citations. Publish denominators and measured failures; any reduction to approved scope/criteria needs the user's explicit agreement.
 

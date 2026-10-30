@@ -1,6 +1,6 @@
 # DocWeave — Engineering Rules
 
-Status: Confirmed direction and GitHub extension reconciled 2026-10-28. Phase: folder scaffold, backend manifest, and frontend starter initialized; product features unstarted.
+Status: Backend foundational slices and a separate frontend preview exist. Backend RAG/evaluation planning reconciled 2026-10-30; frontend integration remains deferred.
 
 ## Read order and authority
 
@@ -8,14 +8,16 @@ Start with [memory.md](memory.md), then [PRD.md](PRD.md) and this file. Read [ar
 
 Direct user instructions take precedence. PRD owns product scope; architecture owns technical behavior; design owns frontend; tasks owns task state. Memory is a concise handoff and cannot override those documents. Fix contradictions at their authoritative source and update affected references together.
 
-The user confirmed the planning pack and subsequently authorized folder initialization, a backend pyproject.toml, and React/Vite frontend initialization. Starter files and the frontend's required dependencies are within scope. Product features, backend dependency installation, repository initialization, migrations, credentials/account work, paid calls, and deployments require further instruction.
+Current scope confirmed 2026-10-30: work on backend only, on `main`; frontend implementation/integration remains deferred. Groq serves all current hosted LLM roles, with Gemini permitted only for embeddings. Build both native full-text/BM25 and exact/HNSW retrieval paths for end-to-end RAG evaluation before choosing defaults. The future provider-selecting LLM gateway is outside this release. This supersedes earlier Gemini-reranking/three-answer-provider requirements, not historical implementation evidence.
+
+Initial scaffold authorization was followed by the scoped backend/preview work recorded in tasks.md and memory.md. Continue the user's current authorized task and preserve pending changes; planning checkboxes alone do not authorize unrelated implementation, account changes, paid calls or deployment.
 
 ## Security and privacy invariants
 
 - Workspace is the tenant. Authorize every operation against identity, tenant membership, resource ownership, roles, collection grants, and current processing policy; opaque IDs are never authorization.
 - Conversations are author-private and project-bound. Apply policy to listing, titles, turns, citations, graph checkpoints, intermediate writes, summaries, background work, and history—not only retrieval.
 - Google/GitHub/email accounts use verified identity-provider flows. Preserve issuer/subject identity, explicit secure linking, recipient-bound invitations, and last-owner protection.
-- Require approvals for the actual processors of private project/doc/conversation content. Gemini retrieval approval is required even with a Groq/HF answer provider. Private identifier lookups need explicit discovery consent; raw configs/credentials/private URLs do not leave through lookup.
+- Require approvals for the actual processors of private project/doc/conversation content: Gemini for embeddings and Groq for LLM roles, including offline judges. Private identifier lookups need explicit discovery consent; raw configs/credentials/private URLs do not leave through lookup.
 - Treat documents, project context, messages, summaries, and model output as untrusted. Models have no authorization-changing, browsing, shell, or deployment tools.
 - GitHub repository access is separate from login, user-owned, read-only, and selected-repository scoped. Contents read is broader than filenames; enforce the application's file allowlist without pretending GitHub enforces it.
 - Require current actor/viewer upstream access as well as DocWeave policy for private repo-derived context, including retained scans, summaries/checkpoints, labels, and jobs. No installation-token or workspace-owner bypass.
@@ -43,6 +45,8 @@ Use uv for backend dependency management and npm for the frontend. Add or update
 Each task follows a meaningful failing test -> minimal implementation -> relevant verification cycle. Prefer behavioral/security/failure tests over mirrored implementation tests. Keep deterministic CI free of paid keys; use explicit budget-reserved live integration runs to prove current provider behavior.
 
 Record corpus/config/prompt/model/backend/tokenizer/dataset versions. Keep development, calibration, and held-out release evidence separate. Labels and generated-output human reviews are different work.
+
+RAG evaluation must exercise the actual backend answer workflow and score correctness, faithfulness, relevance, citation support, abstention, memory/privacy behavior, latency and cost alongside retrieval diagnostics. No configuration may trade unauthorized/incompatible-version evidence for quality. Verify exact/HNSW query plans and BM25 corpus-statistics isolation; keep all four hybrid comparisons on identical inputs/settings. Initial ten-question smoke results do not establish the production winner. Configure evaluator providers explicitly; judge calls use the same reservation/consent boundaries as other hosted roles.
 
 Every milestone includes the builder's brief explanation of the main choices and one relevant failure walkthrough. A passing application test alone does not satisfy the learning goal.
 

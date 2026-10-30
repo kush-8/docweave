@@ -82,13 +82,13 @@ async def test_read_grants_never_elevate_member_and_writer_needs_maintainer_role
     path = f'/api/v1/projects/{c["project"]}/collections'
     assert (await c["guest"].get(path)).json()["items"][0]["can_write"] is False
     documents = f'/api/v1/collections/{c["collection"]}/documents'
-    assert (await c["guest"].get(documents)).status_code == 501
+    assert (await c["guest"].get(documents)).json() == {"items": [], "next_cursor": None}
     assert (await c["guest"].post(documents, headers=c["guest_headers"])).status_code == 403
     member = f'/api/v1/workspaces/{c["workspace"]["id"]}/members/{user}'
     assert (await c["admin"].patch(member, json={"role": "maintainer"}, headers=c["headers"])).status_code == 200
     written = await replace_grants(c, [{"user_id": user, "access": "write"}], 2)
     assert written.status_code == 200, written.text
-    assert (await c["guest"].post(documents, headers=c["guest_headers"])).status_code == 501
+    assert (await c["guest"].post(documents, headers=c["guest_headers"])).status_code == 422
     assert (await c["guest"].get(path)).json()["items"][0]["can_write"] is True
     assert (await c["guest"].get(grant_path(c))).status_code == 403
     assert (await c["guest"].put(grant_path(c), json={"expected_revision": 3, "grants": []}, headers=c["guest_headers"])).status_code == 403
