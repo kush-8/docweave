@@ -1,5 +1,20 @@
 # DocWeave — Frontend Design and App Flow
 
+## Current UI direction — 2026-10-30
+
+The user replaced the workbench presentation with a simple chatbot. This direction supersedes the project rail and permanently adjacent evidence layout described below; the broader product requirements remain future integration scope.
+
+- Show a quiet chat page with a short welcome, a message box, and Send. Use everyday language throughout.
+- Keep the bluish tone: use a soft blue-gray chat background, a slightly deeper blue sidebar, and cobalt accents. The composer is a lighter blue-tinted surface rather than pure white. Dark mode uses navy surfaces and soft blue accents. This supersedes the brief warm paper/teal experiment.
+- Keep the composer compact, with a 40px minimum text area, a 24px outer corner radius and a pill-shaped Send button. Longer messages can grow up to the existing scrollable limit.
+- Provide a toggleable sidebar: New chat at the top, expandable Workspaces with their chats nested underneath, then Recent chats below. Open it as a contained drawer on mobile; hide it until requested on narrow screens.
+- Keep model selection under Chat options. Open sources in a drawer only when a numbered source is selected. Start with an empty chat rather than a technical example.
+- Keep light/dark/device themes, keyboard focus, source URLs, browser history, and draft protection. Workspace switches and New chat must also protect unsent drafts. Suggested questions appear only while the draft is empty.
+- The current frontend is a labeled preview with example workspaces/chats. Messages are not sent and history is not saved. Do not imply authenticated workspace isolation or real AI responses.
+- Reuse shadcn controls and the small MIT-licensed 21st.dev Agent Elements Suggestions component, adapted to the existing Button and theme without new dependencies. Source: https://github.com/21st-dev/agent-elements, registry component public/r/suggestions.json; license retained beside the component.
+
+The following sections retain the earlier product design and future workflow requirements for reference. Apply the current presentation above when those workflows are integrated.
+
 Status: Direction and GitHub extension confirmed and reconciled 2026-10-28. On 2026-10-29, the main workbench was implemented as a labeled synthetic preview; live application flows remain unimplemented.
 Confirmed document scope: frontend design, screens, navigation, interactions, and user-facing app flows.
 Product requirements: [PRD.md](PRD.md). Backend workflows, security enforcement, limits, and evaluation: [architecture.md](architecture.md).
@@ -22,16 +37,17 @@ Use rows and section dividers for source/job lists; reserve cards for project su
 
 | Core token | Light | Dark | Use |
 | --- | --- | --- | --- |
-| Canvas | `#F7F9FC` | `#0B1220` | Page background |
-| Surface | `#FFFFFF` | `#111C2E` | Reading/input surfaces |
-| Ink | `#172B4D` | `#E5EDF7` | Primary text/headings |
-| Secondary ink | `#475569` | `#A8B8CC` | Supporting text |
-| Accent | `#1D4ED8` | `#8CB4FF` | Actions, links, active citation, focus |
-| Control boundary | `#64748B` | `#71839B` | Meaningful control outlines |
+| Canvas | `#DAE4F1` | `#111B2B` | Sidebar and message bubble |
+| Surface | `#EAF0F8` | `#19263A` | Main reading surface and browser chrome |
+| Card | `#F3F6FB` | `#21334A` | Composer surface |
+| Ink | `#243650` | `#E4EDF9` | Primary text/headings |
+| Secondary ink | `#4C607D` | `#AABBD2` | Supporting text |
+| Accent | `#345FB5` | `#9DBFFF` | Actions, links, active citation, focus |
+| Control boundary | `#6C7F9D` | `#7186A5` | Meaningful control outlines |
 
-Pale slate `#D8E1EC` is a light-theme decorative divider, not an input's sole boundary. On white, semantic text colors are success `#166534`, warning `#92400E`, and error/destructive `#B91C1C`. In dark mode, use ink plus status icons/labels until semantic-color variants are contrast-verified; never reuse dark red/green text from the light palette. Selected navigation has a marker and `aria-current`; status/selection never relies on color alone.
+Dividers (`#C2D0E2` light, `#334963` dark) are decorative; controls use the stronger boundary color. Error text uses `#9F343F` light and `#FFC1C4` dark. Selected navigation uses `aria-current`; status/selection must remain understandable without color alone.
 
-Calculated contrast on white: primary text 14.10:1, secondary text 7.58:1, accent text/white button text 6.70:1, and control boundary 4.76:1. Accent focus on the canvas is 6.35:1. Dark-surface ratios: ink 14.47:1, secondary ink 8.45:1, accent 8.21:1, control boundary 4.41:1. Dark accent buttons use canvas-colored labels (8.99:1), not white labels (2.08:1). These calculations cover specified solid-color pairs, not rendered components, transparency, hover variants, or a complete accessibility audit.
+Calculated light-surface contrast: ink 10.66:1, secondary text 5.59:1, accent 5.31:1; white labels on blue buttons 6.09:1. Secondary sidebar text is 4.99:1, and input boundaries against the composer are 3.76:1. Dark-surface ratios: ink 12.89:1, secondary text 7.79:1, accent 8.21:1; dark labels on blue buttons 9.32:1. Dark input boundaries against the composer are 3.45:1. These calculations cover specified solid-color pairs, not rendered components, transparency, hover variants, or a complete accessibility audit.
 
 ### Typography, spacing, and components
 

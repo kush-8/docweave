@@ -8,6 +8,7 @@
   --font-mono: ui-monospace, Consolas, monospace;
   --color-canvas: var(--canvas);
   --color-background: var(--surface);
+  --color-card: var(--card);
   --color-foreground: var(--ink);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -31,29 +32,31 @@
 }
 
 :root {
-  --canvas: #f7f9fc;
-  --surface: #ffffff;
-  --ink: #172b4d;
-  --secondary-ink: #475569;
-  --primary: #1d4ed8;
+  --canvas: #dae4f1;
+  --surface: #eaf0f8;
+  --card: #f3f6fb;
+  --ink: #243650;
+  --secondary-ink: #4c607d;
+  --primary: #345fb5;
   --primary-foreground: #ffffff;
-  --control-boundary: #64748b;
-  --divider: #d8e1ec;
-  --selection: #edf2ff;
-  --error: #b91c1c;
+  --control-boundary: #6c7f9d;
+  --divider: #c2d0e2;
+  --selection: #d6e4f7;
+  --error: #9f343f;
 }
 
 :root[data-theme="dark"] {
-  --canvas: #0b1220;
-  --surface: #111c2e;
-  --ink: #e5edf7;
-  --secondary-ink: #a8b8cc;
-  --primary: #8cb4ff;
-  --primary-foreground: #0b1220;
-  --control-boundary: #71839b;
-  --divider: #2c3d55;
-  --selection: #1b304e;
-  --error: #e5edf7;
+  --canvas: #111b2b;
+  --surface: #19263a;
+  --card: #21334a;
+  --ink: #e4edf9;
+  --secondary-ink: #aabbd2;
+  --primary: #9dbfff;
+  --primary-foreground: #111b2b;
+  --control-boundary: #7186a5;
+  --divider: #334963;
+  --selection: #2b4163;
+  --error: #ffc1c4;
 }
 
 @layer base {

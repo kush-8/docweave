@@ -1,14 +1,8 @@
 import { useRef } from "react";
-import { ArrowUp, ChevronDown, LockKeyhole } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Props = {
   draft: string;
@@ -20,127 +14,61 @@ type Props = {
   onSubmit: (error: string) => void;
 };
 
-export function Composer({
-  draft,
-  onDraft,
-  fresh,
-  provider,
-  onProvider,
-  error,
-  onSubmit,
-}: Props) {
+export function Composer({ draft, onDraft, fresh, provider, onProvider, error, onSubmit }: Props) {
   const input = useRef<HTMLTextAreaElement>(null);
-  const shortcut = /Mac|iPhone|iPad/.test(navigator.platform)
-    ? "Command+Enter"
-    : "Ctrl+Enter";
+  const shortcut = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘ Enter" : "Ctrl+Enter";
 
   function submit() {
-    onSubmit(
-      draft.trim()
-        ? "Answers are unavailable in this preview. Your draft has not been sent. Connect the backend and configure an inference profile to send messages."
-        : "Enter a message before sending.",
-    );
+    onSubmit(draft.trim()
+      ? "Chat isn’t connected yet. Your message hasn’t been sent."
+      : "Write a message first.");
     input.current?.focus();
   }
 
   return (
-    <form
-      className="shrink-0 rounded-b-md border-t border-divider bg-background px-4 pt-4 pb-3 md:px-6"
-      onSubmit={(event) => {
-        event.preventDefault();
-        submit();
-      }}
-    >
-      <div className="mb-2 flex items-center justify-between text-sm font-semibold [&>span]:text-sm [&>span]:font-normal">
-        <label htmlFor="message">Your message</label>
-        <span className="text-sm text-muted-foreground">
-          {fresh ? "New conversation" : "Follow-up"}
-        </span>
+    <form className="shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]" onSubmit={(event) => { event.preventDefault(); submit(); }}>
+      <div className="rounded-3xl border border-input bg-card p-2 shadow-sm focus-within:border-primary">
+        <label htmlFor="message" className="sr-only">Your message</label>
+        <Textarea
+          ref={input}
+          id="message"
+          name="message"
+          autoComplete="off"
+          placeholder="Message DocWeave…"
+          className="min-h-10 max-h-40 resize-none border-0 bg-transparent px-3 py-2 text-base shadow-none md:text-base"
+          value={draft}
+          aria-describedby={`composer-help${error ? " composer-error" : ""}`}
+          aria-invalid={!!error && !draft.trim()}
+          onChange={(event) => { onDraft(event.target.value); if (error) onSubmit(""); }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !event.nativeEvent.isComposing) {
+              event.preventDefault(); submit();
+            }
+          }}
+        />
+        <div className="flex items-end justify-between gap-3">
+          <details className="min-w-0 text-sm text-muted-foreground">
+            <summary className="flex min-h-11 items-center rounded-md px-2 hover:bg-accent">Chat options</summary>
+            <div className="flex flex-wrap items-center gap-2 px-2 py-2">
+              {fresh ? <>
+                <label htmlFor="provider">Model</label>
+                <Select value={provider} onValueChange={onProvider}>
+                  <SelectTrigger id="provider" aria-label="Model"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Gemini", "Groq", "Hugging Face"].map((name) => <SelectItem value={name} key={name}>{name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </> : <span translate="no">Gemini · example chat</span>}
+            </div>
+            <p className="px-2 pb-2">Preview only. No AI service is connected.</p>
+          </details>
+          <Button type="submit" className="shrink-0 rounded-full" aria-label="Send">
+            <span className="sr-only sm:not-sr-only">Send</span><ArrowUp aria-hidden="true" />
+          </Button>
+        </div>
       </div>
-      <Textarea
-        ref={input}
-        className="min-h-20 max-h-40 resize-y border-input bg-background p-3 text-base text-foreground shadow-none placeholder:text-muted-foreground md:text-base"
-        id="message"
-        name="message"
-        autoComplete="off"
-        placeholder="Ask about your project…"
-        value={draft}
-        aria-describedby={`composer-help${error ? " composer-error" : ""}`}
-        aria-invalid={!!error}
-        onChange={(event) => {
-          onDraft(event.target.value);
-          if (error) onSubmit("");
-        }}
-        onKeyDown={(event) => {
-          if (
-            event.key === "Enter" &&
-            (event.ctrlKey || event.metaKey) &&
-            !event.nativeEvent.isComposing
-          ) {
-            event.preventDefault();
-            submit();
-          }
-        }}
-      />
-      {error && (
-        <p
-          id="composer-error"
-          className="mt-2 text-sm text-destructive"
-          role="alert"
-        >
-          {error}
-        </p>
-      )}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        {fresh ? (
-          <div className="flex items-center gap-3 text-sm max-sm:w-full max-sm:justify-between [&_[data-slot=select-trigger]]:min-w-36">
-            <label htmlFor="provider">Answer provider</label>
-            <Select value={provider} onValueChange={onProvider}>
-              <SelectTrigger id="provider" aria-label="Answer provider">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {["Gemini", "Groq", "Hugging Face"].map((name) => (
-                  <SelectItem value={name} key={name}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : (
-          <span className="flex flex-wrap items-center gap-2 text-sm [&>span:last-child]:text-sm max-sm:[&>span:last-child]:basis-full max-sm:[&>span:last-child]:pl-5">
-            <LockKeyhole aria-hidden="true" size={14} />
-            <span translate="no">Gemini</span>
-            <span className="text-sm text-muted-foreground">Sample model</span>
-          </span>
-        )}
-        <Button type="submit" className="ml-auto shrink-0">
-          <span>Send message</span>
-          <ArrowUp aria-hidden="true" />
-        </Button>
-      </div>
-      <div
-        id="composer-help"
-        className="mt-2 flex flex-col justify-between gap-1 text-sm text-muted-foreground sm:flex-row sm:gap-4 [&>span:last-child]:whitespace-nowrap"
-      >
-        <span>
-          {fresh
-            ? "No model configured. Gemini retrieval approval is also required for Groq and Hugging Face."
-            : "Provider is fixed for this sample conversation."}
-        </span>
-        <span>{shortcut} to send</span>
-      </div>
-      <details className="mt-1 text-sm text-muted-foreground [&>summary]:flex [&>summary]:min-h-11 [&>summary]:w-fit [&>summary]:items-center [&>summary]:gap-1 [&>p]:py-2">
-        <summary>
-          <ChevronDown aria-hidden="true" size={14} />
-          Knowledge in this preview
-        </summary>
-        <p>
-          3 synthetic architecture notes. No private collections or real
-          provider approvals are connected.
-        </p>
-      </details>
+      {error && <p id="composer-error" className="mt-2 text-sm text-destructive" role="alert">{error}</p>}
+      <p id="composer-help" className="mt-3 text-center text-xs text-muted-foreground">Preview only · Messages aren’t sent. <span className="hidden sm:inline">{shortcut} to send.</span></p>
     </form>
   );
 }

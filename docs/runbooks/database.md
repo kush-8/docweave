@@ -22,7 +22,7 @@ uv run --project backend --locked alembic -c backend/alembic.ini current
 uv run --project backend --locked alembic -c backend/alembic.ini check
 ```
 
-Expected revision is `0001_core (head)`; `alembic check` should report no new upgrade operations. Migrations use `MIGRATION_DATABASE_URL`; runtime sessions use `DATABASE_URL`. API startup does not connect, create tables, or migrate automatically. Existing feature operations remain 501 and application readiness remains 503.
+Expected revision is `0004_memberships (head)`; `alembic check` should report no new upgrade operations. Migrations use `MIGRATION_DATABASE_URL`; runtime uses `DATABASE_URL`. Startup does not create tables or migrate. Backend auth, workspaces, member management and invitations are implemented; other domains remain reserved and readiness stays 503. See [auth](auth.md), [workspaces](workspaces.md) and [memberships](memberships.md), including the post-reset development-credential limitation.
 
 Bootstrap runs only for an empty PostgreSQL data directory. Changing `.env` passwords does not rotate existing database-role passwords. Preserve the environment file and volume; credential rotation must update roles and configuration together. Do not recreate development storage to work around an authentication failure.
 
@@ -37,9 +37,9 @@ erDiagram
     workspaces ||--o{ projects : contains
 ```
 
-Use `tenant_session(engine, actor_id=..., workspace_id=...)` from the database module only with IDs obtained from trusted identity/policy code. It applies parameter-bound actor/workspace settings inside one transaction and commits or rolls back on exit. These settings do not authenticate a caller. RLS limits the runtime role to the actor's own user/membership and a workspace/project set for which that actor has membership. Missing context or missing membership yields no rows. Owner/migrator connections intentionally bypass ordinary table-owner RLS; they are never runtime API credentials. Application write grants and business authorization remain deferred.
+Use `tenant_session(engine, actor_id=..., workspace_id=...)` only with IDs obtained from trusted identity/policy code. It applies parameter-bound transaction-local settings and commits or rolls back on exit. These settings do not authenticate a caller. RLS permits only the actor's own user row, including before joining a workspace; membership and workspace/project rows remain scoped by actor membership. Missing actor context returns no rows; missing membership never grants workspace/project access. Owner/migrator connections bypass ordinary table-owner RLS and are never API credentials. Auth adds CRUD only on `auth_flows`, `auth_sessions`, `auth_rate_limits` and EXECUTE on a fixed-search-path identity-provisioning function. General domain write grants and business authorization remain deferred.
 
-The stored stack is an array of metadata, not proof that dependency/version review has occurred. No collections, sessions, invitations, jobs, conversation data, provider calls, deletion workflows, or last-owner rules are implemented by this schema.
+`0003_workspaces` adds narrow atomic creation/own-workspace listing and a membership-user index. `0004_memberships` adds private RLS-enabled invitation storage and fixed-search-path owner/recipient functions, with no direct runtime invitation SELECT/DML or helper execution. Writers serialize on workspace rows, recheck authority/state and preserve the last owner. General domain writes and ordinary unselected tenant reads remain restricted. The stored stack is metadata, not proof of version review. Projects, collections/grants, jobs, conversations, model calls and deletion workflows remain future work.
 
 ## Tests
 
@@ -48,12 +48,12 @@ docker compose --profile test up -d --wait test-db
 uv run --project backend --locked pytest backend/tests -q -W error
 ```
 
-The suite currently has 196 checks: 145 API/contract checks and 51 database checks. Database tests perform migrations, downgrade/re-upgrade, seed/clear synthetic rows, and exercise constraints and privileges against the separate test instance. They require `TEST_DATABASE_URL` and `TEST_MIGRATION_DATABASE_URL`, allow only query-free URLs targeting exactly `127.0.0.1:55433/docweave_test`, require separate role logins, and reject a development database target. Missing configuration fails clearly; tests are not silently skipped. Run this database suite serially because it shares one disposable schema.
+The suite includes API/contract, OIDC/session and database checks. Database tests perform migrations, downgrade/re-upgrade, seed/clear synthetic rows, and verify constraints/privileges on the disposable instance. They require `TEST_DATABASE_URL` and `TEST_MIGRATION_DATABASE_URL`, allow only query-free URLs targeting exactly `127.0.0.1:55433/docweave_test`, require distinct role logins and reject development targets. Missing configuration fails clearly. Run the backend suite serially because these fixtures share a disposable schema.
 
 To run only the API/contract checks without a database:
 
 ```powershell
-uv run --project backend --locked pytest backend/tests --ignore=backend/tests/test_database.py -q
+uv run --project backend --locked pytest backend/tests/test_api.py backend/tests/test_health.py backend/tests/test_openapi.py -q
 ```
 
 Tests cover actual restricted logins, denied cross-tenant/no-context reads, required membership, rollback, pooled connection reuse after commit and rollback, refused DML/DDL/role switching/RLS bypass, vector availability, identity uniqueness, named checks and foreign keys. They do not establish complete application authentication or authorization. Windows sandbox execution may need local-loopback permission for Python's internal event-loop sockets.
