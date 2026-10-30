@@ -26,6 +26,8 @@ Expected revision is `0009_retrieval (head)`; `alembic check` should report no n
 
 Bootstrap runs only for an empty PostgreSQL data directory. Changing `.env` passwords does not rotate existing database-role passwords. Preserve the environment file and volume; credential rotation must update roles and configuration together. Do not recreate development storage to work around an authentication failure.
 
+On 2026-10-31 the user explicitly approved [development login repair](../../backend/infra/postgres/repair-development-logins.sql). It was first checked on the guarded disposable service. Private database/login backups were saved under ignored `backups/`, original application row counts stayed unchanged, all three restricted logins authenticated, and the preserved development volume reached `0009_retrieval`. The queue is installed and empty. The repair is an operator recovery action, never an automatic startup step; password variables must be supplied privately through stdin, never command-line values or committed files.
+
 ## Schema and session boundary
 
 The `app` schema contains users, workspaces, memberships, and projects. Issuer/subject identifies a user; duplicate emails do not merge identities. Memberships have a composite workspace/user primary key and an owner/maintainer/member role check. Projects hold their workspace, goal, JSONB stack array, optional context text, and a positive context revision. Keys are UUIDs, timestamps are timezone-aware, and foreign keys use restrictive deletion.

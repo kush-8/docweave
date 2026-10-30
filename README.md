@@ -6,6 +6,8 @@ Status: The frontend remains a synthetic preview. The backend implements authent
 
 Current RAG plan: Groq-hosted LLMs with Gemini embeddings; compare native full-text/BM25 and filtered exact/HNSW retrieval through an end-to-end RAG evaluation pipeline. Deterministic retrieval components exist; live compatibility/pilot and complete RAG evaluation remain planned. See the [backend task order](docs/tasks.md#current-backend-task-order--2026-10-30); frontend integration and the future provider-selecting LLM gateway are deferred.
 
+Guardrails and the [structured prompt-writing rule](docs/rules.md#structured-prompt-writing-rule) are confirmed follow-up work: exact-version scanning/quarantine, owner review, credential blocking and validated evidence links. See the [guardrail plan](docs/superpowers/plans/2026-10-31-rag-guardrails.md). Implementation is pending; semantic caching and live guard models are outside the milestone.
+
 ## Repository structure
 
 ```text

@@ -1,6 +1,7 @@
 """Exact, concurrent budget admission on guarded disposable PostgreSQL only."""
 
 import asyncio
+import json
 from datetime import date
 from decimal import Decimal
 from uuid import UUID, uuid4
@@ -21,14 +22,21 @@ pytestmark = pytest.mark.anyio
 async def profile(owner, **overrides):
     args = {"id": uuid4(), "fixed": Decimal("0.6"), "input": Decimal("0"), "output": Decimal("0"),
         "enabled": True, "capabilities": True, "account": True, "pricing": True, "attempts": 1, "role": "generation", **overrides}
+    args.setdefault("provider", "gemini" if args["role"] == "embedding" else "groq")
+    args.setdefault("backend", "fake-google" if args["provider"] == "gemini" else "fake-groq")
+    args.setdefault("processors", ["test:budget:google", "test:budget:groq"] if args["role"] == "generation"
+        else ["test:budget:google" if args["provider"] == "gemini" else "test:budget:groq"])
+    args["processors"] = json.dumps(args["processors"])
     async with owner.begin() as connection:
         await connection.execute(text("""INSERT INTO app.processors(id,provider,backend,roles)
             VALUES ('test:budget:google','gemini','fake-google','["embedding","reranking","generation"]') ON CONFLICT DO NOTHING"""))
-        await connection.execute(text("UPDATE app.processors SET enabled=true WHERE id='test:budget:google'"))
+        await connection.execute(text("""INSERT INTO app.processors(id,provider,backend,roles)
+            VALUES ('test:budget:groq','groq','fake-groq','["reranking","generation","query_resolution","summarization"]') ON CONFLICT DO NOTHING"""))
+        await connection.execute(text("UPDATE app.processors SET enabled=true WHERE id IN ('test:budget:google','test:budget:groq')"))
         await connection.execute(text("""
             INSERT INTO app.provider_profiles(id,provider,model,backend,role,processor_ids,input_usd_per_million,output_usd_per_million,
                 fixed_usd,max_input_tokens,max_output_tokens,max_attempts,enabled,capabilities_verified,account_verified,pricing_verified)
-            VALUES (:id,'gemini','fake-model','fake-google',:role,'["test:budget:google"]',:input,:output,
+            VALUES (:id,:provider,'fake-model',:backend,:role,CAST(:processors AS jsonb),:input,:output,
                 :fixed,1000,1000,:attempts,:enabled,:capabilities,:account,:pricing)
         """), args)
     return args["id"]

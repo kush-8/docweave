@@ -36,6 +36,36 @@ Initial scaffold authorization was followed by the scoped backend/preview work r
 - Bound model-visible context with summarization; retain authorized transcripts. No arbitrary conversation turn-count cutoff. Summaries/prior answers are context, not documentary evidence.
 - Stage index/version replacements, then activate atomically. Keep prior good data on failed updates; tombstones prevent retries/re-index/restore from resurrecting deletions.
 
+## Structured prompt-writing rule
+
+Every LLM prompt must clearly separate application-controlled rules, the task, untrusted input data, the user query and the output contract. This applies to answering, reranking, query resolution, summarization and offline judging.
+
+```text
+SYSTEM — application-controlled
+  task
+  rules
+  output_contract
+
+USER — serialized data envelope
+  query
+  project_context
+  conversation_context
+  evidence
+```
+
+Use only roles supported by the verified profile and JSON-encode data values. Never interpolate documents, queries, history or summaries into trusted instructions or let their content define message roles. Preserve evidence/version/provenance IDs; owner-reviewed documents remain untrusted evidence. Use shared prompt builders and version-controlled templates, record prompt versions in operations/evaluation reports, and test embedded delimiters, fake roles and instruction overrides as literal data. Count schema/framing against existing token budgets. Structured formatting does not establish factual correctness or eliminate prompt injection.
+
+## RAG guardrail policy — confirmed 2026-10-31
+
+The [guardrail plan](superpowers/plans/2026-10-31-rag-guardrails.md) is approved direction, not implemented protection. Reuse current access, ingestion, consent and budget controls; add deterministic checks rather than live guard-model calls. General content moderation and semantic caching are outside this scope.
+
+- Quarantine document versions flagged for instruction overrides, role spoofing or requests to expose system instructions/secrets; workspace owners review them. Block similarly flagged chat messages before hosted calls.
+- Detect strong credential/private-key/token/authorization/connection-string formats, with explicit placeholder handling rather than broad entropy guesses. Block external use until content is sanitized; do not auto-redact, mutate original text or permit review to waive this block.
+- Bind assessments/reviews to exact version, content hash, parser configuration and rule revision. Enforce them in indexing, retrieval, provider dispatch and evidence release; a status label alone is insufficient. Preserve an older eligible index when a replacement is held.
+- Reviews require current resource/owner authority, CSRF and expected revisions, with content-free audit. They cannot grant source trust, consent, budget or broader access. After rule changes, rescan existing versions; clean versions resume and flagged versions require current review.
+- Use provenance-aware preflight across every hosted role, including offline judges. Do not blanket-reject an assembled prompt because explicitly reviewed evidence contains a flagged phrase. Recheck dependent memory/citations when eligibility changes.
+- Require structured documentation/project-context/inferred-advice blocks; validate references, spans and access before history/checkpoint writes. Render citations server-side. Invalid citations abstain; malformed output fails operationally; credentials/access violations block release. Do not automatically regenerate rejected output; retain incurred-cost accounting.
+
 ## Implementation and evidence
 
 Use existing/platform/library behavior before adding abstractions or dependencies. Maintain contracts, migrations, OpenAPI, accessible UI states, and recovery instructions with the behavior they describe. Patch shared causes and affected callers together.

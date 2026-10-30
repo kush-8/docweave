@@ -2,11 +2,15 @@
 
 Task 3A implements TXT/Markdown upload, replacement, document/version listing, approved single-page source import/refresh, document/source deletion and safe job listing/status. It prepares immutable local snapshots and exact character/line locators. It does not create retrieval indexes or make embedding/LLM calls. A preparation job can be `completed` at `snapshot_published` while its document is `awaiting_approval` or `waiting_capacity`; this does not mean it is searchable. Readiness remains 503.
 
+## Planned guardrail review
+
+The current `quarantined` preparation state does not implement human review. The confirmed [guardrail plan](../superpowers/plans/2026-10-31-rag-guardrails.md) adds assessments bound to version/hash/parser/rule revision, owner review of injection findings, and non-waivable credential egress blocks. Scan before hosted indexing, preserve original snapshots and older eligible indexes, and rescan retained versions when rules change. These gates/APIs are pending; initial source approval remains the separate operator-seeded workflow below.
+
 ## Setup
 
 Use `uv sync --project backend --locked`. The pinned Procrastinate 3.10.0 schema belongs to `queue`; application models belong to `app`. Bootstrap now requires a distinct `PG_WORKER_PASSWORD`, creates `docweave_worker` and the migration-owned `queue` schema, and grants the worker only queue access plus narrow ingestion functions. `docweave_runtime` cannot read queue internals, raw version records or perform general document DML. Queue payloads contain only job IDs.
 
-For a fresh database, configure `.env` from `.env.example` before bootstrap. For an existing database, an administrator must create the restricted worker login, grant its database connection/app schema usage and create the migration-owned `queue` schema before applying `0008_ingestion`; changing bootstrap does not change existing roles. Keep the worker password out of shell history and command output. Do not reset a development volume or change existing role passwords to satisfy this setup. This session migrated only the guarded disposable service; development credentials still need restoration.
+For a fresh database, configure `.env` from `.env.example` before bootstrap. For an existing database, an administrator must create the restricted worker login, grant its database connection/app schema usage and create the migration-owned `queue` schema before applying `0008_ingestion`; changing bootstrap does not change existing roles. Keep the worker password out of shell history and command output. Never reset a development volume to satisfy setup. On 2026-10-31 an explicitly approved, backed-up credential repair restored development access; the preserved volume is at `0009_retrieval` with its queue installed and empty. See the [database runbook](database.md).
 
 Build the isolated parser from the repository root:
 

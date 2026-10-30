@@ -112,6 +112,21 @@ Poll while visible, back off while hidden, respect an optional `Retry-After`, an
 
 Other mutations have no blanket retry guarantee. After uncertain transport acceptance, recover resource/job state before repeating them. Job retries use the explicit keyed retry operation and recheck current authority and budget.
 
+## Planned guardrail review and blocked turns
+
+Confirmed 2026-10-31, not implemented routes. Add these contracts during the [guardrail checkpoint](superpowers/plans/2026-10-31-rag-guardrails.md); the existing OpenAPI document has not yet been expanded for them:
+
+| Method/path | Planned behavior |
+| --- | --- |
+| `GET /documents/{id}/versions/{version_id}/guard-review` | Current workspace owner reads the assessment/findings/decision and bounded snapshot-text pages |
+| `PUT /documents/{id}/versions/{version_id}/guard-review` | Current owner approves/rejects injection findings using an expected revision and reason category; CSRF required |
+
+Scope reads/reviews to current resource/owner authority. Bind decisions to exact version/hash/parser configuration/rule revision; stale decisions conflict. Findings/audit omit matched credentials. Review cannot approve origins/docs fallback, grant consent, waive credentials or bypass budget. Initial source approval remains operator-seeded until Task 7; guard review is a separate owner workflow.
+
+Expose safe per-version assessment/review state through document/source/job views when implemented. Current ingestion `quarantined` means preparation, not an enforced review hold. Gate the actual indexed version and preserve an older eligible index when a replacement is held. Updated rules trigger rescans and renewed review for flagged versions.
+
+Flagged chat records `blocked_policy` before hosted calls and does not enter model memory. Internal documentation/project-context/inferred-advice blocks render to the existing public text/citations contract after validation. Invalid citations abstain; malformed output fails operationally; credentials/access violations block release. Unsafe output is not written to history/checkpoints; rejection neither automatically regenerates nor erases incurred charges. All LLM roles follow the [structured prompt rule](rules.md#structured-prompt-writing-rule).
+
 ## GitHub scan and documentation review
 
 GitHub repository connection is separate from GitHub sign-in. `POST /connections/github/connect` returns an authorization URL with state bound to the current user. The callback revalidates that identity and the user/App intersection. Repository and branch lists expose only currently eligible choices. Contents read permission covers repository contents broadly; the application's fetch allowlist restricts actual reads to supported metadata.

@@ -38,8 +38,8 @@ The user confirmed two lexical implementations (PostgreSQL native full-text and 
 | --- | --- | --- |
 | 1 | 3A | Durable bounded TXT/Markdown ingestion and frozen FastAPI/PostgreSQL fixtures |
 | 2 | 3B + 10 foundation | Tenant/version-scoped indexing, both lexical/vector strategies, and versioned evaluation cases/run reports |
-| 3 | 3C | Verified embedding/reranking adapters, bounded hybrid retrieval, and the initial retrieval pilot |
-| 4 | 4 + 10 RAG pilot | Groq answers, private conversations/memory, and end-to-end RAG evaluation through the actual backend workflow |
+| 3 | 3C + guardrail checkpoint | Version-bound scanning/owner review and provider preflight before hosted adapters, bounded hybrid retrieval and the pilot |
+| 4 | 4 + 10 RAG pilot | Versioned structured prompts, validated Groq answers, private memory and end-to-end RAG evaluation |
 | 5 | 6–7 backend | Read-only GitHub stack review, reviewed documentation discovery, version selection and rescan APIs |
 | 6 | 8 | Remaining formats, full lifecycle and all 29 verified bounded documentation sources |
 | 7 | 9 | Groq profile/adapter hardening across all hosted LLM roles |
@@ -175,6 +175,8 @@ async def test_cross_workspace_project_is_hidden(owner_a, project_b):
 
 ### 3C — Hosted compatibility, bounded fusion and retrieval pilot
 
+- [ ] Complete the document/provider gate in the [guardrail plan](superpowers/plans/2026-10-31-rag-guardrails.md) before hosted corpus processing: deterministic scans, exact-version assessments, owner review, rescan jobs and indexing/retrieval/release fences. Existing 3A/3B completion evidence stays intact; these are unfinished follow-up checks.
+- [ ] Implement the [structured prompt-writing rule](rules.md#structured-prompt-writing-rule) with shared versioned builders. Separate trusted task/rules/output contracts from JSON-encoded query/context/evidence for reranking and every later LLM role; test fake roles/delimiters as data. Semantic caching, general moderation and live guard models are excluded.
 - [ ] Reconcile Task 2's processor requirements, then add Gemini embedding and Groq LLM-reranking adapters. Verify model-specific query/document configuration, dimensions, normalization, tokenizers, strict ranking schemas, returned-ID membership, billed reasoning/output limits and actual price/account compatibility.
 - [ ] Run initial synthetic compatibility probes under reservations with a **US$0.25 total cap**. Pin eligible profiles only after evidence; missing credentials/prices/access keep hosted work waiting while fake-provider tests continue. Determine a working bounded Groq ranking output allowance rather than inheriting the old Gemini 512-token assumption.
 - [ ] Implement up to 30 candidates/channel, deterministic deduplication and RRF `k=60`; rerank at most 20 bounded candidates with Groq, returning at most eight chunks/6,000 evidence tokens. Revalidate consent/access before external calls and evidence release; validate exact spans and source/version state.
@@ -201,6 +203,8 @@ assert fake_provider.operation_count("answer") == 1
 - [ ] Add failure tests: crash after dispatch produces `completion_unknown`; resume does not call the provider again; revoked/deleted context blocks checkpoint/summary replay; normal refresh preserves old authorized citations. Test private approval before every helper/model call.
 - [ ] Run the three test files and confirm meaningful failures before implementation.
 - [ ] Implement the graph/context compiler and protected persistent checkpointer, provenance/dependency tracking, fixed-provider policy, 24,000/12,000-token allocation, bounded summaries and query resolution, and structured answer/clarification/abstention.
+- [ ] Extend guardrails to chat and generated query/summary text. Block before hosted calls and exclude blocked content from model memory. Reuse structured prompts and provenance-aware preflight; approved evidence remains untrusted without being blanket-reblocked.
+- [ ] Require documentation/project-context/inferred-advice blocks, validate source membership/spans/current access and render citations server-side before history/checkpoint writes. Invalid citations abstain, malformed output fails operationally, and credentials/access violations block release. Retain billing/uncertainty without automatic regeneration.
 - [ ] Use verified Groq profiles for answers and required ambiguous-follow-up resolution; summarize with the conversation's fixed answer model. Extend Task 10's evaluator to execute actual backend turns and capture retrieved/reranked evidence, answers, citations, memory behavior and per-stage usage. Score correctness, faithfulness, relevance, citation support, abstention and privacy, not retrieval alone.
 - [ ] Implement HTTP 202 durable turns, separate turn queue, per-conversation ordering/idempotency, operation dispatch ledger, polling/status recovery, current-access finalization, and uncertain-execution handling. No unvalidated token streaming or blind checkpoint replay.
 - [ ] Run `uv run --project backend pytest backend/tests/test_conversations.py backend/tests/test_memory.py backend/tests/test_turn_recovery.py -q`; restart API/worker between accepted and completed fixture turns and expect the same recoverable result.
@@ -310,7 +314,7 @@ assert fake_github.fetched_paths == []
 
 ## Task 10 — End-to-end RAG evaluation pipeline and held-out quality gates
 
-**Files:** Create `evaluation.py`, `backend/eval/scenarios.jsonl`, labels/split/family/config manifests and reports, `backend/tests/test_evaluation_protocol.py`.
+**Files:** Extend `evaluation.py` and evaluation-protocol tests; add scenario/label/split/family/config manifests and reports as the complete RAG workflow arrives.
 
 **Consumes:** Start with Task 3's corpus/retrieval fixtures, add Task 4's complete backend RAG turns, then expand to all catalog sources and architecture's 150-scenario allocation. This is ongoing evaluation work, not a final-stage-only retrieval benchmark.
 **Produces:** CLI `python -m docweave.evaluation --split development|held-out --config <path>` driving actual authorized backend RAG services; per-case and aggregate JSON/CSV reports with corpus/profile/config/prompt/hash/date/cost provenance and captured evidence, answers and citations.
@@ -319,6 +323,7 @@ assert fake_github.fetched_paths == []
 - [ ] Write staged protocol tests: the initial 10-question development pilot, then the complete 150 scenarios/100 development/50 held-out split, no family overlap, 29 development coverage checks and separate human-rating samples. Held-out cases never select retrieval defaults, models, prompts or judges.
 - [ ] Add deterministic metric tests for labeled context precision/recall, Recall/MRR/nDCG where labels support them, ANN Recall@k versus exact search, underfill and structural citation/span checks. Add semantic answer correctness/required-fact coverage, faithfulness to supplied evidence, response relevance and citation-to-claim support; faithfulness is not a substitute for correctness.
 - [ ] Evaluate abstention/clarification, follow-ups, summary continuity, version/staleness/conflicts, adversarial documents, source/upstream revocation and tenant/conversation isolation. Security failures disqualify a configuration rather than being averaged into its quality score. Record scenario and turn counts separately.
+- [ ] Add guardrail regressions for structured sections/fake roles, injection flags/benign examples, credentials, owner-review races, changed rules/hashes, safe older indexes, quarantine/deletion/revocation and rejected-output persistence. Assert forbidden inputs never reach fake providers; report false positives/outcomes/overhead without claiming complete detection. Keep the 150-scenario split/human-review protocol; add deterministic boundary cases separately.
 - [ ] Run `uv run --project backend pytest backend/tests/test_evaluation_protocol.py -q`; observe missing evaluator/protocol failures.
 - [ ] Implement the CLI/report runner incrementally and human-verify reference labels. Compare native full-text/BM25 crossed with exact/HNSW vectors plus lexical-only/vector-only baselines, first at retrieval and then through complete generation with the same Groq answer profile, prompts/history, reranker settings, evidence budgets and query embeddings. Choose defaults using broader development end-to-end quality, latency/cost and operational complexity; prefer the simpler path when results are effectively tied.
 - [ ] Assess Ragas for semantic metrics without committing to it before Groq compatibility/cost validation. Configure all hosted judge LLM calls explicitly through Groq, with Gemini used only for any required embeddings; no framework-default provider calls. Capture per-stage/end-to-end p50/p95, token/cost totals, query plans, HNSW settings, index build time/size, machine identity, failures and configuration differences.

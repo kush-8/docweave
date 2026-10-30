@@ -107,6 +107,42 @@ def evidence(row):
         "locator": {"start": row["start_offset"], "end": row["end_offset"], "heading": row["heading"], "line_start": row["line_start"], "line_end": row["line_end"]}}
 
 
+def fuse_channels(channels):
+    hits, scores = {}, {}
+    for name in ("lexical", "vector"):
+        seen = set()
+        for rank, hit in enumerate(channels[name][:30], 1):
+            identity = hit["chunk_id"]
+            if identity in seen:
+                continue
+            seen.add(identity)
+            hits.setdefault(identity, hit)
+            scores[identity] = scores.get(identity, 0) + 1 / (60 + rank)
+    ordered = sorted(hits, key=lambda identity: (-scores[identity], str(identity)))
+    return [{**hits[identity], "score": scores[identity]} for identity in ordered[:20]]
+
+
+def ranked_evidence(candidates, ordered_ids, count_tokens):
+    by_id = {str(hit["chunk_id"]): hit for hit in candidates}
+    if (len(candidates) > 20 or not isinstance(ordered_ids, list)
+        or any(type(identity) is not str or identity not in by_id for identity in ordered_ids)
+        or len(set(ordered_ids)) != len(ordered_ids)):
+        raise RetrievalError("invalid_ranking")
+    selected, used = [], 0
+    for identity in ordered_ids:
+        hit = by_id[identity]
+        tokens = count_tokens(hit["quote"])
+        if type(tokens) is not int or tokens < 0:
+            raise RetrievalError("invalid_token_count")
+        if used + tokens > 6000:
+            continue
+        selected.append(hit)
+        used += tokens
+        if len(selected) == 8:
+            break
+    return selected
+
+
 async def retrieve_channels(actor, project_id, query, *, collection_ids, generation_id, query_vector, engine, lexical="native", vector="exact", explain=False):
     if lexical not in ("native", "bm25") or vector not in ("exact", "hnsw"):
         raise RetrievalError("invalid_strategy")

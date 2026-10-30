@@ -35,6 +35,8 @@ These requirements specialize the original Enterprise Knowledge Intelligence bri
 | Memory | Current project context, recent conversation, summarized older context, and relevant evidence; no arbitrary chat-length cutoff |
 | Answer provider | Groq-hosted LLM profiles; select and fix the verified answer model at conversation creation; additional providers belong to a future LLM gateway |
 | Retrieval | Gemini embeddings only, bounded Groq LLM reranking and RRF; implement native full-text/BM25 lexical alternatives and filtered exact/HNSW vector alternatives, then choose defaults through development RAG evaluation |
+| Prompt structure | Separate application-controlled task/rules/output contracts from serialized query, project/conversation data and evidence; shared versioned builders across all LLM roles |
+| RAG guardrails | Deterministic injection checks, exact-version quarantine with workspace-owner review, credential egress blocking, flagged-chat blocking and structured claim/evidence validation; implementation pending |
 | Clarification | Ask a focused follow-up when essential information is missing; avoid asking for information already in context |
 | Reliability | Accepted turns finish independently of the browser; recover status/results and prevent duplicate submissions |
 | Access changes | Revoked/deleted remembered sources pause affected conversations; affected content and derived memory become inaccessible |
@@ -46,6 +48,8 @@ These requirements specialize the original Enterprise Knowledge Intelligence bri
 | Change authority | Only the user can approve reductions to accepted scope or release criteria |
 
 Cleanup deadlines assume services are running; overdue deletion runs before traffic is accepted after downtime. Local deletion cannot recall content already dispatched to a provider.
+
+Guardrails confirmed 2026-10-31: owner review cannot waive credential blocks, source restrictions, access, consent or budgets. Updated rules require existing versions to be rescanned; clean versions resume and flagged versions require current review. General moderation, semantic caching and live guard-model calls are outside this milestone. See the [guardrail plan](superpowers/plans/2026-10-31-rag-guardrails.md); structured prompts/checks do not guarantee factual correctness or complete injection resistance.
 
 ## User stories and acceptance
 

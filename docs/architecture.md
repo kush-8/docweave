@@ -196,6 +196,28 @@ Summaries are lossy context, not evidence or authority. Keep raw messages readab
 
 Resolve ambiguous follow-up references against authorized conversation/project context before retrieval. This is required conversational query resolution, not speculative search optimization. Preserve the original message; construct a bounded retrieval query (maximum 1,024 embedding-model tokens) and clarify unresolved ambiguity. Never embed the entire conversation prompt. Optional additional query-rewriting experiments still need development evidence.
 
+## Structured prompts and RAG guardrails
+
+Confirmed 2026-10-31; implementation is pending. Follow the [guardrail plan](superpowers/plans/2026-10-31-rag-guardrails.md) and [prompt-writing rule](rules.md#structured-prompt-writing-rule). Semantic caching, general moderation and live guard-model calls are outside this milestone.
+
+### Prompt boundary
+
+Use shared version-controlled builders for answers, reranking, query resolution, summaries and offline judging. Supported system roles contain only application-controlled task/rules/output contracts. JSON-serialized user-data envelopes separate query, project context, conversation context and evidence with stable source/version/provenance IDs. Input text cannot create roles, alter policy or become trusted instructions. Preserve source bytes/locators; scan-only normalization and prompt escaping do not rewrite evidence. Record prompt versions and count framing against existing token limits.
+
+### Version-specific document gate
+
+Bounded deterministic rules flag instruction overrides, role spoofing and requests to expose system instructions/secrets. Strong credential checks cover private keys, recognizable tokens, authorization credentials and password-bearing connection strings, using explicit placeholders without broad entropy detection. Scan normalized snapshots before hosted processing; retain immutable source text.
+
+Persist assessments against version/content hash/parser configuration/rule revision and keep decisions revision-bound/auditable. This is separate from the implemented initial ingestion `quarantined` status. Missing/failed/held assessments block model use. Check the actual indexed version at index input/insertion/activation, retrieval, provider dispatch and evidence/citation release; a document status change alone cannot enforce quarantine. Keep an older eligible searchable version when a replacement is held.
+
+Workspace owners review exact findings and bounded snapshot text through the planned backend API. Current resource/owner authority, CSRF and expected revisions apply. Approval cannot waive credentials, source restrictions, consent or budgets. Credential matches require sanitized replacement content, not auto-redaction. Approval resumes remaining eligible work through idempotent queueing without replaying uncertain paid calls. Rule updates require rescans; clean versions resume and flagged versions need current review. Changed eligibility also fences dependent memory, checkpoints and citations.
+
+### Runtime and output boundary
+
+Block flagged incoming chat before any hosted call, including summary/query resolution; keep blocked content out of model memory. Scan generated query/summary text before further model use. Every provider-bound role, including embeddings/offline judging, rechecks credentials, access/source state, assessments, consent and budget. Handle segments by provenance: a reviewed document remains untrusted data but is not immediately reblocked by blanket matching over an assembled prompt.
+
+Internal blocks distinguish documentation claims, project-context statements and inferred advice. Documentation claims reference supplied evidence; project statements reference supplied context. Validate schema, reference membership, exact quotes/locators, versions and access, then construct public text/citations server-side before history/checkpoint persistence. Invalid citations abstain, malformed output fails operationally, and credentials/access violations block release. Account for incurred calls without automatic regeneration. Pattern/schema checks do not prove semantic correctness or complete injection resistance; adversarial evaluation and human calibration remain required.
+
 ## Bounded retrieval and answering
 
 Graph: authorize/revalidate -> load current context/history -> summarize if needed -> resolve query or clarify -> retrieve -> rerank -> build context -> generate -> validate -> persist/finalize. Every provider-bound step uses ordinary server policy and budget code; the model has no browser, shell, deployment, or policy-changing tools.
