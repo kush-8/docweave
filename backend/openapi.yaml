@@ -4,13 +4,17 @@ info:
   version: 0.1.0-draft
   summary: Planned HTTP contract for the local DocWeave application.
   description: |
-    Authentication, workspaces, member management, invitations, manual project context and liveness are implemented.
+    Authentication, workspaces, member management, invitations, manual project context,
+    collection create/list/grants, project/collection processor consent and liveness are implemented.
     Other domain feature contracts remain planned.
     Readiness returns 503. Private reserved operations enforce sessions and mutation
     origin/CSRF checks before returning 501; public catalog/provider stubs return 501.
     Manual projects atomically create owner-only default collections and local pending
     documentation requests; source_state is pending_review and job_ids is empty until
     source approval/import admission exists. GitHub reviewed-stack creation returns 501.
+    Collection reads require current grants/ownership; write also requires an eligible role.
+    Consent IDs must match enabled operator-configured immutable processor identities.
+    Registration/consent does not verify model availability, prices or inference admission.
     Other domain request-body processing, import workers and AI remain unimplemented.
     Generated /openapi.json describes the current runtime responses.
     architecture.md owns behavior; api.md explains usage and draft wire decisions.

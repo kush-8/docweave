@@ -58,3 +58,29 @@ async def require_project_actor(request: Request, user=Depends(require_user)) ->
 
 async def require_project_owner(request: Request, actor=Depends(require_project_actor)) -> Actor:
     return await require_owner(request, actor)
+
+
+async def require_collection_actor(request: Request, user=Depends(require_user)) -> Actor:
+    try:
+        collection_id = UUID(request.path_params["collection_id"])
+    except (ValueError, TypeError, KeyError):
+        raise HTTPException(404) from None
+    _, engine, _ = auth_service(request)
+    async with tenant_session(engine, actor_id=UUID(user["id"])) as session:
+        workspace_id = await session.scalar(text("SELECT app.collection_workspace(:collection)"), {"collection": collection_id})
+    if workspace_id is None:
+        raise HTTPException(404)
+    return Actor(UUID(user["id"]), workspace_id)
+
+
+async def require_collection_owner(request: Request, actor=Depends(require_collection_actor)) -> Actor:
+    return await require_owner(request, actor)
+
+
+async def require_collection_writer(request: Request, actor=Depends(require_collection_actor)) -> Actor:
+    _, engine, _ = auth_service(request)
+    async with tenant_session(engine, actor_id=actor.user_id, workspace_id=actor.workspace_id) as session:
+        writable = await session.scalar(text("SELECT app.collection_can(:collection,'write')"), {"collection": UUID(request.path_params["collection_id"])})
+    if not writable:
+        raise HTTPException(403, detail="forbidden")
+    return actor

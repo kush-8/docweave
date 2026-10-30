@@ -145,8 +145,9 @@ async def databases(test_urls):
         async with owner.begin() as connection:
             for table in ("auth_sessions", "auth_flows", "auth_rate_limits"):
                 await connection.execute(text(f"DELETE FROM app.{table}"))
-            for table in ("documentation_requests", "collections", "invitations", "projects", "memberships", "workspaces", "users"):
+            for table in ("collection_processor_approvals", "project_processor_approvals", "collection_grants", "documentation_requests", "collections", "invitations", "projects", "memberships", "workspaces", "users"):
                 await connection.execute(text(f"DELETE FROM app.{table}"))
+            await connection.execute(text("UPDATE app.processors SET enabled=false"))
             for actor, subject in [(A, "actor-a"), (B, "actor-b"), (C, "no-membership")]:
                 await connection.execute(text("INSERT INTO app.users (id,issuer,subject,display_name,email) VALUES (:id,'https://issuer.test',:subject,:subject,'shared@example.test')"), {"id": actor, "subject": subject})
             for workspace, actor, project, name in [(WA, A, PA, "Alpha"), (WB, B, PB, "Beta")]:

@@ -35,7 +35,7 @@ There are no approved source manifests/version selections, processing policies, 
 
 Editing other context updates the active requests' context revision. Replacing the stack supersedes old pending requests and assigns replacement dependency IDs with new pending requests, atomically with the revision. The default collection ID stays fixed. There is no existing imported knowledge to replace in this slice.
 
-Current members can see project context and its default collection ID. Runtime collection rows are readable only by current owners in the selected workspace; no read/write grants are added. Collection/grant endpoints remain reserved. A default ID is not content access. Project child stubs check current membership before returning 501; unknown, malformed and inaccessible project IDs share safe 404. Visible nonowners get 403/`forbidden` for project mutations. Removed members lose access on their next request.
+Current members can see project context and its default collection ID. Creation adds no read/write grants. The later [collection policy slice](collection-policy.md) implements owner-managed grants, grant-filtered collection metadata and separate project/collection processor consent; a default ID alone grants no content access. Project child stubs check current membership before returning 501; unknown, malformed and inaccessible project IDs share safe 404. Visible nonowners get 403/`forbidden` for project mutations. Removed members lose access on their next request.
 
 ## Storage, failure walkthrough and verification
 
@@ -53,4 +53,4 @@ docker compose --profile test stop test-db
 
 The original persistent development credentials remain unavailable after the prior reset. Development volumes were not reset or migrated; restore their original credentials before starting `db` or applying development migrations. Downgrading this revision drops collections and pending requests; it is not a production data-preserving rollback. Use a verified backup/recovery plan for persistent data.
 
-Exact results and independent review are recorded in the [project plan](../superpowers/plans/2026-10-30-projects.md). Task 1 remains incomplete until its remaining access/processing boundaries and live compatibility evidence are delivered. Next backend work is collection grants and processing approvals, then budget admission and approved-source ingestion.
+Exact results and independent review are recorded in the [project plan](../superpowers/plans/2026-10-30-projects.md). Collection grants/processor consent are now covered in the [collection runbook](collection-policy.md). Task 1 remains incomplete until its remaining compatibility/runtime evidence is delivered. Next backend work is budget admission and configured provider profiles before approved-source ingestion.

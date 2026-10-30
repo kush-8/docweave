@@ -15,10 +15,11 @@ from docweave.routes import FEATURE_ROUTES
 from docweave.auth import AuthSettings, make_oidc, require_csrf, require_user, router
 from docweave.db import make_engine
 from docweave.settings import database_url
-from docweave.policy import require_actor, require_owner, require_project_actor
+from docweave.policy import require_actor, require_owner, require_project_actor, require_collection_actor, require_collection_writer
 from docweave.workspaces import router as workspace_router
 from docweave.memberships import router as membership_router
 from docweave.projects import router as project_router
+from docweave.collections import router as collection_router
 
 
 class Health(BaseModel):
@@ -51,7 +52,7 @@ EXPECTED_ERRORS = {
     (403, "forbidden"): ("forbidden", "You do not have permission for this operation.", False),
     (409, "last_owner"): ("last_owner", "The last workspace owner cannot be removed or demoted.", False),
     (409, "already_member"): ("already_member", "You already belong to this workspace.", False),
-    (409, "revision_conflict"): ("revision_conflict", "The project changed. Reload it before editing.", False),
+    (409, "revision_conflict"): ("revision_conflict", "The resource changed. Reload it before editing.", False),
 }
 
 
@@ -82,11 +83,11 @@ def create_app(*, auth_settings=None, auth_engine=None, oidc=None) -> FastAPI:
     app = FastAPI(
         title="DocWeave API",
         version="0.1.0",
-        description="Authentication, workspaces, memberships/invitations, manual project context and liveness are implemented. Documentation imports and other domain operations remain reserved.",
+        description="Authentication, workspaces, memberships/invitations, manual projects, collection grants, processor consent and liveness are implemented. Ingestion, conversations and hosted calls remain unavailable.",
         lifespan=lifespan,
     )
     app.state.auth = (settings, engine, oidc or make_oidc(settings)) if settings else None
-    feature_routers = (router, workspace_router, membership_router, project_router)
+    feature_routers = (router, workspace_router, membership_router, project_router, collection_router)
     for feature_router in feature_routers:
         app.include_router(feature_router)
     implemented_routes = [route for feature_router in feature_routers for route in feature_router.routes]
@@ -132,6 +133,8 @@ def create_app(*, auth_settings=None, auth_engine=None, oidc=None) -> FastAPI:
             dependencies.append(Depends(require_owner if owner_only else require_actor))
         if path.startswith("/projects/{project_id}/"):
             dependencies.append(Depends(require_project_actor))
+        if path.startswith("/collections/{collection_id}/"):
+            dependencies.append(Depends(require_collection_actor if method == "GET" else require_collection_writer))
         app.add_api_route(
             f"/api/v1{path}",
             not_implemented,
