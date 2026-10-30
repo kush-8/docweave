@@ -1,6 +1,6 @@
 # DocWeave — Architecture
 
-Status: Confirmed direction and GitHub extension, reconciled 2026-10-28. Implementation and live compatibility checks are unstarted.
+Status: Confirmed direction and GitHub extension, reconciled 2026-10-28. Backend auth, workspaces, member management and recipient-bound invitations are implemented. Project/collection/conversation workflows and broader live compatibility checks remain incomplete. See [auth](runbooks/auth.md), [workspace](runbooks/workspaces.md) and [membership](runbooks/memberships.md) evidence.
 Product: [PRD.md](PRD.md). Frontend: [design.md](design.md). Delivery: [tasks.md](tasks.md).
 Numeric settings are explicit engineering defaults; quality/performance targets below require development baselining before release evaluation.
 
@@ -32,9 +32,13 @@ Compose uses Linux containers and localhost bindings for development. This does 
 
 Validate OIDC issuer, audience, state, nonce, PKCE, and tokens using a maintained OIDC client. Persist identity by validated issuer/subject, not email. Keep provider tokens server-side in expiring application sessions; HttpOnly, SameSite cookies and CSRF protection apply. Secure cookies/TLS are required except explicit localhost development configuration.
 
+The backend auth slice uses Authlib, RS256 validation, encrypted PostgreSQL protocol/token records, hashed opaque session IDs, shared login throttling and exact-origin/session-bound CSRF. Sessions end at provider token expiry or eight hours; refresh/global IdP logout are not implemented. The actor can read only their own user row before membership; workspace/project reads still require current membership. Authentication creates no memberships. Local captured-email registration/verification/reset has separate live smoke evidence; real social-provider accounts and frontend auth integration remain deferred.
+
 Google/GitHub login and email/password are all supported. Email verification/reset require SMTP. Callback URIs are exact and secrets server-side. Preserve identity-provider reauthentication/account-linking safeguards; an email-string match never merges accounts automatically. Magic links are not part of the chosen login method.
 
 Workspace is the tenant. A user may create a workspace as owner and hold independent roles elsewhere. Existing-workspace membership comes from owner invitations: high-entropy hashed single-use token, 48-hour default expiry, intended verified recipient, atomic acceptance. Start with copyable invitation links rather than an invitation-email delivery product. Membership is never inferred from an email domain or a resource ID. Prevent removal/demotion of the last owner.
+
+The backend creates a workspace and actor-owner membership atomically through a narrow runtime-only function, and lists current memberships with encrypted actor-bound keyset cursors. Actor-only context does not broaden ordinary tenant-table SELECTs. Workspace routes check current DB membership/required owner status. Member/invitation functions serialize on the workspace row and recheck authority after waiting; last-owner preservation, atomic single-use acceptance and current verified recipient checks are enforced there. Pending invitations are revoked when their issuing owner loses ownership. No actor/role/email claim in a request grants authority. Frontend and project/collection policies remain separate work.
 
 | Tenant role | Authority |
 | --- | --- |

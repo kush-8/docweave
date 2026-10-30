@@ -4,10 +4,12 @@ info:
   version: 0.1.0-draft
   summary: Planned HTTP contract for the local DocWeave application.
   description: |
-    Future feature contract. The running HTTP skeleton reserves these routes:
-    liveness returns 200, readiness 503, and all feature operations 501.
-    Business logic, authentication, request-body validation, storage and AI are not implemented.
-    The skeleton's generated /openapi.json describes its current responses.
+    Authentication, workspaces, member management, invitations and liveness are implemented.
+    Other domain feature contracts remain planned.
+    Readiness returns 503. Private reserved operations enforce sessions and mutation
+    origin/CSRF checks before returning 501; public catalog/provider stubs return 501.
+    Other domain request-body processing, jobs, project persistence and AI remain unimplemented.
+    Generated /openapi.json describes the current runtime responses.
     architecture.md owns behavior; api.md explains usage and draft wire decisions.
     All paths use the same browser origin. IDs never grant access. Recheck identity,
     workspace membership, ownership, collection grants, processing approvals and,
@@ -174,7 +176,7 @@ paths:
       tags: [Workspaces]
       operationId: updateMemberRole
       summary: Change a member's role as an owner
-      description: The last owner cannot be demoted; returns 409 last_owner.
+      description: The last owner cannot be demoted; returns 409 last_owner. Losing ownership revokes that issuer's pending invitations.
       security: [{ sessionCookie: [], csrfToken: [] }]
       requestBody:
         required: true
@@ -198,7 +200,7 @@ paths:
       tags: [Workspaces]
       operationId: removeMember
       summary: Remove a member as an owner
-      description: Revoke access immediately. The last owner cannot be removed.
+      description: Revoke access and that issuer's pending invitations immediately. The last owner cannot be removed.
       security: [{ sessionCookie: [], csrfToken: [] }]
       responses:
         '204': { description: Membership removed. }
@@ -222,7 +224,7 @@ paths:
       tags: [Workspaces]
       operationId: createInvitation
       summary: Issue a recipient-bound invitation as an owner
-      description: Single use; expires after 48 hours. Return a copyable link once; no invitation email delivery is implied.
+      description: Single use; expires after 48 hours. Return a secret-bearing POST acceptance URL once; no invitation email delivery or frontend page is implemented.
       security: [{ sessionCookie: [], csrfToken: [] }]
       requestBody:
         required: true
@@ -257,7 +259,7 @@ paths:
       tags: [Workspaces]
       operationId: acceptInvitation
       summary: Atomically accept as the intended verified recipient
-      description: Invalid, expired, revoked or consumed tokens return the same safe 404 response.
+      description: Invalid, expired, revoked, consumed or wrong-recipient tokens return the same safe 404. Existing members return 409 already_member without role changes or token consumption. Current verified recipient and issuing owner authority are rechecked after lock waits.
       security: [{ sessionCookie: [], csrfToken: [] }]
       responses:
         '200':
@@ -1226,7 +1228,7 @@ components:
       additionalProperties: false
       required: [name]
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { type: string, minLength: 1, pattern: '^[^\x00]*[^\s\x00][^\x00]*$', description: Nonblank name without NUL characters. }
     Health:
       type: object
       required: [status]

@@ -1,0 +1,41 @@
+{
+  "realm": "docweave",
+  "enabled": true,
+  "displayName": "DocWeave",
+  "sslRequired": "none",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 28800,
+  "passwordPolicy": "length(12)",
+  "smtpServer": {
+    "host": "mailpit", "port": "1025", "from": "accounts@docweave.test",
+    "fromDisplayName": "DocWeave", "auth": "false", "ssl": "false", "starttls": "false"
+  },
+  "clients": [{
+    "clientId": "docweave",
+    "name": "DocWeave",
+    "enabled": true,
+    "protocol": "openid-connect",
+    "publicClient": false,
+    "secret": "${OIDC_CLIENT_SECRET}",
+    "standardFlowEnabled": true,
+    "implicitFlowEnabled": false,
+    "directAccessGrantsEnabled": false,
+    "serviceAccountsEnabled": false,
+    "redirectUris": ["http://127.0.0.1:58000/api/v1/auth/callback"],
+    "webOrigins": [],
+    "attributes": {"pkce.code.challenge.method": "S256"},
+    "defaultClientScopes": ["profile", "email"]
+  }]
+}

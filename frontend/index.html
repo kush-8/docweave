@@ -2,10 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" href="data:," />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#F7F9FC" />
-    <meta name="description" content="DocWeave project documentation and evidence workbench." />
-    <title>Ask your project · DocWeave</title>
+    <meta name="theme-color" content="#EAF0F8" />
+    <meta name="description" content="Chat about your project with DocWeave." />
+    <title>DocWeave · Chat</title>
     <script>
       (() => {
         let preference;
@@ -15,7 +16,7 @@
         document.documentElement.dataset.theme = theme;
         document.documentElement.classList.toggle('dark', theme === 'dark');
         document.documentElement.style.colorScheme = theme;
-        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0B1220' : '#F7F9FC';
+        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#19263A' : '#EAF0F8';
       })();
     </script>
   </head>

@@ -14,6 +14,47 @@ x-database: &database
     retries: 30
 
 services:
+  keycloak-db:
+    <<: *database
+    profiles: [auth]
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_DB: keycloak
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:-}
+    volumes:
+      - identity_pgdata:/var/lib/postgresql/data
+
+  mailpit:
+    image: axllent/mailpit:v1.29.0
+    profiles: [auth]
+    ports:
+      - "127.0.0.1:8025:8025"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    profiles: [auth]
+    command: [start-dev, --import-realm]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:-}
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:-}
+      KC_HOSTNAME: http://127.0.0.1:58080
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      KC_HTTP_ACCESS_LOG_ENABLED: "false"
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "127.0.0.1:58080:8080"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    volumes:
+      - ./backend/infra/keycloak/docweave-realm.json:/opt/keycloak/data/import/docweave-realm.json:ro
+
   db:
     <<: *database
     environment:
@@ -40,3 +81,4 @@ services:
 
 volumes:
   pgdata:
+  identity_pgdata:

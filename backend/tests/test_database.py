@@ -143,7 +143,9 @@ async def databases(test_urls):
     runtime = make_engine(runtime_url)
     try:
         async with owner.begin() as connection:
-            for table in ("projects", "memberships", "workspaces", "users"):
+            for table in ("auth_sessions", "auth_flows", "auth_rate_limits"):
+                await connection.execute(text(f"DELETE FROM app.{table}"))
+            for table in ("invitations", "projects", "memberships", "workspaces", "users"):
                 await connection.execute(text(f"DELETE FROM app.{table}"))
             for actor, subject in [(A, "actor-a"), (B, "actor-b"), (C, "no-membership")]:
                 await connection.execute(text("INSERT INTO app.users (id,issuer,subject,display_name,email) VALUES (:id,'https://issuer.test',:subject,:subject,'shared@example.test')"), {"id": actor, "subject": subject})
@@ -268,7 +270,8 @@ async def test_tenant_context_cannot_replace_membership(databases, actor, worksp
     _, runtime = databases
     async with tenant_session(runtime, actor_id=actor, workspace_id=workspace) as session:
         for table in TABLES:
-            assert (await session.scalar(text(f"SELECT count(*) FROM app.{table}"))) == 0
+            expected = 1 if table == "users" else 0
+            assert (await session.scalar(text(f"SELECT count(*) FROM app.{table}"))) == expected
 
 
 @pytest.mark.parametrize("rollback", [False, True])

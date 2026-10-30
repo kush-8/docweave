@@ -16,11 +16,11 @@ def make_engine(url: URL) -> AsyncEngine:
 
 
 @asynccontextmanager
-async def tenant_session(engine: AsyncEngine, *, actor_id: UUID, workspace_id: UUID):
+async def tenant_session(engine: AsyncEngine, *, actor_id: UUID, workspace_id: UUID | None = None):
     # Callers must obtain these IDs from verified identity/policy, never request claims.
     async with AsyncSession(engine, expire_on_commit=False) as session, session.begin():
         await session.execute(text(
             "SELECT set_config('docweave.actor_id', :actor, true), "
             "set_config('docweave.workspace_id', :workspace, true)"
-        ), {"actor": str(actor_id), "workspace": str(workspace_id)})
+        ), {"actor": str(actor_id), "workspace": str(workspace_id) if workspace_id is not None else ""})
         yield session
