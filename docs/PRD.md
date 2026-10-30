@@ -2,7 +2,7 @@
 
 Status: Backend foundations implemented in scoped slices; RAG planning reconciled on 2026-10-30. Product completion remains subject to the task-specific evidence below.
 
-Current update — 2026-10-30: backend auth/tenancy/project/collection/budget slices exist; ingestion, retrieval, conversations and RAG evaluation remain planned. The user confirmed Groq-only hosted LLMs with a Gemini embedding exception, native full-text/BM25 and exact/HNSW retrieval experiments, and end-to-end RAG evaluation. Backend work remains active on `main`; frontend integration is deferred. These provider decisions supersede the earlier three-answer-provider scope.
+Current update — 2026-10-31: backend auth/tenancy/project/collection/budget slices and bounded TXT/Markdown snapshot ingestion exist; retrieval, conversations and RAG evaluation remain planned. The user chose operator-seeded source approvals for Task 3A, leaving the owner approval API in Task 7. Groq-only hosted LLMs with a Gemini embedding exception, native full-text/BM25 and exact/HNSW retrieval experiments, and end-to-end RAG evaluation remain confirmed. Backend work stays active on `main`; frontend integration is deferred. These provider decisions supersede the earlier three-answer-provider scope.
 
 ## Purpose and release outcome
 
