@@ -2,9 +2,9 @@
 
 Project-aware technical documentation and knowledge assistant.
 
-Status: The frontend remains a synthetic preview. The backend implements Keycloak OIDC, workspaces/memberships, manual projects, collection grants, processor consent, configured answer profiles, conservative budgets/usage and durable bounded TXT/Markdown ingestion. Uploads and operator-approved single-page sources prepare immutable local snapshots through a restricted queue worker; indexing and hosted AI remain unavailable. Profiles/prices/account capabilities remain unverified and disabled. Readiness, conversations and GitHub setup remain incomplete; frontend integration is deferred. See the [auth](docs/runbooks/auth.md), [workspace](docs/runbooks/workspaces.md), [membership](docs/runbooks/memberships.md), [project](docs/runbooks/projects.md), [collection policy](docs/runbooks/collection-policy.md), [budget](docs/runbooks/budget.md) and [ingestion](docs/runbooks/ingestion.md) runbooks.
+Status: The frontend remains a synthetic preview. The backend implements authentication/tenancy, manual projects, collection grants/consent, conservative budgets, durable TXT/Markdown snapshots and a scoped retrieval/evaluator foundation. Native full-text/SQL BM25 and exact/shared-HNSW paths have deterministic evidence; hosted adapters, account/pricing verification and semantic RAG quality remain incomplete. Readiness stays unavailable; conversations, GitHub setup and frontend integration remain unfinished. See [auth](docs/runbooks/auth.md), [workspaces](docs/runbooks/workspaces.md), [memberships](docs/runbooks/memberships.md), [projects](docs/runbooks/projects.md), [collection policy](docs/runbooks/collection-policy.md), [budget](docs/runbooks/budget.md), [ingestion](docs/runbooks/ingestion.md) and [retrieval/evaluation](docs/runbooks/retrieval.md).
 
-Current RAG plan: Groq-hosted LLMs with Gemini embeddings; compare native full-text/BM25 and filtered exact/HNSW retrieval through an end-to-end RAG evaluation pipeline. These paths remain planned. See the [backend task order](docs/tasks.md#current-backend-task-order--2026-10-30); frontend integration and the future provider-selecting LLM gateway are deferred.
+Current RAG plan: Groq-hosted LLMs with Gemini embeddings; compare native full-text/BM25 and filtered exact/HNSW retrieval through an end-to-end RAG evaluation pipeline. Deterministic retrieval components exist; live compatibility/pilot and complete RAG evaluation remain planned. See the [backend task order](docs/tasks.md#current-backend-task-order--2026-10-30); frontend integration and the future provider-selecting LLM gateway are deferred.
 
 ## Repository structure
 
@@ -97,7 +97,7 @@ uv run --project backend --locked uvicorn docweave.main:create_app --factory --a
 
 If uv is not on PATH but the synchronized environment exists, use `./backend/.venv/Scripts/python.exe -m uvicorn docweave.main:create_app --factory --app-dir backend/src --host 127.0.0.1 --port 58000 --no-access-log --no-proxy-headers` on Windows.
 
-Open [interactive API docs](http://127.0.0.1:58000/docs) or [runtime OpenAPI](http://127.0.0.1:58000/openapi.json). Liveness returns 200; readiness remains 503. Configure [auth](docs/runbooks/auth.md) for login/session/logout, then use [workspace creation/listing](docs/runbooks/workspaces.md). Other domain handlers remain 501 after applicable session, CSRF and workspace-role checks. Public catalog/provider stubs remain 501. No jobs or AI calls are accepted. Responses carry request IDs, safe errors and `Cache-Control: no-store`.
+Open [interactive API docs](http://127.0.0.1:58000/docs) or [runtime OpenAPI](http://127.0.0.1:58000/openapi.json). Liveness returns 200; readiness remains 503. Configure [auth](docs/runbooks/auth.md), then use the implemented workspace/project/collection/budget and [ingestion](docs/runbooks/ingestion.md) operations. The configured answer-profile catalog is implemented; the source catalog and unfinished domains remain 501 after current authority checks. Local ingestion jobs are accepted; hosted inference is unavailable. Responses carry request IDs, safe errors and `Cache-Control: no-store`.
 
 ## Backend tests
 

@@ -6,7 +6,7 @@ SELECT set_config('docweave.actor_id', :'approved_by', true),
 SELECT app.lock_workspace_owner();
 SELECT app.project_view(:'project_id'::uuid);
 INSERT INTO app.documentation_selections(
-    id,workspace_id,project_id,approved_by,technology,docs_target,coverage,source_url,origin,path_prefix,attribution)
+    id,workspace_id,project_id,approved_by,technology,docs_target,coverage,source_url,origin,path_prefix,attribution,approved_stack)
 VALUES (
     md5(:'project_id' || ':pilot-fastapi-2026-10-31')::uuid,
     :'workspace_id'::uuid, :'project_id'::uuid, :'approved_by'::uuid,
@@ -14,7 +14,9 @@ VALUES (
     'https://raw.githubusercontent.com/fastapi/fastapi/1c83302d783783d4c9703df94b823dd39e545b63/docs/en/docs/tutorial/sql-databases.md',
     'https://raw.githubusercontent.com',
     '/fastapi/fastapi/1c83302d783783d4c9703df94b823dd39e545b63/docs/en/docs/tutorial/',
-    'FastAPI documentation; MIT license; https://github.com/fastapi/fastapi/blob/1c83302d783783d4c9703df94b823dd39e545b63/LICENSE')
+    'FastAPI documentation; MIT license; https://github.com/fastapi/fastapi/blob/1c83302d783783d4c9703df94b823dd39e545b63/LICENSE',
+    (SELECT selected FROM app.projects p CROSS JOIN LATERAL jsonb_array_elements(p.stack) selected
+        WHERE p.id=:'project_id'::uuid AND lower(selected->>'technology')='fastapi' LIMIT 1))
 -- Reruns neither duplicate the approval nor reactivate a revoked selection.
 ON CONFLICT (id) DO NOTHING;
 COMMIT;

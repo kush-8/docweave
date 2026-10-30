@@ -88,7 +88,7 @@ def create_app(*, auth_settings=None, auth_engine=None, oidc=None) -> FastAPI:
     app = FastAPI(
         title="DocWeave API",
         version="0.1.0",
-        description="Authentication, workspaces, memberships/invitations, manual projects, collection grants, processor consent, configured answer profiles, financial admission, own-tenant usage and durable bounded TXT/Markdown snapshot preparation are implemented. Retrieval indexing, conversations and hosted calls remain unavailable.",
+        description="Authentication, workspaces, memberships/invitations, manual projects, collection grants, processor consent, configured answer profiles, financial admission, own-tenant usage and durable TXT/Markdown preparation are implemented. Internal scoped retrieval and a recorded-vector evaluator exist. Hosted indexing, conversations and inference remain unavailable.",
         lifespan=lifespan,
     )
     app.state.auth = (settings, engine, oidc or make_oidc(settings)) if settings else None

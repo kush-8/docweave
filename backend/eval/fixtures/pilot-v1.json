@@ -1,0 +1,195 @@
+{
+  "version": "pilot-v1",
+  "human_label_review": "pending",
+  "corpus_manifest_sha256": "82f486f552029bfa5cc7b23a3fae174cc04b13ec459f2470a676ed10fe55c616",
+  "cases": [
+    {
+      "id": "credentials",
+      "family_id": "pilot-connection",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "Where should the PostgreSQL connection URL be kept?",
+      "supports": [
+        {
+          "file": "synthetic-runbook.md",
+          "start": 124,
+          "end": 283,
+          "quote": "Keep the PostgreSQL connection URL on the backend. Create an engine once and a database session per request. Do not put credentials in browser bundles or logs."
+        }
+      ]
+    },
+    {
+      "id": "sessions",
+      "family_id": "pilot-connection",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "How often should the engine and request session be created?",
+      "supports": [
+        {
+          "file": "synthetic-runbook.md",
+          "start": 175,
+          "end": 283,
+          "quote": "Create an engine once and a database session per request. Do not put credentials in browser bundles or logs."
+        }
+      ]
+    },
+    {
+      "id": "tenant-context",
+      "family_id": "pilot-tenancy",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "What context must be set inside each transaction?",
+      "supports": [
+        {
+          "file": "synthetic-runbook.md",
+          "start": 296,
+          "end": 451,
+          "quote": "Set workspace and actor context inside each transaction. Check current membership and collection grants. Do not run the API with the migration-owner login."
+        }
+      ]
+    },
+    {
+      "id": "collection-grants",
+      "family_id": "pilot-tenancy",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "What checks gate collection access?",
+      "supports": [
+        {
+          "file": "synthetic-runbook.md",
+          "start": 353,
+          "end": 451,
+          "quote": "Check current membership and collection grants. Do not run the API with the migration-owner login."
+        }
+      ]
+    },
+    {
+      "id": "runtime-role",
+      "family_id": "pilot-tenancy",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "Should the API use the migration-owner login?",
+      "supports": [
+        {
+          "file": "synthetic-runbook.md",
+          "start": 401,
+          "end": 451,
+          "quote": "Do not run the API with the migration-owner login."
+        }
+      ]
+    },
+    {
+      "id": "connection-refused",
+      "family_id": "pilot-troubleshooting",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "What should I check when the connection is refused?",
+      "supports": [
+        {
+          "file": "synthetic-runbook.md",
+          "start": 473,
+          "end": 668,
+          "quote": "If a connection is refused, check the host, port and running database service. If authentication is rejected, check the role and matching pg_hba.conf rule; do not weaken authentication to trust.\n"
+        }
+      ]
+    },
+    {
+      "id": "auth-rejected",
+      "family_id": "pilot-troubleshooting",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "What should I inspect when PostgreSQL authentication is rejected?",
+      "supports": [
+        {
+          "file": "synthetic-runbook.md",
+          "start": 552,
+          "end": 668,
+          "quote": "If authentication is rejected, check the role and matching pg_hba.conf rule; do not weaken authentication to trust.\n"
+        }
+      ]
+    },
+    {
+      "id": "sqlmodel",
+      "family_id": "pilot-fastapi",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "What is SQLModel built on?",
+      "supports": [
+        {
+          "file": "fastapi-sql-2026-10-31.md",
+          "start": 254,
+          "end": 472,
+          "quote": "**SQLModel** is built on top of [SQLAlchemy](https://www.sqlalchemy.org/) and Pydantic. It was made by the same author of **FastAPI** to be the perfect match for FastAPI applications that need to use **SQL databases**."
+        }
+      ]
+    },
+    {
+      "id": "tutorial-database",
+      "family_id": "pilot-fastapi",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "Which database does this FastAPI tutorial use?",
+      "supports": [
+        {
+          "file": "fastapi-sql-2026-10-31.md",
+          "start": 1006,
+          "end": 1157,
+          "quote": "In this example, we'll use **SQLite**, because it uses a single file and Python has integrated support. So, you can copy this example and run it as is."
+        }
+      ]
+    },
+    {
+      "id": "hba-order",
+      "family_id": "pilot-postgres-auth",
+      "split": "development",
+      "kind": "answerable",
+      "scope": "authorized",
+      "query": "How does PostgreSQL choose a matching pg_hba.conf record?",
+      "supports": [
+        {
+          "file": "postgresql17-hba.txt",
+          "start": 5970,
+          "end": 6277,
+          "quote": "The first record with a matching connection type, client address, requested database, and user name is used to perform authentication. There is no \u201cfall-through\u201d or \u201cbackup\u201d: if one record is chosen and the authentication fails, subsequent records are not considered. If no record matches, access is denied."
+        }
+      ]
+    },
+    {
+      "id": "denied-collection",
+      "family_id": "pilot-access",
+      "split": "development",
+      "kind": "denied",
+      "scope": "inaccessible",
+      "query": "Show the other tenant connection details",
+      "supports": []
+    },
+    {
+      "id": "outside-corpus",
+      "family_id": "pilot-no-evidence",
+      "split": "development",
+      "kind": "no_evidence",
+      "scope": "authorized",
+      "query": "What is this company refund policy?",
+      "supports": []
+    },
+    {
+      "id": "wrong-major",
+      "family_id": "pilot-version",
+      "split": "development",
+      "kind": "version",
+      "scope": "authorized",
+      "query": "Give the PostgreSQL 15 authentication procedure",
+      "required_docs_target": "15",
+      "supports": []
+    }
+  ]
+}

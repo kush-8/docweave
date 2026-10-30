@@ -56,9 +56,11 @@ async def approved_selection(c, **changes):
     data = selection(**changes)
     async with c["owner"].begin() as connection:
         await connection.execute(text("""INSERT INTO app.documentation_selections(id,workspace_id,project_id,approved_by,
-            technology,docs_target,coverage,source_url,origin,path_prefix,attribution)
+            technology,docs_target,coverage,source_url,origin,path_prefix,attribution,approved_stack)
             VALUES(:id,:workspace,:project,:actor,'FastAPI','rolling:2026-10-31',
-                CAST(:coverage AS jsonb),:source_url,:origin,:path_prefix,:attribution)"""),
+                CAST(:coverage AS jsonb),:source_url,:origin,:path_prefix,:attribution,
+                (SELECT selected FROM app.projects p CROSS JOIN LATERAL jsonb_array_elements(p.stack) selected
+                    WHERE p.id=:project AND lower(selected->>'technology')='fastapi' LIMIT 1))"""),
             {"id": identity, "workspace": UUID(c["workspace"]["id"]), "project": UUID(c["project"]), "actor": UUID(c["user"]["id"]),
                 "coverage": json.dumps({"granularity": "rolling", "publisher_range": None}), **data})
     return identity

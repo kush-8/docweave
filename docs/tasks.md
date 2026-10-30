@@ -30,6 +30,8 @@ Budget/profile backend slice implemented 2026-10-30 on `main`: immutable version
 
 ## Current backend task order — 2026-10-30
 
+2026-10-31 checkpoint: Tasks 3A and 3B are implemented through deterministic/recorded-vector evaluation. The full backend suite passes 505 tests with warnings as errors. See [ingestion](runbooks/ingestion.md) and [retrieval](runbooks/retrieval.md). The evaluator CLI reports matching frozen corpus hashes, current scope and real exact/HNSW plans; it explicitly withholds semantic quality claims. The user chose operator seed SQL (owner API stays Task 7) and SQL BM25 with authorized corpus statistics. Next: 3C real adapters, profile/processor reconciliation, bounded dispatch/fusion/reranking and live compatibility/pilot evidence. The user is configuring keys and development DB access; no paid call has been made.
+
 The user confirmed two lexical implementations (PostgreSQL native full-text and BM25), two vector strategies (filtered exact nearest neighbours and shared HNSW with database filtering/iterative scans), and an end-to-end RAG evaluation pipeline. Evaluate their four hybrid combinations before choosing production retrieval defaults. None of these paths or quality results is implemented yet.
 
 | Order | Task | Deliverable |
@@ -159,17 +161,17 @@ async def test_cross_workspace_project_is_hidden(owner_a, project_b):
 
 ### 3A — Durable ingestion
 
-- [ ] Write failing ingestion tests for a synthetic FastAPI-to-PostgreSQL connection/access runbook and frozen official fixtures: a dated rolling FastAPI snapshot and PostgreSQL 17 docs. Label FastAPI coverage honestly; do not claim exact package-version coverage.
-- [ ] Implement bounded TXT/Markdown parse/normalize/hash/chunk/stage/publish, transactional jobs/outbox, worker leases/recovery, private storage and source allowlist/redirect checks. Seed approved DocumentationSelection records; imports accept their IDs, not client-asserted trusted URLs. Use fake embedding transport until 3C verifies hosted profiles.
-- [ ] Test same-content/config idempotency, failed replacement retaining the last good snapshot, immutable locators, post-wait authority and deletion during publication. Wrong-tenant or unapproved private text must never reach even a fake embedder.
+- [x] Write failing ingestion tests for a synthetic FastAPI-to-PostgreSQL connection/access runbook and frozen official fixtures: a dated rolling FastAPI snapshot and PostgreSQL 17 docs. Label FastAPI coverage honestly; do not claim exact package-version coverage.
+- [x] Implement bounded TXT/Markdown parse/normalize/hash/chunk/stage/publish, transactional jobs/outbox, worker leases/recovery, private storage and source allowlist/redirect checks. Seed approved DocumentationSelection records; imports accept their IDs, not client-asserted trusted URLs. Fake embedding transports are confined to 3B's deterministic tests; hosted profiles wait for 3C.
+- [x] Test same-content/config idempotency, failed replacement retaining the last good snapshot, immutable locators, post-wait authority and deletion during publication. Wrong-tenant or unapproved private text must never reach even a fake embedder.
 
 ### 3B — Scoped indexes and evaluation foundation
 
-- [ ] Add workspace/collection-owned chunk/embedding storage and RLS with transaction-local actor context. Enforce current grants, project-approved technology/docs selections, active snapshots, tombstones and compatible embedding generations in both retrieval channels. Never mix incompatible embedding spaces or broaden an empty authorized scope.
-- [ ] Implement PostgreSQL native full-text and BM25 as alternative lexical paths. Choose/pin the BM25 implementation after checking PostgreSQL 17 compatibility, tokenization and corpus-statistics isolation; shared statistics influenced by unreadable documents must not silently bypass the privacy gate. Cover literal error codes/identifiers and explicit version metadata.
-- [ ] Implement metadata filtering followed by exact distance ranking without an ANN index, and shared HNSW candidate search with database RLS/metadata filtering and bounded iterative scans. Ordinary metadata indexes remain available to the exact path. Verify execution plans distinguish the paths; record HNSW settings and scan limits.
-- [ ] Start Task 10's backend evaluation CLI/data/report format with 10 labeled answerable development questions and separate denial, no-evidence and version cases. Freeze corpus snapshots, source spans, scenario/family IDs and configurations; these pilot cases remain development-only.
-- [ ] Build baseline/report plumbing with fake or recorded embeddings; register native-only, BM25-only, exact-vector-only and HNSW-vector-only baselines plus the four hybrid configurations executed in 3C. Record candidate IDs/ranks, SQL plans, latency, index size/build time, underfilled results and HNSW Recall@k against exact results; distinguish this ANN recall from labeled supporting-passage recall. Fake vectors prove behavior, not semantic quality.
+- [x] Add workspace/collection-owned chunk/embedding storage and RLS with transaction-local actor/workspace/generation context. Enforce current grants, approved technology/version entries, searchable snapshots, tombstones and compatible generations. A separate atomic searchable pointer preserves the previous good index through failed replacements; empty scope never broadens.
+- [x] Implement native full-text and `sql-bm25-ident-v1` (k1=1.2, b=0.75) on PostgreSQL 17. Native ranking and true BM25 remain distinct; identifiers and authorized-only corpus statistics have independent regressions. The user chose SQL rather than a search extension.
+- [x] Implement materialized filtered exact ranking and shared HNSW with RLS/metadata filters and bounded iterative scans. Real plans distinguish the paths; experiment settings, scan limits and underfill are recorded.
+- [x] Start the evaluation CLI/report format with ten answerable development questions plus denial/no-evidence/version cases, frozen corpus hashes, exact source spans and scenario/family IDs. Labels remain pending human review; no held-out cases are used.
+- [x] Build recorded-vector component reports and register four single-channel baselines plus four hybrid combinations. Record candidate ranks/plans/timing, shared index size, publication/build measurements, underfill, ANN Recall@30 and separate supporting Recall@10 denominators. Recordings bind to generation and exact question-file hashes. Semantic quality, hybrid fusion and reranking remain 3C.
 
 ### 3C — Hosted compatibility, bounded fusion and retrieval pilot
 
