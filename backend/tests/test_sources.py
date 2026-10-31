@@ -4,15 +4,19 @@ import json
 import socket
 import asyncio
 import subprocess
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import text
 
 from test_auth import auth_client  # noqa: F401
 from test_collections import collections  # noqa: F401
-from test_database import databases, test_urls  # noqa: F401
-from test_ingestion import FIXTURES, ingestion, work  # noqa: F401
+from test_database import databases
+from test_database import test_urls  # noqa: F401
+from test_ingestion import FIXTURES
+from test_ingestion import ingestion
+from test_ingestion import work  # noqa: F401
 from test_memberships import members  # noqa: F401
 
 pytestmark = pytest.mark.anyio
@@ -32,14 +36,14 @@ def public_resolver(host, port, **kwargs):
     "https://docs.example.test/manual/../secret", "https://docs.example.test/manual/%2e%2e/secret",
     "https://docs.example.test/manual/%252e%252e/secret", "https://docs.example.test/manual/a%2fb", "https://docs.example.test/manual/a?secret=x"])
 async def test_fetch_scope_rejects_unapproved_or_ambiguous_targets(url):
-    from docweave.sources import validated_address
+    from docweave.integrations.public_sources import validated_address
     with pytest.raises(ValueError):
         validated_address(url, selection(), resolver=public_resolver)
 
 
 @pytest.mark.parametrize("address", ["127.0.0.1", "10.0.0.1", "169.254.169.254", "100.64.0.1", "::1", "fc00::1", "0.0.0.0", "192.0.2.1", "224.0.0.1", "ff02::1", "64:ff9b::7f00:1"])
 async def test_dns_results_are_all_public_before_a_connection_is_allowed(address):
-    from docweave.sources import validated_address
+    from docweave.integrations.public_sources import validated_address
     def mixed(host, port, **kwargs):
         return public_resolver(host, port) + [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (address, port))]
     with pytest.raises(ValueError):
@@ -47,7 +51,7 @@ async def test_dns_results_are_all_public_before_a_connection_is_allowed(address
 
 
 async def test_safe_target_returns_pinned_address_without_second_dns_lookup():
-    from docweave.sources import validated_address
+    from docweave.integrations.public_sources import validated_address
     assert validated_address(selection()["source_url"], selection(), resolver=public_resolver) == ("docs.example.test", 443, "93.184.216.34")
 
 
@@ -118,7 +122,7 @@ async def test_revoked_selection_never_reaches_fetch_and_source_delete_tombstone
 
 @pytest.mark.parametrize("response", ["redirect", "robots_denied"])
 async def test_fetcher_enforces_robots_redirects_and_response_bounds(monkeypatch, response):
-    from docweave import sources
+    from docweave.integrations import public_sources as sources
     monkeypatch.setattr(sources.socket, "getaddrinfo", public_resolver)
     requests = []
     def request(url, address):
@@ -137,9 +141,28 @@ async def test_fetcher_enforces_robots_redirects_and_response_bounds(monkeypatch
         assert len(requests) == 1
 
 
+async def test_fetcher_rechecks_authorization_before_each_pinned_request(monkeypatch):
+    from docweave.integrations import public_sources as sources
+    monkeypatch.setattr(sources.socket, "getaddrinfo", public_resolver)
+    events = []
+    def request(url, address):
+        events.append("request")
+        assert address == ("docs.example.test", 443, "93.184.216.34")
+        assert url.endswith("/robots.txt")
+        return 200, {"Content-Type": "text/plain"}, b"User-agent: *\nAllow: /"
+    async def authorize():
+        events.append("authorize")
+        if len(events) > 1:
+            raise PermissionError("revoked")
+    monkeypatch.setattr(sources, "_request", request)
+    with pytest.raises(PermissionError, match="revoked"):
+        await sources.fetch_document(selection(), authorize=authorize)
+    assert events == ["authorize", "request", "authorize"]
+
+
 async def test_operator_seed_checks_current_owner_and_commits_project_scoped_selection(ingestion):
     c = ingestion
-    from docweave.ingestion import ROOT
+    from docweave.core.paths import ROOT
     sql = (ROOT / "backend" / "catalog" / "pilot-text-selections.sql").read_bytes()
     command = ["docker", "compose", "exec", "-T", "test-db", "psql", "-U", "docweave_migrator", "-d", "docweave_test",
         "-v", "ON_ERROR_STOP=1", "-v", "workspace_id=" + c["workspace"]["id"], "-v", "project_id=" + c["project"], "-v"]

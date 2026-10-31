@@ -4,6 +4,8 @@ Captured: 2026-10-30T05:56:25+05:30 (Asia/Calcutta). HEAD: `d43cba28d68869e608ca
 
 [Return to the study guide](study-guide.md). This appendix identifies the inspected source and lockfile graph. It does not claim package installation, current passing tests, or completed learning.
 
+This is a historical file/hash inventory. Responsibility separation on 2026-10-31 moved implementation into technical layers; [README](../README.md#repository-structure) owns the current physical map. Recorded paths and hashes below are intentionally unchanged.
+
 ## Scope and counts
 
 - 89 existing tracked/nonignored project files before the two study documents, including empty placeholders.

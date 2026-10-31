@@ -6,8 +6,8 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from docweave.models import Base
-from docweave.settings import database_url
+from docweave.db.models import Base
+from docweave.core.settings import database_url
 
 
 def run_migrations(connection):

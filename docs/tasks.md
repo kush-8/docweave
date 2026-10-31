@@ -88,21 +88,19 @@ The user authorized the scaffold, frontend preview, API skeleton, and database f
 
 | Location | Responsibility |
 | --- | --- |
-| `backend/src/docweave/main.py`, `settings.py`, `db.py` | App creation, configuration, runtime DB/session boundary |
-| `auth.py`, `policy.py`, `projects.py` | OIDC sessions, tenant roles/grants, membership/invitations/project operations |
-| `budget.py`, `providers.py` | Reservations/settlement and explicitly configured hosted profiles/adapters |
-| `ingestion.py`, `sources.py`, `retrieval.py` | Durable lifecycle, approved source selection/fetch, version-scoped retrieval |
-| `github.py`, `dependencies.py`, `documentation.py` | User-owned repo access/commit scans, static dependency facts, reviewed version-aware documentation discovery |
-| `conversations.py`, `memory.py`, `workflow.py` | Author-private turns, protected checkpoints/summary, bounded graph |
-| `telemetry.py`, `evaluation.py` | Content-safe operations and reproducible reports |
+| `backend/src/docweave/main.py`, `api/`, `core/`, `db/` | App composition, HTTP boundaries, configuration, identity and tenant sessions/models |
+| `schemas/`, `services/`, `repositories/` | Validation, coordinated workflows and SQL, grouped by domain |
+| `integrations/`, `storage/`, `workers/` | External adapters, artifact operations and queue lifecycle |
+| `rag/`, `repositories/rag/` | Separate implemented RAG stages and authorized lexical/vector/publication SQL |
+| `evaluation/` | Reproducible datasets, metrics, execution, source fingerprints and reports |
 | `backend/alembic/`, `backend/tests/` | Migrations and unit/integration/security/failure checks |
-| `frontend/src/app/`, `features/` | Application routing/bootstrap and feature-owned pages/state/components |
-| `frontend/src/components/ui/`, `lib/`, `styles/` | Shared presentation controls, HTTP/browser helpers, global theme tokens |
+| `frontend/src/app/`, `pages/`, `layouts/` | Bootstrap, screen coordination and presentational shell |
+| `frontend/src/components/`, `hooks/`, `routing/`, `data/`, `styles/` | Presentation, state/browser behavior, URLs, synthetic fixtures and themes |
 | `frontend/tests/` | Playwright browser flows, including deterministic API fixtures |
 | `backend/catalog/`, `backend/eval/` | Source manifests and versioned scenario/label/split/config data |
 | `compose.yaml`, `.github/workflows/` | Reproducible local services and deterministic/manual-live CI |
 
-Keep domain routes/schemas close to their owning modules. Split a module only when its responsibility grows; this map does not require a separate abstraction for every operation.
+Keep domain names consistent across technical layers. Introduce a service only when it coordinates a workflow; this map does not require a forwarding abstraction for every operation. Future GitHub, conversation and memory features should follow these boundaries when implemented, without empty modules now.
 
 Backend checks run from repository root as `uv run --project backend pytest backend/tests/<file> -q`. Browser checks use `npm --prefix frontend exec -- playwright test`. Establish these commands during Task 1; they are future commands, not checks already run.
 

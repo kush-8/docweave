@@ -7,13 +7,15 @@ uses only captured SMTP and the guarded disposable application database.
 import asyncio
 import re
 from html.parser import HTMLParser
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import urljoin
+from urllib.parse import urlsplit
 from uuid import uuid4
 
 import httpx
 import pytest
 
-from test_database import databases, test_urls  # noqa: F401
+from test_database import databases
+from test_database import test_urls  # noqa: F401
 
 
 class Forms(HTMLParser):
@@ -55,7 +57,7 @@ def test_form_parser_preserves_hidden_fields_and_decodes_actions():
 
 @pytest.mark.anyio
 async def test_local_email_registration_verification_reset_and_backend_session(databases):
-    from docweave.auth import AuthSettings
+    from docweave.core.settings import AuthSettings
     from docweave.main import create_app
 
     settings = AuthSettings.load()

@@ -14,10 +14,15 @@ from sqlalchemy import text
 
 from test_auth import auth_client  # noqa: F401
 from test_collections import collections  # noqa: F401
-from test_database import WB, databases, test_urls  # noqa: F401
-from test_ingestion import FIXTURES, ingestion  # noqa: F401
+from test_database import WB
+from test_database import databases
+from test_database import test_urls  # noqa: F401
+from test_ingestion import FIXTURES
+from test_ingestion import ingestion  # noqa: F401
 from test_memberships import members  # noqa: F401
-from test_retrieval import basis, index, indexed  # noqa: F401
+from test_retrieval import basis
+from test_retrieval import index
+from test_retrieval import indexed  # noqa: F401
 
 pytestmark = pytest.mark.anyio
 DATASET = Path(__file__).resolve().parents[1] / "eval" / "fixtures" / "pilot-v1.json"
@@ -60,7 +65,8 @@ async def test_metric_denominators_distinguish_ann_recall_and_supporting_recall(
 
 
 async def test_supporting_recall_requires_the_correct_source_span():
-    from docweave.evaluation import load_dataset, support_recall
+    from docweave.evaluation import load_dataset
+    from docweave.evaluation import support_recall
     case = load_dataset(DATASET).cases[0]
     support = case.supports[0]
     hit = {"quote": support.quote, "provenance": {"document_title": support.file}, "source_url": None,
@@ -71,7 +77,9 @@ async def test_supporting_recall_requires_the_correct_source_span():
 
 
 async def test_report_runs_all_registered_components_without_claiming_semantic_quality(indexed, tmp_path):
-    from docweave.evaluation import evaluate, load_dataset, load_recording
+    from docweave.evaluation import evaluate
+    from docweave.evaluation import load_dataset
+    from docweave.evaluation import load_recording
     c = indexed
     await index(c, b"Alpha connection instructions.\n")
     dataset = load_dataset(DATASET)
@@ -91,6 +99,12 @@ async def test_report_runs_all_registered_components_without_claiming_semantic_q
     assert report["corpus_matches_manifest"] is False
     assert report["query_recording_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
     assert report["physical_shared_index_size_bytes"] > 0
+    assert report["report_version"] == "retrieval-components-v2"
+    implementation = report["retrieval_implementation"]
+    assert implementation["algorithm"] == "sha256-path-content-manifest-v1"
+    assert report["retrieval_implementation_sha256"] == implementation["sha256"]
+    assert "backend/src/docweave/rag/retrieval.py" in implementation["files"]
+    assert "backend/src/docweave/repositories/rag/vector.py" in implementation["files"]
     denied_case = next(case for case in report["cases"] if case["kind"] == "denied")
     assert all(run["status"] == "denied" for run in denied_case["runs"])
     normal = next(case for case in report["cases"] if case["kind"] == "answerable")
@@ -103,9 +117,9 @@ async def test_report_runs_all_registered_components_without_claiming_semantic_q
 
 async def test_cli_evaluates_the_frozen_corpus_and_writes_an_atomic_report(indexed, tmp_path):
     from docweave.evaluation import load_dataset
-    from docweave.ingestion import ROOT
-    from docweave.retrieval import index_document
-    from docweave.settings import database_url
+    from docweave.core.paths import ROOT
+    from docweave.rag.indexing import index_document
+    from docweave.core.settings import database_url
     from test_ingestion import work
     c = indexed
     manifest = json.loads((FIXTURES / "manifest.json").read_text())
@@ -147,7 +161,9 @@ async def test_cli_evaluates_the_frozen_corpus_and_writes_an_atomic_report(index
 @pytest.mark.parametrize("wrong", ["generation", "dataset", "changed_question"])
 async def test_recordings_must_match_the_requested_generation_and_question_file(tmp_path, wrong):
     from uuid import uuid4
-    from docweave.evaluation import evaluate, load_dataset, load_recording
+    from docweave.evaluation import evaluate
+    from docweave.evaluation import load_dataset
+    from docweave.evaluation import load_recording
     dataset = load_dataset(DATASET)
     if wrong == "changed_question":
         changed = json.loads(DATASET.read_text())

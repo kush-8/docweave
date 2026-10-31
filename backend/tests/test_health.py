@@ -2,7 +2,8 @@
 
 import asyncio
 
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport
+from httpx import AsyncClient
 
 
 def test_liveness_returns_ok_without_login():

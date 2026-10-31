@@ -1,13 +1,21 @@
 """Workspace behavior is exercised through real auth and restricted-role PostgreSQL."""
 
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import text
-from sqlalchemy.exc import DBAPIError, IntegrityError
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import IntegrityError
 
-from test_auth import ORIGIN, auth_client, login  # noqa: F401
-from test_database import A, WA, WB, databases, test_urls  # noqa: F401
+from test_auth import ORIGIN
+from test_auth import auth_client
+from test_auth import login  # noqa: F401
+from test_database import A
+from test_database import WA
+from test_database import WB
+from test_database import databases
+from test_database import test_urls  # noqa: F401
 
 pytestmark = pytest.mark.anyio
 
@@ -156,7 +164,7 @@ async def test_workspace_guards_hide_outsiders_and_check_current_owner_role(auth
 
 
 async def test_actor_contains_only_verified_ids_and_cannot_be_supplied_by_request(auth_client):
-    from docweave.policy import Actor
+    from docweave.core.identity import Actor
 
     client, _, owner, user, _ = await signed_in(auth_client)
     async with owner.begin() as connection:
@@ -169,7 +177,7 @@ async def test_actor_contains_only_verified_ids_and_cannot_be_supplied_by_reques
 
 
 async def test_workspace_creation_rolls_back_if_owner_insert_fails(databases):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     owner, runtime = databases
     with pytest.raises(IntegrityError):
@@ -205,7 +213,7 @@ async def test_workspace_functions_have_fixed_search_path_and_no_public_execute(
 
 
 async def test_actor_only_context_cannot_read_unselected_tenant_rows_and_clears_on_reuse(databases):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     _, runtime = databases
     async with tenant_session(runtime, actor_id=A) as session:

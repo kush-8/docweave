@@ -2,15 +2,23 @@
 
 import asyncio
 import json
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
 from test_auth import auth_client  # noqa: F401
-from test_database import B, PB, WB, databases, test_urls  # noqa: F401
-from test_memberships import accept, invite, members, wait_for_lock  # noqa: F401
+from test_database import B
+from test_database import PB
+from test_database import WB
+from test_database import databases
+from test_database import test_urls  # noqa: F401
+from test_memberships import accept
+from test_memberships import invite
+from test_memberships import members
+from test_memberships import wait_for_lock  # noqa: F401
 from test_projects import validate
 
 pytestmark = pytest.mark.anyio
@@ -270,7 +278,7 @@ async def test_collection_creation_rejects_invalid_input_without_writing(collect
 
 
 async def test_storage_permissions_and_function_search_paths_are_restricted(collections):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     c = collections
     async with c["owner"].connect() as connection:
@@ -299,7 +307,7 @@ async def test_storage_permissions_and_function_search_paths_are_restricted(coll
 
 
 async def test_runtime_cannot_bypass_owner_checks_or_selected_workspace(collections):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     c = collections
     statements = ["SELECT app.create_collection(:project,'No')", "SELECT app.collection_grants(:collection)",
@@ -370,7 +378,8 @@ async def test_insert_failure_restores_previous_rows_and_revision(collections, o
 
 
 async def test_runtime_openapi_declares_consent_security_and_strict_inputs(collections):
-    from jsonschema import Draft202012Validator, FormatChecker
+    from jsonschema import Draft202012Validator
+    from jsonschema import FormatChecker
 
     schema = (await collections["admin"].get("/openapi.json")).json()
     for path, method in [("/projects/{project_id}/collections", "post"), ("/collections/{collection_id}/grants", "put"),

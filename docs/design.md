@@ -1,5 +1,7 @@
 # DocWeave — Frontend Design and App Flow
 
+Code organization — 2026-10-31: `pages/WorkbenchPage` coordinates the current screen; `layouts` owns the presentational shell/header/sidebar, `components` owns conversation/composer/evidence/dialog rendering, `hooks` owns navigation/draft protection and browser preferences, `routing` owns URL parsing/building, and `data` owns synthetic fixtures. This separation preserves the current UI and introduces no backend integration or new screens.
+
 ## Current UI direction — 2026-10-30
 
 The user replaced the workbench presentation with a simple chatbot. This direction supersedes the project rail and permanently adjacent evidence layout described below; the broader product requirements remain future integration scope.

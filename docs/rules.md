@@ -12,6 +12,8 @@ Current scope confirmed 2026-10-30: work on backend only, on `main`; frontend im
 
 Initial scaffold authorization was followed by the scoped backend/preview work recorded in tasks.md and memory.md. Continue the user's current authorized task and preserve pending changes; planning checkboxes alone do not authorize unrelated implementation, account changes, paid calls or deployment.
 
+On 2026-10-31 the user authorized responsibility separation in both backend and frontend. This includes restructuring the existing frontend preview, while frontend integration and new product features remain deferred. Use technical layers and separate implemented RAG stages as mapped in README. Do not add forwarding layers for simple operations. Lower layers must not import HTTP routes, dependencies or framework exceptions; the API maps domain failures to existing HTTP contracts.
+
 ## Security and privacy invariants
 
 - Workspace is the tenant. Authorize every operation against identity, tenant membership, resource ownership, roles, collection grants, and current processing policy; opaque IDs are never authorization.

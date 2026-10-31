@@ -2,16 +2,23 @@
 
 import asyncio
 import json
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import pytest
-from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema import Draft202012Validator
+from jsonschema import FormatChecker
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
 from test_api import DRAFT
 from test_auth import auth_client  # noqa: F401
-from test_database import B, PB, WB, databases, migrate, test_urls  # noqa: F401
+from test_database import B
+from test_database import PB
+from test_database import WB
+from test_database import databases
+from test_database import migrate
+from test_database import test_urls  # noqa: F401
 from test_memberships import wait_for_lock
 from test_workspaces import signed_in
 
@@ -149,7 +156,7 @@ async def test_project_and_child_ids_hide_other_workspaces_and_ignore_forged_act
 async def test_members_can_read_context_but_not_collection_content_or_mutate(projects, role):
     client, data, owner, user, headers, workspace = projects
     project = (await create(projects))["project"]
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     async with owner.begin() as connection:
         await connection.execute(text("UPDATE app.memberships SET role=:role WHERE workspace_id=:w AND user_id=:u"), {"w": UUID(workspace), "u": UUID(user["id"]), "role": role})
@@ -228,7 +235,7 @@ async def test_owner_authority_is_rechecked_after_workspace_lock_wait(projects, 
 
 
 async def test_private_function_failure_rolls_back_whole_creation(projects):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     _, data, owner, user, _, workspace = projects
     dependency = {"id": str(uuid4()), "technology": "FastAPI", "declared_version": None, "resolved_version": None, "docs_target": None}
@@ -242,7 +249,7 @@ async def test_private_function_failure_rolls_back_whole_creation(projects):
 
 
 async def test_runtime_grants_and_collection_isolation(projects):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     _, data, _, user, _, workspace = projects
     project = (await create(projects))["project"]
@@ -336,7 +343,7 @@ async def test_migration_stops_before_changing_legacy_nonempty_stacks(databases,
 
 async def test_patch_pending_request_failure_rolls_back_context_and_requests(projects, monkeypatch):
     project = (await create(projects))["project"]
-    monkeypatch.setattr("docweave.projects.uuid4", lambda: UUID(project["stack"][0]["id"]))
+    monkeypatch.setattr("docweave.services.projects.uuid4", lambda: UUID(project["stack"][0]["id"]))
     path = f'/api/v1/projects/{project["id"]}'
     response = await projects[0].patch(path, json={"expected_revision": 1, "goal": "Must roll back",
         "stack": [{"technology": "Python"}]}, headers=projects[4])

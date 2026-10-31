@@ -4,6 +4,8 @@ Prepared on 2026-10-30, Asia/Calcutta. Reader: comfortable with Python and JavaS
 
 This is a learning companion, not a replacement for the product specification or an implementation plan. [The inventory](study-inventory.md) records the files, dependency declarations, resolved package records, and Git changes inspected for this guide. Existing code was not changed to prepare it.
 
+Path update — 2026-10-31: the guide and inventory below retain their historical snapshots. The live implementation now uses technical layers and separate RAG stages; use [README's current map](../README.md#repository-structure) and [architecture boundaries](architecture.md#code-organization--2026-10-31) to locate the equivalent code. Main, worker and evaluation commands remain stable.
+
 ## What we are studying
 
 There are three useful views of this repository:

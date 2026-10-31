@@ -4,14 +4,22 @@ import asyncio
 import json
 from datetime import date
 from decimal import Decimal
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
 from test_auth import auth_client  # noqa: F401
-from test_database import A, B, PA, PB, WA, WB, databases, test_urls  # noqa: F401
+from test_database import A
+from test_database import B
+from test_database import PA
+from test_database import PB
+from test_database import WA
+from test_database import WB
+from test_database import databases
+from test_database import test_urls  # noqa: F401
 from test_projects import validate
 from test_memberships import wait_for_lock
 from test_workspaces import signed_in
@@ -49,21 +57,21 @@ async def allowance(owner, workspace=WA, amount="1", month=None):
 
 
 async def reserve(runtime, identity, key="operation-a", *, actor_id=A, workspace=WA, project=PA, input_tokens=1, output_tokens=1):
-    from docweave.budget import reserve_cost
-    from docweave.policy import Actor
+    from docweave.services.budget import reserve_cost
+    from docweave.core.identity import Actor
 
     return await reserve_cost(Actor(actor_id, workspace), key, identity, input_tokens, output_tokens, engine=runtime, project_id=project)
 
 
 async def settle(runtime, reservation, actual, uncertain=False, *, actor_id=A, workspace=WA):
-    from docweave.budget import settle_cost
-    from docweave.policy import Actor
+    from docweave.services.budget import settle_cost
+    from docweave.core.identity import Actor
 
     return await settle_cost(reservation.id, actual, uncertain, actor=Actor(actor_id, workspace), engine=runtime)
 
 
 async def test_concurrent_reservations_respect_workspace_and_global_caps(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)
@@ -81,7 +89,7 @@ async def test_concurrent_reservations_respect_workspace_and_global_caps(databas
 
 
 async def test_same_operation_is_idempotent_and_changed_payload_or_actor_conflicts(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)
@@ -97,7 +105,7 @@ async def test_same_operation_is_idempotent_and_changed_payload_or_actor_conflic
 
 
 async def test_uncertain_settlement_retains_maximum_then_confirmed_reconciliation_is_idempotent(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)
@@ -121,7 +129,7 @@ async def test_uncertain_settlement_retains_maximum_then_confirmed_reconciliatio
 @pytest.mark.parametrize("overrides", [{"input": None}, {"fixed": None}, {"enabled": False},
     {"pricing": False}, {"capabilities": False}, {"account": False}])
 async def test_unverified_or_unpriced_profiles_cannot_reserve(databases, overrides):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner, **overrides)
@@ -131,7 +139,7 @@ async def test_unverified_or_unpriced_profiles_cannot_reserve(databases, overrid
 
 
 async def test_missing_allowance_and_disabled_processor_fail_closed(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)
@@ -145,7 +153,7 @@ async def test_missing_allowance_and_disabled_processor_fail_closed(databases):
 
 
 async def test_decimal_bounds_attempts_and_actual_overrun_are_conservative(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner, fixed=Decimal("0"), input=Decimal("0.0000001"), output=Decimal("0"), attempts=3)
@@ -161,7 +169,7 @@ async def test_decimal_bounds_attempts_and_actual_overrun_are_conservative(datab
 
 
 async def test_month_uses_calcutta_and_old_charges_do_not_move_on_reconciliation(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     async with runtime.connect() as connection:
@@ -178,7 +186,7 @@ async def test_month_uses_calcutta_and_old_charges_do_not_move_on_reconciliation
 
 
 async def test_settlement_is_scoped_but_can_record_cost_after_membership_revocation(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)
@@ -195,7 +203,7 @@ async def test_settlement_is_scoped_but_can_record_cost_after_membership_revocat
 
 @pytest.mark.parametrize("value", [True, -1, 1.5, "1", 1001])
 async def test_token_bounds_reject_invalid_values(databases, value):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)
@@ -237,7 +245,7 @@ async def test_runtime_cannot_read_ledger_or_raise_caps(databases):
 
 @pytest.mark.parametrize("change,code", [("cap", "workspace_limit"), ("membership", "not_found"), ("profile", "profile_unavailable")])
 async def test_admission_rechecks_changes_after_budget_lock_wait(databases, change, code):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)
@@ -266,7 +274,7 @@ async def test_admission_rechecks_changes_after_budget_lock_wait(databases, chan
 
 
 async def test_zero_allowance_stops_even_zero_priced_hosted_work(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner, fixed=Decimal("0"))
@@ -287,7 +295,7 @@ async def test_invalid_or_binary_float_actual_cost_cannot_change_ledger(database
 
 
 async def test_uncertain_partial_cost_never_shrinks_and_confirmed_replays_cannot_reopen_it(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)
@@ -302,7 +310,7 @@ async def test_uncertain_partial_cost_never_shrinks_and_confirmed_replays_cannot
 
 
 async def test_overrun_is_recorded_and_stops_future_global_admission(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)
@@ -366,7 +374,7 @@ async def test_usage_totals_project_attribution_and_capacity_never_include_other
 
 
 async def test_narrow_function_acl_and_current_project_scope(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
 
     owner, runtime = databases
     identity = await profile(owner)

@@ -8,8 +8,11 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from dotenv import dotenv_values
-from sqlalchemy import make_url, select, text
-from sqlalchemy.exc import DBAPIError, IntegrityError
+from sqlalchemy import make_url
+from sqlalchemy import select
+from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 
@@ -86,7 +89,7 @@ def test_database_test_guard_accepts_only_the_approved_local_pair():
 
 
 def test_database_configuration_requires_an_explicit_url(monkeypatch):
-    from docweave.settings import database_url
+    from docweave.core.settings import database_url
 
     monkeypatch.delenv("MISSING_DATABASE_URL", raising=False)
     with pytest.raises(ValueError, match="MISSING_DATABASE_URL"):
@@ -95,7 +98,7 @@ def test_database_configuration_requires_an_explicit_url(monkeypatch):
 
 @pytest.mark.parametrize("value", ["sqlite:///data.db", "not-a-url", "postgresql+asyncpg://user@localhost"])
 def test_database_configuration_rejects_invalid_urls_without_exposing_them(monkeypatch, value):
-    from docweave.settings import database_url
+    from docweave.core.settings import database_url
 
     monkeypatch.setenv("TEST_INVALID_URL", value)
     with pytest.raises(ValueError) as error:
@@ -104,7 +107,7 @@ def test_database_configuration_rejects_invalid_urls_without_exposing_them(monke
 
 
 def test_database_configuration_does_not_export_administrator_credentials(monkeypatch):
-    from docweave.settings import database_url
+    from docweave.core.settings import database_url
 
     monkeypatch.delenv("PG_ADMIN_PASSWORD", raising=False)
     monkeypatch.setenv("CONFIGURED_RUNTIME_URL", "postgresql+asyncpg://reader:example@127.0.0.1:55432/docweave")
@@ -135,7 +138,7 @@ async def migrate(url, revision, *, downgrade=False):
 
 @pytest.fixture
 async def databases(test_urls):
-    from docweave.db import make_engine
+    from docweave.db.engine import make_engine
 
     runtime_url, migration_url = test_urls
     await migrate(migration_url, "head")
@@ -203,7 +206,8 @@ async def test_migration_downgrade_then_upgrade_recreates_empty_tables(test_urls
 @pytest.mark.anyio
 async def test_models_persist_defaults_and_same_email_does_not_merge_identity(databases):
     from sqlalchemy.ext.asyncio import AsyncSession
-    from docweave.models import Project, User
+    from docweave.db.models import Project
+    from docweave.db.models import User
 
     owner, _ = databases
     async with AsyncSession(owner) as session, session.begin():
@@ -257,7 +261,7 @@ async def test_database_constraints_reject_invalid_rows(databases, statement, co
 
 @pytest.mark.anyio
 async def test_tenant_context_limits_each_table_to_authorized_rows(databases):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     _, runtime = databases
     async with tenant_session(runtime, actor_id=A, workspace_id=WA) as session:
@@ -272,7 +276,7 @@ async def test_tenant_context_limits_each_table_to_authorized_rows(databases):
 @pytest.mark.parametrize(("actor", "workspace"), [(A, WB), (B, WA), (C, WA)])
 @pytest.mark.anyio
 async def test_tenant_context_cannot_replace_membership(databases, actor, workspace):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     _, runtime = databases
     async with tenant_session(runtime, actor_id=actor, workspace_id=workspace) as session:
@@ -284,7 +288,7 @@ async def test_tenant_context_cannot_replace_membership(databases, actor, worksp
 @pytest.mark.parametrize("rollback", [False, True])
 @pytest.mark.anyio
 async def test_pool_reuse_clears_context_after_commit_and_rollback(databases, rollback):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     _, runtime = databases
     try:
@@ -316,7 +320,7 @@ async def test_pool_reuse_clears_context_after_commit_and_rollback(databases, ro
 ])
 @pytest.mark.anyio
 async def test_runtime_cannot_write_change_schema_or_assume_owner(databases, statement):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     _, runtime = databases
     with pytest.raises(DBAPIError) as error:

@@ -1,5 +1,5 @@
-import { Workbench } from "@/features/conversations/Workbench";
+import { WorkbenchPage } from "@/pages/WorkbenchPage";
 
 export default function App() {
-  return <Workbench />;
+  return <WorkbenchPage />;
 }

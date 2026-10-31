@@ -8,13 +8,15 @@ import pytest
 from psycopg import sql
 from sqlalchemy import text
 
-from test_database import checked_test_urls, databases, test_urls  # noqa: F401
+from test_database import checked_test_urls
+from test_database import databases
+from test_database import test_urls  # noqa: F401
 
 
 @pytest.mark.anyio
 async def test_login_repair_preserves_rows_and_restricted_roles(databases, test_urls):
-    from docweave.db import make_engine
-    from docweave.settings import database_url
+    from docweave.db.engine import make_engine
+    from docweave.core.settings import database_url
     owner, runtime = databases
     worker_url = database_url("TEST_WORKER_DATABASE_URL")
     checked_test_urls(worker_url.render_as_string(hide_password=False), test_urls[1].render_as_string(hide_password=False))

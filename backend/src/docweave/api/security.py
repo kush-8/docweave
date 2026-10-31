@@ -1,0 +1,1 @@
+MUTATION = {"security": [{"sessionCookie": [], "csrfToken": []}]}

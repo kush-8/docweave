@@ -11,11 +11,15 @@ import httpx
 import pytest
 from sqlalchemy import text
 
-from docweave.auth import digest
-from docweave.hosted import synthetic_request
-from docweave.policy import Actor
+from docweave.core.security import digest
+from docweave.services.compatibility import synthetic_request
+from docweave.core.identity import Actor
 from test_budget import allowance
-from test_database import A, PA, WA, databases, test_urls  # noqa: F401
+from test_database import A
+from test_database import PA
+from test_database import WA
+from test_database import databases
+from test_database import test_urls  # noqa: F401
 from test_retrieval import basis
 
 pytestmark = pytest.mark.anyio
@@ -35,7 +39,7 @@ async def prepare(owner):
 
 
 async def run(owner, handler):
-    from docweave.compatibility import run_synthetic_probe
+    from docweave.services.compatibility import run_synthetic_probe
     return await run_synthetic_probe(Actor(A, WA), PA, "gemini-query", "dispatch-v1", engine=owner,
         api_key="synthetic-test-key", transport=httpx.MockTransport(handler))
 
@@ -84,7 +88,7 @@ async def test_redirect_oversize_and_invalid_response_fail_without_retry(databas
 
 
 async def test_changed_registered_body_cannot_reach_transport(databases):
-    from docweave.hosted import HostedError
+    from docweave.rag.contracts import HostedError
     owner, _ = databases
     await prepare(owner)
     async with owner.begin() as connection:
@@ -96,7 +100,7 @@ async def test_changed_registered_body_cannot_reach_transport(databases):
 
 
 async def test_lost_claim_acknowledgement_never_replays_http(databases, monkeypatch):
-    import docweave.compatibility as module
+    import docweave.services.compatibility as module
     owner, _ = databases
     await prepare(owner)
     original = module.tenant_session
@@ -128,7 +132,7 @@ async def test_cancellation_preserves_unknown_execution_without_replay(databases
 
 
 async def test_operator_preparation_is_idempotent_and_does_not_enable_profiles(databases):
-    from docweave.compatibility import prepare_synthetic_probes
+    from docweave.services.compatibility import prepare_synthetic_probes
     owner, _ = databases
     first = await prepare_synthetic_probes(owner)
     second = await prepare_synthetic_probes(owner)
@@ -140,7 +144,7 @@ async def test_operator_preparation_is_idempotent_and_does_not_enable_profiles(d
 
 
 async def test_registration_bounds_are_checked_after_budget_lock_wait(databases):
-    from docweave.hosted import HostedError
+    from docweave.rag.contracts import HostedError
     owner, _ = databases
     await prepare(owner)
     async def handler(request):
@@ -175,3 +179,15 @@ async def test_compressed_provider_response_is_rejected_before_decoding(database
         return httpx.Response(200, headers={"content-encoding": "gzip"},
             content=gzip.compress(json.dumps({"embedding": {"values": basis()}}).encode()))
     assert await run(owner, handler) == {"outcome": "rejected", "failure": "provider_response_encoding"}
+
+
+async def test_synthetic_runner_cannot_use_the_public_fixture_budget(databases):
+    from docweave.rag.contracts import HostedError
+    owner, _ = databases
+    await prepare(owner)
+    async with owner.begin() as connection:
+        await connection.execute(text("UPDATE app.compatibility_requests SET purpose='public_fixture'"))
+    async def handler(request):
+        pytest.fail("Synthetic runner used public-fixture capacity")
+    with pytest.raises(HostedError, match="probe_configuration_mismatch"):
+        await run(owner, handler)

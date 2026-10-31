@@ -5,8 +5,13 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import text
 
-from test_budget import allowance, profile, reserve, settle
-from test_database import databases, migrate, test_urls  # noqa: F401
+from test_budget import allowance
+from test_budget import profile
+from test_budget import reserve
+from test_budget import settle
+from test_database import databases
+from test_database import migrate
+from test_database import test_urls  # noqa: F401
 
 pytestmark = pytest.mark.anyio
 

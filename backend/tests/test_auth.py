@@ -1,7 +1,8 @@
 """Real signed OIDC tokens and restricted-role PostgreSQL exercise auth boundaries."""
 
 import time
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qs
+from urllib.parse import urlsplit
 
 import httpx
 import pytest
@@ -10,7 +11,8 @@ from joserfc import jwt
 from joserfc.jwk import RSAKey
 from sqlalchemy import text
 
-from test_database import databases, test_urls  # noqa: F401 -- isolated DB fixtures
+from test_database import databases
+from test_database import test_urls  # noqa: F401 -- isolated DB fixtures
 
 pytestmark = pytest.mark.anyio
 ORIGIN = "https://app.example.test"
@@ -31,19 +33,19 @@ def configuration(**overrides):
     {"AUTH_LOCALHOST_HTTP": "yes"}, {"AUTH_LOCALHOST_HTTP": "true"},
 ])
 async def test_unsafe_auth_configuration_is_rejected(overrides):
-    from docweave.auth import AuthSettings
+    from docweave.core.settings import AuthSettings
     with pytest.raises(ValueError):
         AuthSettings.load(configuration(**overrides))
 
 
 @pytest.mark.parametrize("origin", ["https://APP.EXAMPLE.TEST", ORIGIN + ":443/"])
 async def test_origin_matches_browser_serialization(origin):
-    from docweave.auth import AuthSettings
+    from docweave.core.settings import AuthSettings
     assert AuthSettings.load(configuration(APP_ORIGIN=origin)).origin == ORIGIN
 
 
 async def test_local_http_requires_explicit_loopback_configuration():
-    from docweave.auth import AuthSettings
+    from docweave.core.settings import AuthSettings
     settings = AuthSettings.load(configuration(APP_ORIGIN="http://127.0.0.1:5173",
         OIDC_ISSUER="http://127.0.0.1:58080/realms/docweave", AUTH_LOCALHOST_HTTP="true"))
     assert not settings.secure
@@ -53,7 +55,8 @@ async def test_local_http_requires_explicit_loopback_configuration():
 @pytest.fixture
 async def auth_client(databases):
     import httpx2
-    from docweave.auth import AuthSettings, make_oidc
+    from docweave.core.settings import AuthSettings
+    from docweave.integrations.oidc import make_oidc
     from docweave.main import create_app
 
     owner, runtime = databases
@@ -232,7 +235,7 @@ async def test_private_stubs_and_shared_login_rate_limit(auth_client):
 async def test_auth_migration_matches_models_and_provisioning_has_no_public_grant(databases):
     from alembic.autogenerate import compare_metadata
     from alembic.migration import MigrationContext
-    from docweave.models import Base
+    from docweave.db.models import Base
 
     owner, _ = databases
     async with owner.connect() as connection:

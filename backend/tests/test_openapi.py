@@ -4,7 +4,9 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
-from jsonschema import Draft202012Validator, FormatChecker, ValidationError
+from jsonschema import Draft202012Validator
+from jsonschema import FormatChecker
+from jsonschema import ValidationError
 from openapi_spec_validator import validate
 from openapi_spec_validator.readers import read_from_filename
 

@@ -7,10 +7,19 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from docweave.auth import digest
-from docweave.db import tenant_session
-from test_budget import allowance, profile, reserve
-from test_database import A, B, PA, PB, WA, WB, databases, test_urls  # noqa: F401
+from docweave.core.security import digest
+from docweave.db.sessions import tenant_session
+from test_budget import allowance
+from test_budget import profile
+from test_budget import reserve
+from test_database import A
+from test_database import B
+from test_database import PA
+from test_database import PB
+from test_database import WA
+from test_database import WB
+from test_database import databases
+from test_database import test_urls  # noqa: F401
 
 pytestmark = pytest.mark.anyio
 PAYLOAD = digest("fixed-synthetic-request-v1")
@@ -47,7 +56,7 @@ async def test_unverified_probe_is_claimed_once_and_retains_uncertainty_before_e
 
 
 async def test_runtime_cannot_use_probe_exception_or_read_private_journal(databases):
-    from docweave.budget import BudgetError
+    from docweave.services.budget import BudgetError
     owner, runtime = databases
     identity = await setup(owner)
     with pytest.raises(BudgetError, match="profile_unavailable"):
@@ -111,3 +120,29 @@ async def test_consumed_registration_cannot_erase_lifetime_probe_spend(databases
     with pytest.raises(DBAPIError) as error:
         await claim(owner, "cap-after-retirement")
     assert error.value.orig.sqlstate == "DW016"
+
+
+async def test_public_fixture_cap_is_separate_and_cannot_consume_synthetic_capacity(databases):
+    owner, _ = databases
+    identity = await profile(owner, role="embedding", fixed=Decimal("0.25"), enabled=False, account=False, capabilities=False)
+    await allowance(owner, amount="20")
+    for index in range(6):
+        key = f"public-{index}"
+        await register(owner, identity, key)
+        async with owner.begin() as connection:
+            await connection.execute(text("UPDATE app.compatibility_requests SET purpose='public_fixture' WHERE operation_hash=:key"), {"key": digest(key)})
+    for index in range(4):
+        assert (await claim(owner, f"public-{index}"))["created"]
+    with pytest.raises(DBAPIError) as error:
+        await claim(owner, "public-4")
+    assert error.value.orig.sqlstate == "DW016"
+    await register(owner, identity, "synthetic-after-public")
+    assert (await claim(owner, "synthetic-after-public"))["created"]
+    await register(owner, identity, "synthetic-after-cap")
+    with pytest.raises(DBAPIError) as error:
+        await claim(owner, "synthetic-after-cap")
+    assert error.value.orig.sqlstate == "DW016"
+    with pytest.raises(DBAPIError) as error:
+        async with owner.begin() as connection:
+            await connection.execute(text("UPDATE app.compatibility_requests SET purpose='synthetic' WHERE operation_hash=:key"), {"key": digest("public-0")})
+    assert error.value.orig.sqlstate == "22023"

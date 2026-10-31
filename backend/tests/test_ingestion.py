@@ -8,23 +8,29 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
 from test_auth import auth_client  # noqa: F401
-from test_collections import collections, replace_grants  # noqa: F401
-from test_database import B, WB, databases, test_urls  # noqa: F401
-from test_memberships import members, wait_for_lock  # noqa: F401
+from test_collections import collections
+from test_collections import replace_grants  # noqa: F401
+from test_database import B
+from test_database import WB
+from test_database import databases
+from test_database import test_urls  # noqa: F401
+from test_memberships import members
+from test_memberships import wait_for_lock  # noqa: F401
 
 pytestmark = pytest.mark.anyio
 FIXTURES = Path(__file__).parent / "fixtures" / "ingestion"
 
 
 async def test_text_normalization_chunks_and_exact_locators():
-    from docweave.text_parser import parse_text
+    from docweave.rag.parsing import parse_text
 
     parsed = parse_text(b"\xef\xbb\xbf# Connection\r\n\r\nUse PostgreSQL.\r\n", "text/markdown")
     assert parsed["text"] == "# Connection\n\nUse PostgreSQL.\n"
@@ -40,16 +46,16 @@ async def test_text_normalization_chunks_and_exact_locators():
 @pytest.mark.parametrize("content,media", [(b"\xff", "text/plain"), (b"a\x00b", "text/plain"), (b"   ", "text/plain"),
     (b"%PDF-1.7", "application/pdf"), (b"a" * 2_000_001, "text/plain")])
 async def test_parser_rejects_invalid_binary_empty_or_overlong_content(content, media):
-    from docweave.text_parser import parse_text
+    from docweave.rag.parsing import parse_text
     with pytest.raises(ValueError):
         parse_text(content, media)
 
 
 @pytest.fixture
 async def ingestion(collections, tmp_path):
-    from docweave.ingestion import ArtifactStore
-    from docweave.settings import database_url
-    from docweave.db import make_engine
+    from docweave.storage.artifacts import ArtifactStore
+    from docweave.core.settings import database_url
+    from docweave.db.engine import make_engine
 
     c = collections
     c["store"] = ArtifactStore(tmp_path / "private")
@@ -67,8 +73,8 @@ async def upload(c, content=b"# Runbook\n\nUse SCRAM authentication.\n", documen
 
 
 async def work(c, job, **kwargs):
-    from docweave.ingestion import run_ingestion
-    from docweave.text_parser import parse_text
+    from docweave.services.ingestion import run_ingestion
+    from docweave.rag.parsing import parse_text
     return await run_ingestion(UUID(job), engine=c["worker"], store=c["store"], parser=parse_text, **kwargs)
 
 
@@ -137,7 +143,7 @@ async def test_revoked_writer_never_reaches_parser_and_cannot_read_jobs(ingestio
     await replace_grants(c, [], revision=2)
     def forbidden(*args):
         pytest.fail("Revoked private text reached processing")
-    from docweave.ingestion import run_ingestion
+    from docweave.services.ingestion import run_ingestion
     await run_ingestion(UUID(accepted["job_id"]), engine=c["worker"], store=c["store"], parser=forbidden)
     assert (await c["guest"].get(accepted["status_url"])).status_code == 404
     assert (await c["admin"].get(accepted["status_url"])).json()["status"] == "blocked_policy"
@@ -146,8 +152,8 @@ async def test_revoked_writer_never_reaches_parser_and_cannot_read_jobs(ingestio
 async def test_deletion_during_processing_fences_publication_and_removes_bytes(ingestion):
     c = ingestion
     accepted = (await upload(c)).json()
-    from docweave.ingestion import run_ingestion
-    from docweave.text_parser import parse_text
+    from docweave.services.ingestion import run_ingestion
+    from docweave.rag.parsing import parse_text
     started, resume = asyncio.Event(), asyncio.Event()
     async def paused(content, media):
         started.set()
@@ -197,7 +203,7 @@ async def test_upload_rejects_unknown_parts_and_unsupported_types_without_artifa
 
 async def test_runtime_has_no_queue_or_artifact_write_authority(ingestion):
     c = ingestion
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
     for sql in ["SELECT * FROM queue.procrastinate_jobs", "UPDATE app.documents SET title='forged'", "SELECT * FROM app.document_versions"]:
         with pytest.raises(DBAPIError) as error:
             async with tenant_session(c["runtime"], actor_id=UUID(c["user"]["id"]), workspace_id=UUID(c["workspace"]["id"])) as session:
@@ -209,9 +215,9 @@ async def test_runtime_has_no_queue_or_artifact_write_authority(ingestion):
 async def test_real_queue_worker_drains_a_job_without_an_in_process_task(ingestion):
     c = ingestion
     accepted = (await upload(c)).json()
-    from docweave.worker import run_worker
-    from docweave.settings import database_url
-    from docweave.text_parser import parse_text
+    from docweave.workers.ingestion import run_worker
+    from docweave.core.settings import database_url
+    from docweave.rag.parsing import parse_text
     await run_worker(database_url("TEST_WORKER_DATABASE_URL"), c["store"], wait=False, parser=parse_text)
     assert (await c["admin"].get(accepted["status_url"])).json()["status"] == "completed"
     async with c["owner"].connect() as connection:
@@ -234,7 +240,7 @@ async def test_worker_attempts_are_bounded_and_expired_leases_fence_old_publicat
         await connection.execute(text("SELECT app.fail_ingestion(:id,:token,true)"), {"id": UUID(accepted["job_id"]), "token": UUID(second["token"])})
     async def transient(*args):
         raise OSError("Temporary parser failure")
-    from docweave.ingestion import run_ingestion
+    from docweave.services.ingestion import run_ingestion
     with pytest.raises(OSError):
         await run_ingestion(UUID(accepted["job_id"]), engine=c["worker"], store=c["store"], parser=transient)
     await run_ingestion(UUID(accepted["job_id"]), engine=c["worker"], store=c["store"], parser=transient)
@@ -243,7 +249,7 @@ async def test_worker_attempts_are_bounded_and_expired_leases_fence_old_publicat
 
 
 async def test_container_parser_runs_the_same_bounded_parser():
-    from docweave.ingestion import container_parse
+    from docweave.integrations.parser import container_parse
     parsed = await container_parse(b"# Container\n\nNo network or private mounts.\n", "text/markdown")
     assert parsed["text"] == "# Container\n\nNo network or private mounts.\n"
     with pytest.raises(ValueError):
@@ -251,7 +257,7 @@ async def test_container_parser_runs_the_same_bounded_parser():
 
 
 async def test_frozen_official_and_synthetic_fixtures_have_stable_exact_spans():
-    from docweave.text_parser import parse_text
+    from docweave.rag.parsing import parse_text
     manifest = json.loads((FIXTURES / "manifest.json").read_text())
     assert len(manifest["documents"]) == 3
     for document in manifest["documents"]:
@@ -288,16 +294,16 @@ async def test_upload_rechecks_authority_after_workspace_lock_and_removes_uncomm
 
 async def test_lost_commit_confirmation_does_not_remove_a_durable_upload(ingestion, monkeypatch):
     c = ingestion
-    from docweave import ingestion as module
-    session = module.membership_session
+    from docweave.services import ingestion as module
+    session = module.domain_session
     @asynccontextmanager
     async def uncertain_commit(*args, **kwargs):
         async with session(*args, **kwargs) as active:
             yield active
         raise OSError("Commit acknowledgement lost")
-    monkeypatch.setattr(module, "membership_session", uncertain_commit)
+    monkeypatch.setattr(module, "domain_session", uncertain_commit)
     assert (await upload(c)).status_code == 500
-    monkeypatch.setattr(module, "membership_session", session)
+    monkeypatch.setattr(module, "domain_session", session)
     async with c["owner"].connect() as connection:
         job = await connection.scalar(text("SELECT id FROM app.ingestion_jobs"))
     assert job is not None
@@ -320,7 +326,8 @@ async def test_replacement_can_reactivate_an_older_immutable_snapshot(ingestion)
 
 async def test_parser_timeout_updates_durable_status_and_can_be_retried(ingestion, monkeypatch):
     c = ingestion
-    from docweave.ingestion import container_parse, run_ingestion
+    from docweave.integrations.parser import container_parse
+    from docweave.services.ingestion import run_ingestion
     accepted = (await upload(c)).json()
     def timeout(command, **kwargs):
         if "run" in command:
@@ -337,8 +344,8 @@ async def test_parser_timeout_updates_durable_status_and_can_be_retried(ingestio
 
 async def test_expired_publication_is_requeued_instead_of_silently_stranded(ingestion):
     c = ingestion
-    from docweave.ingestion import run_ingestion
-    from docweave.text_parser import parse_text
+    from docweave.services.ingestion import run_ingestion
+    from docweave.rag.parsing import parse_text
     accepted = (await upload(c)).json()
     async def expire(content, media):
         async with c["owner"].begin() as connection:
@@ -370,8 +377,8 @@ async def test_replacement_media_type_changes_snapshot_identity_and_locators(ing
 
 async def test_worker_cli_reads_the_configured_private_storage_root(ingestion):
     c = ingestion
-    from docweave.ingestion import ROOT
-    from docweave.settings import database_url
+    from docweave.core.paths import ROOT
+    from docweave.core.settings import database_url
     accepted = (await upload(c)).json()
     environment = {**os.environ, "WORKER_DATABASE_URL": database_url("TEST_WORKER_DATABASE_URL").render_as_string(hide_password=False),
         "INGESTION_STORAGE_ROOT": str(c["store"].root), "PYTHONPATH": str(ROOT / "backend" / "src")}
@@ -398,7 +405,7 @@ async def test_frozen_corpus_runs_through_upload_worker_and_private_artifacts(in
 
 async def test_artifact_reconciliation_preserves_referenced_snapshots_and_removes_orphans(ingestion):
     c = ingestion
-    from docweave.ingestion import reconcile_artifacts
+    from docweave.services.ingestion import reconcile_artifacts
     accepted = (await upload(c)).json()
     await work(c, accepted["job_id"])
     orphan = uuid4()
@@ -409,7 +416,7 @@ async def test_artifact_reconciliation_preserves_referenced_snapshots_and_remove
 
 
 async def test_markdown_chunks_preserve_headings_and_small_fenced_blocks():
-    from docweave.text_parser import parse_text
+    from docweave.rag.parsing import parse_text
     parsed = parse_text(b"# First\n\nAlpha.\n\n# Second\n\nBeta.\n", "text/markdown")
     assert [chunk["heading"] for chunk in parsed["chunks"]] == ["First", "Second"]
     parsed = parse_text(("# Setup\n\n" + "intro " * 340 + "\n\n```sql\n" + "SELECT " * 25 + ";\n```\n").encode(), "text/markdown")
@@ -418,7 +425,7 @@ async def test_markdown_chunks_preserve_headings_and_small_fenced_blocks():
 
 
 async def test_parser_rejects_excessive_structure_without_unbounded_chunk_output():
-    from docweave.text_parser import parse_text
+    from docweave.rag.parsing import parse_text
     with pytest.raises(ValueError):
         parse_text(b"# Heading\n\nText.\n\n" * 10_001, "text/markdown")
 
@@ -447,9 +454,9 @@ async def test_uncertain_publication_preserves_a_committed_snapshot_artifact(ing
 @pytest.mark.parametrize("anyio_backend", [("asyncio", {"loop_factory": asyncio.SelectorEventLoop})])
 async def test_crashed_queue_delivery_recovers_after_its_application_lease_expires(ingestion):
     c = ingestion
-    from docweave.worker import run_worker
-    from docweave.settings import database_url
-    from docweave.text_parser import parse_text
+    from docweave.workers.ingestion import run_worker
+    from docweave.core.settings import database_url
+    from docweave.rag.parsing import parse_text
     accepted = (await upload(c)).json()
     async with c["worker"].begin() as connection:
         assert await connection.scalar(text("SELECT app.claim_ingestion(:id)"), {"id": UUID(accepted["job_id"])})

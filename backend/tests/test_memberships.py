@@ -1,17 +1,24 @@
 """Invitation/member boundaries and races use authenticated restricted-role requests."""
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 from urllib.parse import urlsplit
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import httpx
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from test_auth import ORIGIN, auth_client, login  # noqa: F401
-from test_database import A, WA, databases, test_urls  # noqa: F401
+from test_auth import ORIGIN
+from test_auth import auth_client
+from test_auth import login  # noqa: F401
+from test_database import A
+from test_database import WA
+from test_database import databases
+from test_database import test_urls  # noqa: F401
 from test_workspaces import signed_in
 
 pytestmark = pytest.mark.anyio
@@ -271,7 +278,7 @@ async def test_queued_invitation_creation_rechecks_owner_after_workspace_lock(me
 
 
 async def test_mutation_functions_recheck_revoked_owner_authority(members):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
 
     assert (await accept(members, await invite(members, role="owner"))).status_code == 200
     path = f'/api/v1/workspaces/{members["workspace"]["id"]}/members/{members["user"]["id"]}'

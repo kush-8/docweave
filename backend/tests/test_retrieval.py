@@ -2,16 +2,26 @@
 
 import json
 import asyncio
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
 from test_auth import auth_client  # noqa: F401
-from test_collections import collections, configure_processors, policy_path, replace_grants  # noqa: F401
-from test_database import B, WB, databases, test_urls  # noqa: F401
-from test_ingestion import ingestion, metadata, upload, work  # noqa: F401
+from test_collections import collections
+from test_collections import configure_processors
+from test_collections import policy_path
+from test_collections import replace_grants  # noqa: F401
+from test_database import B
+from test_database import WB
+from test_database import databases
+from test_database import test_urls  # noqa: F401
+from test_ingestion import ingestion
+from test_ingestion import metadata
+from test_ingestion import upload
+from test_ingestion import work  # noqa: F401
 from test_memberships import members  # noqa: F401
 
 pytestmark = pytest.mark.anyio
@@ -23,8 +33,8 @@ def basis(position=0):
 
 @pytest.fixture
 async def indexed(ingestion):
-    from docweave.policy import Actor
-    from docweave.retrieval import index_document
+    from docweave.core.identity import Actor
+    from docweave.rag.indexing import index_document
     c = ingestion
     await configure_processors(c)
     for kind in ("project", "collection"):
@@ -47,7 +57,7 @@ async def fake_vectors(bodies):
 
 
 async def index(c, content):
-    from docweave.retrieval import index_document
+    from docweave.rag.indexing import index_document
     accepted = (await upload(c, content)).json()
     await work(c, accepted["job_id"])
     await index_document(c["actor"], UUID(accepted["document_id"]), c["generation"],
@@ -56,7 +66,7 @@ async def index(c, content):
 
 
 async def retrieve(c, query, *, lexical="native", vector="exact", actor=None, scopes=None, generation=None, explain=False):
-    from docweave.retrieval import retrieve_channels
+    from docweave.rag.retrieval import retrieve_channels
     return await retrieve_channels(actor or c["actor"], UUID(c["project"]), query,
         collection_ids=[UUID(c["collection"])] if scopes is None else scopes, generation_id=generation or c["generation"],
         query_vector=basis(), lexical=lexical, vector=vector, engine=c["runtime"], explain=explain)
@@ -75,7 +85,7 @@ async def test_lexical_paths_preserve_literal_error_codes_and_exact_spans(indexe
 
 
 async def test_empty_and_revoked_scopes_never_broaden(indexed):
-    from docweave.retrieval import RetrievalError
+    from docweave.rag.contracts import RetrievalError
     c = indexed
     await index(c, b"Secret alpha connection.\n")
     empty = await retrieve(c, "alpha", scopes=[])
@@ -90,7 +100,8 @@ async def test_empty_and_revoked_scopes_never_broaden(indexed):
 
 
 async def test_unapproved_private_text_never_reaches_fake_embedding(indexed):
-    from docweave.retrieval import RetrievalError, index_document
+    from docweave.rag.contracts import RetrievalError
+    from docweave.rag.indexing import index_document
     c = indexed
     accepted = (await upload(c, b"Private content must stay local.\n")).json()
     await work(c, accepted["job_id"])
@@ -134,7 +145,7 @@ async def test_exact_and_hnsw_have_distinct_real_plans_and_same_scope(indexed):
 
 
 async def test_old_versions_and_deleted_documents_disappear_from_both_channels(indexed):
-    from docweave.retrieval import index_document
+    from docweave.rag.indexing import index_document
     c = indexed
     accepted = await index(c, b"Original alpha instructions.\n")
     replaced = (await upload(c, b"New beta instructions.\n", accepted["document_id"])).json()
@@ -150,7 +161,7 @@ async def test_old_versions_and_deleted_documents_disappear_from_both_channels(i
 
 
 async def test_generation_isolation_never_falls_back_to_another_embedding_space(indexed):
-    from docweave.retrieval import RetrievalError
+    from docweave.rag.contracts import RetrievalError
     c = indexed
     await index(c, b"Alpha source.\n")
     other = uuid4()
@@ -167,7 +178,8 @@ async def test_generation_isolation_never_falls_back_to_another_embedding_space(
 
 
 async def test_permission_revocation_during_embedding_fences_index_publication(indexed):
-    from docweave.retrieval import RetrievalError, index_document
+    from docweave.rag.contracts import RetrievalError
+    from docweave.rag.indexing import index_document
     c = indexed
     accepted = (await upload(c, b"Private alpha data.\n")).json()
     await work(c, accepted["job_id"])
@@ -182,8 +194,9 @@ async def test_permission_revocation_during_embedding_fences_index_publication(i
 
 
 async def test_source_approval_tracks_selected_version_but_survives_goal_edits(indexed):
-    from test_sources import approved_selection, import_source
-    from docweave.retrieval import index_document
+    from test_sources import approved_selection
+    from test_sources import import_source
+    from docweave.rag.indexing import index_document
     c = indexed
     selection = await approved_selection(c)
     accepted = (await import_source(c, selection)).json()
@@ -204,24 +217,25 @@ async def test_source_approval_tracks_selected_version_but_survives_goal_edits(i
 
 async def test_revocation_before_result_release_removes_captured_evidence(indexed, monkeypatch):
     from sqlalchemy.ext.asyncio import AsyncSession
-    from docweave import retrieval
+    from docweave.rag.contracts import RetrievalError
+    from docweave.repositories.rag.vector import EXACT
     c = indexed
     await index(c, b"Private alpha evidence.\n")
     original, revoked = AsyncSession.execute, False
     async def revoke_after_query(session, statement, *args, **kwargs):
         nonlocal revoked
         result = await original(session, statement, *args, **kwargs)
-        if session.bind is c["runtime"] and str(statement) == retrieval.EXACT and not revoked:
+        if session.bind is c["runtime"] and str(statement) == EXACT and not revoked:
             revoked = True
             await c["admin"].put(policy_path(c, "collection"), json={"expected_revision": 2, "approved_processor_ids": []}, headers=c["headers"])
         return result
     monkeypatch.setattr(AsyncSession, "execute", revoke_after_query)
-    with pytest.raises(retrieval.RetrievalError, match="scope_changed"):
+    with pytest.raises(RetrievalError, match="scope_changed"):
         await retrieve(c, "alpha")
 
 
 async def test_raw_chunk_rls_requires_an_explicit_current_generation(indexed):
-    from docweave.db import tenant_session
+    from docweave.db.sessions import tenant_session
     c = indexed
     await index(c, b"Alpha protected corpus.\n")
     async with tenant_session(c["runtime"], actor_id=c["actor"].user_id, workspace_id=c["actor"].workspace_id) as session:
@@ -235,9 +249,10 @@ async def test_raw_chunk_rls_requires_an_explicit_current_generation(indexed):
 
 
 async def test_wrong_tenant_cannot_index_and_runtime_cannot_forge_chunks(indexed):
-    from docweave.policy import Actor
-    from docweave.db import tenant_session
-    from docweave.retrieval import RetrievalError, index_document
+    from docweave.core.identity import Actor
+    from docweave.db.sessions import tenant_session
+    from docweave.rag.contracts import RetrievalError
+    from docweave.rag.indexing import index_document
     c = indexed
     accepted = (await upload(c)).json()
     await work(c, accepted["job_id"])
@@ -252,7 +267,7 @@ async def test_wrong_tenant_cannot_index_and_runtime_cannot_forge_chunks(indexed
 
 
 async def test_failed_embedding_preserves_the_last_good_searchable_snapshot(indexed):
-    from docweave.retrieval import index_document
+    from docweave.rag.indexing import index_document
     c = indexed
     accepted = await index(c, b"Original alpha evidence.\n")
     before = await retrieve(c, "alpha")
@@ -269,7 +284,7 @@ async def test_failed_embedding_preserves_the_last_good_searchable_snapshot(inde
 
 
 async def test_return_to_a_retained_version_reuses_vectors_and_reactivates_it(indexed):
-    from docweave.retrieval import index_document
+    from docweave.rag.indexing import index_document
     c = indexed
     first = await index(c, b"Original alpha.\n")
     original = (await retrieve(c, "alpha"))["lexical"][0]["chunk_id"]
@@ -284,6 +299,7 @@ async def test_return_to_a_retained_version_reuses_vectors_and_reactivates_it(in
 
 
 async def test_oversized_integer_vectors_use_the_documented_validation_error():
-    from docweave.retrieval import RetrievalError, vector_literal
+    from docweave.rag.contracts import RetrievalError
+    from docweave.repositories.rag.vector import vector_literal
     with pytest.raises(RetrievalError, match="invalid_vector"):
         vector_literal([10**400] + [0] * 767)

@@ -14,7 +14,19 @@ Guardrails and the [structured prompt-writing rule](docs/rules.md#structured-pro
 docweave/
 ├── README.md
 ├── backend/
-│   ├── src/docweave/             # Python application and domain modules
+│   ├── src/docweave/
+│   │   ├── api/                 # HTTP routes, dependencies, safe errors and middleware
+│   │   ├── schemas/             # Request/response validation, grouped by domain
+│   │   ├── services/            # Workflows and transaction coordination
+│   │   ├── repositories/        # SQL; rag/ owns lexical/vector/index publication queries
+│   │   ├── db/                 # Engines, tenant sessions and registered domain models
+│   │   ├── core/               # Configuration, paths, identity, security and errors
+│   │   ├── integrations/       # OIDC, approved-source fetching, parser and hosted adapters
+│   │   ├── storage/            # Artifact filesystem operations
+│   │   ├── workers/            # Queue lifecycle and recovery
+│   │   ├── rag/                # Parsing, chunking, embeddings, indexing, retrieval,
+│   │   │                       # fusion, reranking, prompts and shared value contracts
+│   │   └── evaluation/         # Datasets, metrics, runner, reports and operator CLI
 │   ├── pyproject.toml            # uv-managed Python project metadata/dependencies
 │   ├── openapi.yaml              # Auth and planned domain API contract
 │   ├── alembic/versions/         # Database migration revisions
@@ -33,16 +45,14 @@ docweave/
 │   ├── index.html                # Vite HTML entry point
 │   ├── vite.config.ts            # React/Vite configuration
 │   ├── src/
-│   │   ├── app/                 # Routes, application bootstrap, providers
-│   │   ├── features/
-│   │   │   ├── auth/            # Login/session UI
-│   │   │   ├── workspaces/      # Tenant switching, membership, invitations
-│   │   │   ├── projects/        # Project setup and context settings
-│   │   │   ├── knowledge/       # Collections, sources, documents, approvals
-│   │   │   ├── conversations/   # Ask, history, composer, citation inspector
-│   │   │   └── github/          # Connections, repository scans, stack review
+│   │   ├── app/                 # Application bootstrap and composition
+│   │   ├── pages/               # Workbench screen coordination
+│   │   ├── layouts/             # Shell, header and desktop/mobile sidebar
+│   │   ├── components/          # Composer, conversation, evidence and dialogs
 │   │   ├── components/ui/       # Shared presentational controls
-│   │   ├── lib/                 # Shared HTTP/browser utilities
+│   │   ├── hooks/               # Navigation/draft protection, theme and media queries
+│   │   ├── routing/             # URL parsing, building and view types
+│   │   ├── data/                # Explicitly synthetic preview fixtures
 │   │   └── styles/              # Global styles and light/dark theme tokens
 │   ├── public/                  # Public static assets; never private documents
 │   └── tests/fixtures/          # Browser tests and deterministic API fixtures
@@ -57,8 +67,10 @@ docweave/
 
 ## Boundaries
 
-- Backend domain routes and schemas stay close to the modules named in [tasks.md](docs/tasks.md). Backend source, migrations, dependencies, and tests belong inside `backend/`.
-- Frontend source, assets, dependencies, and browser tests belong inside `frontend/`. Features own their pages/state; shared controls are presentational and cross-feature HTTP helpers belong in `lib`.
+- Backend routes own HTTP behavior, services coordinate workflows, and repositories own SQL. Simple handlers may call repositories directly; there is no mandatory forwarding service. Schemas and ORM models have separate homes. Backend source, migrations, dependencies, and tests belong inside `backend/`.
+- Frontend source, assets, dependencies, and browser tests belong inside `frontend/`. Pages coordinate screens, layouts render the shell, hooks own browser/state behavior, and components render their inputs. Preview data stays separate from URL handling.
+- RAG stages share leaf contracts rather than importing one another's orchestration. Provider adapters own wire encoding/transport; repositories own database encoding. Approved-source fetching keeps its DNS/IP, robots, redirect and authorization safeguards together.
+- Workflow callers own transactions and connections. Ingestion keeps its advisory lock on the same connection across processing; financial admission commits before provider dispatch. Database error codes become domain errors before the HTTP layer maps them to safe responses.
 - The frontend consumes the backend's versioned HTTP API. Neither application imports the other's source modules.
 - Identity, authorization, retrieval, providers, ingestion, memory, and worker behavior belong to the backend. Frontend visibility is not authorization.
 - Backend-owned source manifests, evaluation inputs/reports, and supporting-service configuration live in `backend/catalog/`, `backend/eval/`, and `backend/infra/`. Infrastructure config does not duplicate business logic.
