@@ -11,7 +11,8 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from tests.legacy.test_auth import auth_client  # noqa: F401
+from tests.support.personal import collections, github_login
+from tests.support.personal import wait_for_lock
 from tests.database.test_database import A
 from tests.database.test_database import B
 from tests.database.test_database import PA
@@ -20,9 +21,6 @@ from tests.database.test_database import WA
 from tests.database.test_database import WB
 from tests.database.test_database import databases
 from tests.database.test_database import test_urls  # noqa: F401
-from tests.legacy.test_projects import validate
-from tests.legacy.test_memberships import wait_for_lock
-from tests.legacy.test_workspaces import signed_in
 
 pytestmark = pytest.mark.anyio
 
@@ -212,25 +210,6 @@ async def test_token_bounds_reject_invalid_values(databases, value):
         await reserve(runtime, identity, input_tokens=value)
 
 
-async def test_provider_and_usage_apis_are_honest_and_tenant_filtered(auth_client):
-    client, _, owner, _, headers = await signed_in(auth_client)
-    workspace = (await client.post("/api/v1/workspaces", json={"name": "Budget team"}, headers=headers)).json()["id"]
-    response = await client.get("/api/v1/providers")
-    assert response.status_code == 200, response.text
-    assert response.json() == {"items": [], "next_cursor": None}
-    identity = await profile(owner, account=False)
-    response = await client.get("/api/v1/providers")
-    validate("ProviderPage", response.json())
-    assert response.json()["items"][0]["id"] == str(identity)
-    assert not response.json()["items"][0]["enabled"] and response.json()["items"][0]["disabled_reason"] == "account_unverified"
-    usage = await client.get(f"/api/v1/workspaces/{workspace}/usage")
-    assert usage.status_code == 200, usage.text
-    validate("UsageReport", usage.json())
-    assert usage.json()["workspace_allowance_usd"] is None and usage.json()["capacity_status"] == "allowance_required"
-    assert usage.json()["metered_usd"].startswith("0") and "global" not in usage.text
-    assert (await client.get(f"/api/v1/workspaces/{WB}/usage")).status_code == 404
-    assert (await client.get(f"/api/v1/projects/{PB}/usage")).status_code == 404
-    assert (await client.get(f"/api/v1/workspaces/{workspace}/usage?month=0000-01")).status_code == 422
 
 
 async def test_runtime_cannot_read_ledger_or_raise_caps(databases):
@@ -323,19 +302,18 @@ async def test_overrun_is_recorded_and_stops_future_global_admission(databases):
         await reserve(runtime, another, actor_id=B, workspace=WB, project=PB)
 
 
-async def test_profiles_are_immutable_and_public_without_a_session(auth_client):
-    client, data, owner, _ = auth_client
+async def test_profiles_are_immutable_and_public_without_a_session(collections):
+    client, owner = collections["admin"], collections["owner"]
+    client.cookies.clear()
     assert (await client.get("/api/v1/me")).status_code == 401
     assert (await client.get("/api/v1/providers")).json() == {"items": [], "next_cursor": None}
     ids = [await profile(owner) for _ in range(3)]
     first = (await client.get("/api/v1/providers", params={"limit": 2})).json()
-    validate("ProviderPage", first)
     assert len(first["items"]) == 2 and first["next_cursor"]
     last = (await client.get("/api/v1/providers", params={"cursor": first["next_cursor"]})).json()
     assert len(last["items"]) == 1 and last["next_cursor"] is None
     assert {p["id"] for p in first["items"] + last["items"]} == {str(i) for i in ids}
     assert all("disabled_reason" not in p for p in first["items"] + last["items"])
-    assert data["exchanges"] == []
     for mutation in ["model='another'", "input_usd_per_million=50", "processor_ids='[]'", "max_attempts=10"]:
         with pytest.raises(DBAPIError) as error:
             async with owner.begin() as connection:
@@ -343,34 +321,6 @@ async def test_profiles_are_immutable_and_public_without_a_session(auth_client):
         assert error.value.orig.sqlstate == "22023"
 
 
-async def test_usage_totals_project_attribution_and_capacity_never_include_other_tenants(auth_client):
-    client, data, owner, user, headers = await signed_in(auth_client)
-    workspace = (await client.post("/api/v1/workspaces", json={"name": "Accounting"}, headers=headers)).json()["id"]
-    projects = []
-    for name in ("One", "Two"):
-        projects.append((await client.post(f"/api/v1/workspaces/{workspace}/projects", json={"name": name, "goal": "Test", "stack": [{"technology": "Python"}]}, headers=headers)).json()["project"]["id"])
-    identity = await profile(owner)
-    await allowance(owner, UUID(workspace))
-    runtime = data["app"].state.auth[1]
-    args = {"actor_id": UUID(user["id"]), "workspace": UUID(workspace)}
-    first = await reserve(runtime, identity, project=UUID(projects[0]), **args)
-    await settle(runtime, first, Decimal("0.2"), **args)
-    second = await reserve(runtime, identity, "uncertain", project=UUID(projects[1]), **args)
-    await settle(runtime, second, None, True, **args)
-    await allowance(owner, WB, "20")
-    await reserve(runtime, identity, "other-tenant", actor_id=B, workspace=WB, project=PB)
-    report = (await client.get(f"/api/v1/workspaces/{workspace}/usage")).json()
-    validate("UsageReport", report)
-    assert Decimal(report["metered_usd"]) == Decimal("0.2")
-    assert Decimal(report["reserved_usd"]) == 0 and Decimal(report["retained_uncertain_usd"]) == Decimal("0.6")
-    assert report["capacity_status"] == "available"
-    project = (await client.get(f"/api/v1/projects/{projects[0]}/usage")).json()
-    validate("UsageReport", project)
-    assert Decimal(project["metered_usd"]) == Decimal("0.2") and Decimal(project["retained_uncertain_usd"]) == 0
-    await allowance(owner, UUID(workspace), "0.7")
-    assert (await client.get(f"/api/v1/workspaces/{workspace}/usage")).json()["capacity_status"] == "workspace_limit"
-    for month in ("0000-01", "2026-13", "2026-01-01", "2026-1"):
-        assert (await client.get(f"/api/v1/workspaces/{workspace}/usage", params={"month": month})).status_code == 422
 
 
 async def test_narrow_function_acl_and_current_project_scope(databases):
@@ -395,12 +345,12 @@ async def test_narrow_function_acl_and_current_project_scope(databases):
         assert all(r.runtime == (r.proname not in {"lock_budget", "immutable_profile", "set_workspace_allowance", "reservation_view"}) for r in rows)
 
 
-async def test_answer_catalog_does_not_offer_internal_embedding_profiles(auth_client):
-    client, data, owner, _ = auth_client
+async def test_answer_catalog_does_not_offer_internal_embedding_profiles(collections):
+    client, owner = collections["admin"], collections["owner"]
     answer = await profile(owner)
     embedding = await profile(owner, role="embedding")
     response = await client.get("/api/v1/providers")
     assert response.status_code == 200
     assert [p["id"] for p in response.json()["items"]] == [str(answer)]
     await allowance(owner)
-    assert (await reserve(data["app"].state.auth[1], embedding, output_tokens=0)).created
+    assert (await reserve(collections["runtime"], embedding, output_tokens=0)).created

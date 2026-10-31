@@ -11,9 +11,6 @@ from docweave.api.routes.github_auth import router as auth_router
 from docweave.api.routes.personal import router as project_router
 from docweave.api.routes.conversations import router as conversation_router
 from docweave.api.routes.ingestion import router as ingestion_router
-from docweave.api.dependencies import policy as legacy_policy,auth as legacy_auth
-from docweave.api.dependencies.personal import resource_actor
-from docweave.api.routes.github_auth import require_github_user,require_github_csrf
 from docweave.api.routes.health import router as health_router
 from docweave.api.routes.providers import router as provider_router
 from docweave.core.github_settings import GitHubSettings
@@ -32,12 +29,7 @@ def create_app(*,github_settings=None,auth_engine=None,github_client=None):
             await engine.dispose()
     app=FastAPI(title='DocWeave API',version='0.2.0',description='Personal GitHub-linked documentation assistant.',lifespan=lifespan)
     app.state.github=(settings,engine,client) if settings else None
-    app.state.auth=app.state.github
     app.state.runtime_config={**dotenv_values(ROOT / ".env"),**os.environ}
-    app.dependency_overrides[legacy_auth.require_user]=require_github_user
-    app.dependency_overrides[legacy_auth.require_csrf]=require_github_csrf
-    for dependency in (legacy_policy.require_project_actor,legacy_policy.require_collection_actor,legacy_policy.require_collection_writer,legacy_policy.require_resource_actor):
-        app.dependency_overrides[dependency]=resource_actor
     install_middleware(app)
     install_error_handlers(app)
     for router in (auth_router,project_router,conversation_router,ingestion_router,provider_router,health_router):

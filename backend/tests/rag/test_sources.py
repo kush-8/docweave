@@ -10,14 +10,12 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import text
 
-from tests.legacy.test_auth import auth_client  # noqa: F401
-from tests.legacy.test_collections import collections  # noqa: F401
+from tests.support.personal import collections, github_login  # noqa: F401
 from tests.database.test_database import databases
 from tests.database.test_database import test_urls  # noqa: F401
 from tests.rag.test_ingestion import FIXTURES
 from tests.rag.test_ingestion import ingestion
 from tests.rag.test_ingestion import work  # noqa: F401
-from tests.legacy.test_memberships import members  # noqa: F401
 
 pytestmark = pytest.mark.anyio
 
@@ -65,7 +63,7 @@ async def approved_selection(c, **changes):
                 CAST(:coverage AS jsonb),:source_url,:origin,:path_prefix,:attribution,
                 (SELECT selected FROM app.projects p CROSS JOIN LATERAL jsonb_array_elements(p.stack) selected
                     WHERE p.id=:project AND lower(selected->>'technology')='fastapi' LIMIT 1))"""),
-            {"id": identity, "workspace": UUID(c["workspace"]["id"]), "project": UUID(c["project"]), "actor": UUID(c["user"]["id"]),
+            {"id": identity, "workspace": None, "project": UUID(c["project"]), "actor": UUID(c["user"]["id"]),
                 "coverage": json.dumps({"granularity": "rolling", "publisher_range": None}), **data})
     return identity
 
@@ -160,26 +158,6 @@ async def test_fetcher_rechecks_authorization_before_each_pinned_request(monkeyp
     assert events == ["authorize", "request", "authorize"]
 
 
-async def test_operator_seed_checks_current_owner_and_commits_project_scoped_selection(ingestion):
-    c = ingestion
-    from docweave.core.paths import ROOT
-    sql = (ROOT / "backend" / "catalog" / "pilot-text-selections.sql").read_bytes()
-    command = ["docker", "compose", "exec", "-T", "test-db", "psql", "-U", "docweave_migrator", "-d", "docweave_test",
-        "-v", "ON_ERROR_STOP=1", "-v", "workspace_id=" + c["workspace"]["id"], "-v", "project_id=" + c["project"], "-v"]
-    denied = await asyncio.to_thread(subprocess.run, command + ["approved_by=" + c["recipient"]["id"]], input=sql, capture_output=True, timeout=10)
-    assert denied.returncode != 0
-    accepted = await asyncio.to_thread(subprocess.run, command + ["approved_by=" + c["user"]["id"]], input=sql, capture_output=True, timeout=10)
-    assert accepted.returncode == 0
-    async with c["owner"].connect() as connection:
-        selected = (await connection.execute(text("SELECT project_id,coverage FROM app.documentation_selections"))).one()
-    assert selected.project_id == UUID(c["project"])
-    assert selected.coverage == {"granularity": "rolling", "publisher_range": None}
-    async with c["owner"].begin() as connection:
-        await connection.execute(text("UPDATE app.documentation_selections SET active=false"))
-    repeated = await asyncio.to_thread(subprocess.run, command + ["approved_by=" + c["user"]["id"]], input=sql, capture_output=True, timeout=10)
-    assert repeated.returncode == 0
-    async with c["owner"].connect() as connection:
-        assert (await connection.execute(text("SELECT active FROM app.documentation_selections"))).scalars().all() == [False]
 
 
 async def test_deleting_source_document_cannot_be_undone_by_import_retry(ingestion):

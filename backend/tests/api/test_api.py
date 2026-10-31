@@ -24,7 +24,7 @@ def assert_error(response,status,code,retryable=False):
 @pytest.mark.parametrize(('method','path','operation'),[item for item in OPERATIONS if not item[1].startswith(('/health/','/auth/'))])
 async def test_anonymous_private_operations_are_denied(client,app,method,path,operation):
     url=re.sub(r'\{[^}]+\}','97f0d4a6-86c2-4bec-91cc-329f97d228d2',path)
-    app.state.github=None;app.state.auth=None
+    app.state.github=None
     response=await client.request(method,'/api/v1'+url)
     if path in ('/providers','/catalog'):
         assert_error(response,503,'not_ready',True)

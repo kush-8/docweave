@@ -5,10 +5,10 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import text
 
-from tests.legacy.test_budget import allowance
-from tests.legacy.test_budget import profile
-from tests.legacy.test_budget import reserve
-from tests.legacy.test_budget import settle
+from tests.providers.test_budget import allowance
+from tests.providers.test_budget import profile
+from tests.providers.test_budget import reserve
+from tests.providers.test_budget import settle
 from tests.database.test_database import databases
 from tests.database.test_database import migrate
 from tests.database.test_database import test_urls  # noqa: F401

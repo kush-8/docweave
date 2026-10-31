@@ -1,6 +1,6 @@
 # Personal GitHub projects
 
-Current implementation checkpoint: 2026-11-01. This is the active setup guide. Earlier auth/workspace/membership runbooks document retired behavior and migration evidence.
+This is the active setup guide. See [tasks](../tasks.md) for remaining acceptance and [memory](../memory.md) for history.
 
 ## Setup
 
@@ -21,7 +21,7 @@ No development migration or reset was performed in this checkpoint. Do not disca
 3. Back up database/artifacts, rehearse the additive migrations on an isolated restored copy and verify IDs, hashes, vector counts, source references and all cost/uncertainty claims.
 4. Drain workers, perform the verified cutover, check current authorization and resume workers. Keep legacy schema/functions until preservation-backed removal is safe.
 
-Sole workspace owners backfill directly. Ambiguous legacy projects remain unassigned; legacy manual projects require a repository before starting new chats. Additive migrations currently reach `0026_waiting_turn_resume`; application startup never runs them automatically.
+Sole workspace owners backfill directly. Ambiguous legacy projects remain unassigned; legacy manual projects require a repository before starting new chats. Additive migrations currently reach `0027_personal_source_scope`; application startup never runs them automatically.
 
 ## Operational limits and recovery
 

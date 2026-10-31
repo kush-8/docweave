@@ -9,11 +9,9 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from tests.legacy.test_auth import auth_client  # noqa: F401
-from tests.legacy.test_collections import collections
-from tests.legacy.test_collections import configure_processors
-from tests.legacy.test_collections import policy_path
-from tests.legacy.test_collections import replace_grants  # noqa: F401
+from tests.support.personal import collections, github_login
+from tests.support.personal import configure_processors
+from tests.support.personal import policy_path
 from tests.database.test_database import B
 from tests.database.test_database import WB
 from tests.database.test_database import databases
@@ -22,7 +20,6 @@ from tests.rag.test_ingestion import ingestion
 from tests.rag.test_ingestion import metadata
 from tests.rag.test_ingestion import upload
 from tests.rag.test_ingestion import work  # noqa: F401
-from tests.legacy.test_memberships import members  # noqa: F401
 
 pytestmark = pytest.mark.anyio
 
@@ -37,7 +34,7 @@ async def indexed(ingestion):
     from docweave.rag.indexing import index_document
     c = ingestion
     await configure_processors(c)
-    for kind in ("project", "collection"):
+    for kind in ("project",):
         result = await c["admin"].put(policy_path(c, kind), json={"expected_revision": 1,
             "approved_processor_ids": ["test:gemini:embedding:v1"]}, headers=c["headers"])
         assert result.status_code == 200
@@ -92,11 +89,11 @@ async def test_empty_and_revoked_scopes_never_broaden(indexed):
     assert empty["lexical"] == [] and empty["vector"] == []
     with pytest.raises(RetrievalError, match="not_found"):
         await retrieve(c, "alpha", actor=c["reader"])
-    await replace_grants(c, [{"user_id": c["recipient"]["id"], "access": "read"}])
-    assert (await retrieve(c, "alpha", actor=c["reader"]))["lexical"]
-    await replace_grants(c, [], revision=2)
-    with pytest.raises(RetrievalError, match="not_found"):
-        await retrieve(c, "alpha", actor=c["reader"])
+    async with c['owner'].begin() as connection:
+        await connection.execute(text('UPDATE app.projects SET owner_user_id=:user WHERE id=:project'),
+            {'user': UUID(c['recipient']['id']), 'project': UUID(c['project'])})
+    with pytest.raises(RetrievalError, match='not_found'):
+        await retrieve(c, 'alpha')
 
 
 async def test_unapproved_private_text_never_reaches_fake_embedding(indexed):
@@ -105,7 +102,7 @@ async def test_unapproved_private_text_never_reaches_fake_embedding(indexed):
     c = indexed
     accepted = (await upload(c, b"Private content must stay local.\n")).json()
     await work(c, accepted["job_id"])
-    await c["admin"].put(policy_path(c, "collection"), json={"expected_revision": 2, "approved_processor_ids": []}, headers=c["headers"])
+    await c["admin"].put(policy_path(c, "project"), json={"expected_revision": 2, "approved_processor_ids": []}, headers=c["headers"])
     async def forbidden(bodies):
         pytest.fail("Unapproved content reached fake embedding")
     with pytest.raises(RetrievalError, match="awaiting_approval"):
@@ -113,22 +110,23 @@ async def test_unapproved_private_text_never_reaches_fake_embedding(indexed):
             worker_engine=c["worker"], store=c["store"], embedder=forbidden)
 
 
-async def test_bm25_uses_only_authorized_corpus_statistics(indexed):
+async def test_bm25_uses_only_selected_corpus_statistics(indexed):
     c = indexed
-    await index(c, b"alpha alpha beta")
-    await index(c, b"alpha gamma gamma gamma gamma gamma")
-    await replace_grants(c, [{"user_id": c["recipient"]["id"], "access": "read"}])
-    result = await retrieve(c, "alpha", lexical="bm25", actor=c["reader"])
-    assert [hit["score"] for hit in result["lexical"]] == pytest.approx([0.2766258103, 0.16044296998])
-    hidden = (await c["admin"].post(f'/api/v1/projects/{c["project"]}/collections', json={"name": "Unshared"}, headers=c["headers"])).json()["id"]
-    # A private corpus must not change another user's IDF or length normalization.
-    hidden_c = {**c, "collection": hidden}
-    for kind in ("collection",):
-        await c["admin"].put(policy_path(hidden_c, kind), json={"expected_revision": 1,
-            "approved_processor_ids": ["test:gemini:embedding:v1"]}, headers=c["headers"])
-    await index(hidden_c, b"alpha " * 500)
-    again = await retrieve(c, "alpha", lexical="bm25", actor=c["reader"])
-    assert [hit["score"] for hit in again["lexical"]] == [hit["score"] for hit in result["lexical"]]
+    await index(c, b'alpha alpha beta')
+    await index(c, b'alpha gamma gamma gamma gamma gamma')
+    result = await retrieve(c, 'alpha', lexical='bm25')
+    assert [hit['score'] for hit in result['lexical']] == pytest.approx([0.2766258103, 0.16044296998])
+    hidden = uuid4()
+    async with c['owner'].begin() as connection:
+        await connection.execute(text("INSERT INTO app.collections(id,project_id,workspace_id,name) VALUES(:id,:project,:workspace,'Unselected')"),
+            {'id': hidden, 'project': UUID(c['project']), 'workspace': None})
+    hidden_c = {**c, 'collection': str(hidden)}
+    approved = await c['admin'].put(policy_path(hidden_c, 'project'), json={'expected_revision': 2,
+        'approved_processor_ids': ['test:gemini:embedding:v1']}, headers=c['headers'])
+    assert approved.status_code == 200, approved.text
+    await index(hidden_c, b'alpha ' * 500)
+    again = await retrieve(c, 'alpha', lexical='bm25')
+    assert [hit['score'] for hit in again['lexical']] == [hit['score'] for hit in result['lexical']]
 
 
 async def test_exact_and_hnsw_have_distinct_real_plans_and_same_scope(indexed):
@@ -185,7 +183,7 @@ async def test_permission_revocation_during_embedding_fences_index_publication(i
     await work(c, accepted["job_id"])
     async def revoke(bodies):
         assert bodies == ["Private alpha data.\n"]
-        await c["admin"].put(policy_path(c, "collection"), json={"expected_revision": 2, "approved_processor_ids": []}, headers=c["headers"])
+        await c["admin"].put(policy_path(c, "project"), json={"expected_revision": 2, "approved_processor_ids": []}, headers=c["headers"])
         return [basis()]
     with pytest.raises(RetrievalError, match="awaiting_approval"):
         await index_document(c["actor"], UUID(accepted["document_id"]), c["generation"], worker_engine=c["worker"], store=c["store"], embedder=revoke)
@@ -208,9 +206,12 @@ async def test_source_approval_tracks_selected_version_but_survives_goal_edits(i
     await index_document(c["actor"], document, c["generation"], worker_engine=c["worker"], store=c["store"], embedder=fake_vectors)
     assert (await retrieve(c, "alpha"))["lexical"]
     path = f'/api/v1/projects/{c["project"]}'
-    assert (await c["admin"].patch(path, json={"expected_revision": 1, "goal": "Updated goal"}, headers=c["headers"])).status_code == 200
+    async with c['owner'].begin() as connection:
+        await connection.execute(text("UPDATE app.projects SET goal='Updated goal' WHERE id=:id"), {'id': UUID(c['project'])})
     assert (await retrieve(c, "alpha"))["lexical"]
-    assert (await c["admin"].patch(path, json={"expected_revision": 2, "stack": [{"technology": "FastAPI", "docs_target": "different-version"}]}, headers=c["headers"])).status_code == 200
+    async with c['owner'].begin() as connection:
+        await connection.execute(text("UPDATE app.projects SET stack=CAST(:stack AS jsonb) WHERE id=:id"),
+            {'id': UUID(c['project']), 'stack': json.dumps([{'technology': 'FastAPI', 'docs_target': 'different-version'}])})
     result = await retrieve(c, "alpha", lexical="bm25", vector="hnsw")
     assert result["lexical"] == [] and result["vector"] == []
 
@@ -227,7 +228,7 @@ async def test_revocation_before_result_release_removes_captured_evidence(indexe
         result = await original(session, statement, *args, **kwargs)
         if session.bind is c["runtime"] and str(statement) == EXACT and not revoked:
             revoked = True
-            await c["admin"].put(policy_path(c, "collection"), json={"expected_revision": 2, "approved_processor_ids": []}, headers=c["headers"])
+            await c["admin"].put(policy_path(c, "project"), json={"expected_revision": 2, "approved_processor_ids": []}, headers=c["headers"])
         return result
     monkeypatch.setattr(AsyncSession, "execute", revoke_after_query)
     with pytest.raises(RetrievalError, match="scope_changed"):

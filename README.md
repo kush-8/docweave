@@ -12,23 +12,22 @@ Retrieval remains hybrid: keyword search (native full text/BM25) plus vector sea
 
 ```text
 docweave/
-├── backend/
-│   ├── src/docweave/       # Personal API, workflows, SQL, workers, RAG and evaluation
-│   ├── alembic/versions/   # Preserved migration history and additive personal migration
-│   ├── tests/             # api, database, github, personal, rag, providers, evaluation, legacy
-│   ├── catalog/           # Operator-controlled source definitions
-│   ├── eval/              # Controlled evaluation inputs and ignored generated reports
-│   └── infra/             # PostgreSQL, isolated parser and operational configuration
-├── frontend/
-│   ├── src/               # React application, components, hooks, routing and API client
-│   └── tests/             # e2e, architecture and reusable support fixtures
-├── docs/                  # Product/design records, plans, reports and runbooks
-├── logs/development/      # Ignored local execution logs
-├── storage/               # Ignored private artifacts
-└── backups/               # Ignored private backups
+  backend/
+    src/docweave/       # Current API, workflows, SQL, workers, RAG and evaluation
+    alembic/versions/   # Immutable schema migrations and additive personal changes
+    tests/             # Seven subsystem suites plus support and fixtures
+    eval/              # Controlled inputs and ignored generated reports
+    infra/             # PostgreSQL, isolated parser and operational configuration
+  frontend/
+    src/               # React components, hooks, routing and API client
+    tests/             # e2e, architecture and support fixtures
+  docs/                # Current specifications, tasks and runbooks; history in memory.md
+  logs/development/    # Ignored local execution logs
+  storage/             # Ignored private artifacts
+  backups/             # Ignored private backups
 ```
 
-The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Historical handlers/configuration live only in legacy regression fixtures. Legacy database rows, models and migration functions remain deliberately preserved pending validated cutover; they do not constitute a collaboration product.
+The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Legacy database rows, models and migration functions remain deliberately preserved pending validated cutover; they do not constitute a collaboration product.
 
 ## Run and verify
 
@@ -52,6 +51,6 @@ uv run --project backend --locked pytest backend/tests -q -W error
 
 See [backend test organization](backend/tests/README.md) and [frontend tests](frontend/tests/README.md). Backend DB tests must run serially. Frontend verification uses `npm run build`, `npm run lint`, and `npm test`; installed Chrome can be selected with `PLAYWRIGHT_CHANNEL=chrome`.
 
-`/docs` and `/openapi.json` describe the running API; `backend/openapi.yaml` contains its checked personal contract. Historical contracts exist only as regression fixtures. Liveness is available; readiness remains 503 until release requirements are satisfied.
+`/docs` and `/openapi.json` describe the running API; `backend/openapi.yaml` contains its checked personal contract. The obsolete contract fixture is removed. Liveness is available; readiness remains 503 until release requirements are satisfied.
 
-Read [memory](docs/memory.md), [PRD](docs/PRD.md), [rules](docs/rules.md), the [approved personal-project plan](docs/superpowers/plans/2026-10-31-personal-github-projects.md), and the [remaining-task report](docs/reports/2026-11-01-personal-projects-checkpoint.md) for current work. Older workspace/identity runbooks are explicitly historical.
+Read [memory](docs/memory.md), [PRD](docs/PRD.md), [rules](docs/rules.md), the [approved personal-project plan](docs/superpowers/plans/2026-10-31-personal-github-projects.md), and the [remaining-task report](docs/reports/2026-11-01-personal-projects-checkpoint.md) for current work. Superseded documentation and measurements are retained only in docs/memory.md.

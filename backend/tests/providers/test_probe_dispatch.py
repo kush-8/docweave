@@ -14,7 +14,7 @@ from sqlalchemy import text
 from docweave.core.security import digest
 from docweave.services.compatibility import synthetic_request
 from docweave.core.identity import Actor
-from tests.legacy.test_budget import allowance
+from tests.providers.test_budget import allowance
 from tests.database.test_database import A
 from tests.database.test_database import PA
 from tests.database.test_database import WA

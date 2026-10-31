@@ -15,15 +15,12 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from tests.legacy.test_auth import auth_client  # noqa: F401
-from tests.legacy.test_collections import collections
-from tests.legacy.test_collections import replace_grants  # noqa: F401
+from tests.support.personal import collections, github_login
 from tests.database.test_database import B
 from tests.database.test_database import WB
 from tests.database.test_database import databases
 from tests.database.test_database import test_urls  # noqa: F401
-from tests.legacy.test_memberships import members
-from tests.legacy.test_memberships import wait_for_lock  # noqa: F401
+from tests.support.personal import wait_for_lock
 
 pytestmark = pytest.mark.anyio
 from tests.paths import TESTS_ROOT
@@ -134,20 +131,18 @@ async def test_failed_replacement_preserves_last_good_snapshot(ingestion):
     assert "invalid" not in json.dumps(status)
 
 
-async def test_revoked_writer_never_reaches_parser_and_cannot_read_jobs(ingestion):
+async def test_revoked_owner_never_reaches_parser_and_cannot_read_jobs(ingestion):
     c = ingestion
-    user = c["recipient"]["id"]
-    member = f'/api/v1/workspaces/{c["workspace"]["id"]}/members/{user}'
-    await c["admin"].patch(member, json={"role": "maintainer"}, headers=c["headers"])
-    await replace_grants(c, [{"user_id": user, "access": "write"}])
-    accepted = (await upload(c, client=c["guest"], headers=c["guest_headers"])).json()
-    await replace_grants(c, [], revision=2)
+    accepted = (await upload(c)).json()
+    async with c['owner'].begin() as connection:
+        await connection.execute(text('UPDATE app.projects SET owner_user_id=:user WHERE id=:project'),
+            {'user': UUID(c['recipient']['id']), 'project': UUID(c['project'])})
     def forbidden(*args):
-        pytest.fail("Revoked private text reached processing")
+        pytest.fail('Revoked private text reached processing')
     from docweave.services.ingestion import run_ingestion
-    await run_ingestion(UUID(accepted["job_id"]), engine=c["worker"], store=c["store"], parser=forbidden)
-    assert (await c["guest"].get(accepted["status_url"])).status_code == 404
-    assert (await c["admin"].get(accepted["status_url"])).json()["status"] == "blocked_policy"
+    await run_ingestion(UUID(accepted['job_id']), engine=c['worker'], store=c['store'], parser=forbidden)
+    assert (await c['admin'].get(accepted['status_url'])).status_code == 404
+    assert (await c['guest'].get(accepted['status_url'])).json()['status'] == 'blocked_policy'
 
 
 async def test_deletion_during_processing_fences_publication_and_removes_bytes(ingestion):
@@ -176,18 +171,16 @@ async def test_deletion_during_processing_fences_publication_and_removes_bytes(i
     assert list(c["store"].root.iterdir()) == []
 
 
-async def test_current_read_grant_controls_document_versions_and_jobs(ingestion):
+async def test_only_current_owner_reads_document_versions_and_jobs(ingestion):
     c = ingestion
     accepted = (await upload(c)).json()
-    await work(c, accepted["job_id"])
-    paths = [accepted["status_url"], f'/api/v1/documents/{accepted["document_id"]}', f'/api/v1/documents/{accepted["document_id"]}/versions']
+    await work(c, accepted['job_id'])
+    paths = [accepted['status_url'], f'/api/v1/documents/{accepted["document_id"]}', f'/api/v1/documents/{accepted["document_id"]}/versions']
     for path in paths:
-        assert (await c["guest"].get(path)).status_code == 404
-    await replace_grants(c, [{"user_id": c["recipient"]["id"], "access": "read"}])
-    for path in paths:
-        assert (await c["guest"].get(path)).status_code == 200
-    assert (await upload(c, client=c["guest"], headers=c["guest_headers"])).status_code == 403
-    assert (await c["guest"].delete(paths[1], headers=c["guest_headers"])).status_code == 403
+        assert (await c['guest'].get(path)).status_code == 404
+        assert (await c['admin'].get(path)).status_code == 200
+    assert (await upload(c, client=c['guest'], headers=c['guest_headers'])).status_code == 404
+    assert (await c['guest'].delete(paths[1], headers=c['guest_headers'])).status_code == 404
 
 
 async def test_upload_rejects_unknown_parts_and_unsupported_types_without_artifacts(ingestion):
@@ -272,25 +265,16 @@ async def test_frozen_official_and_synthetic_fixtures_have_stable_exact_spans():
     assert manifest["documents"][2]["coverage"]["publisher_range"] == "17"
 
 
-async def test_upload_rechecks_authority_after_workspace_lock_and_removes_uncommitted_bytes(ingestion):
+async def test_upload_rechecks_ownership_and_removes_uncommitted_bytes(ingestion):
     c = ingestion
-    task = None
-    try:
-        async with c["owner"].begin() as connection, c["runtime"].connect() as observer:
-            await connection.execute(text("SELECT id FROM app.workspaces WHERE id=:id FOR UPDATE"), {"id": UUID(c["workspace"]["id"])})
-            task = asyncio.create_task(upload(c))
-            await wait_for_lock(observer, "enqueue_ingestion")
-            await connection.execute(text("UPDATE app.memberships SET role='member' WHERE workspace_id=:w AND user_id=:actor"),
-                {"w": UUID(c["workspace"]["id"]), "actor": UUID(c["user"]["id"])})
-        response = await task
-        assert response.status_code == 404
-        assert list(c["store"].root.iterdir()) == []
-        async with c["owner"].connect() as connection:
-            assert await connection.scalar(text("SELECT count(*) FROM app.ingestion_jobs")) == 0
-            assert await connection.scalar(text("SELECT count(*) FROM queue.procrastinate_jobs")) == 0
-    finally:
-        if task is not None:
-            await task
+    async with c['owner'].begin() as connection:
+        await connection.execute(text('UPDATE app.projects SET owner_user_id=:user WHERE id=:project'),
+            {'user': UUID(c['recipient']['id']), 'project': UUID(c['project'])})
+    response = await upload(c)
+    assert response.status_code == 404
+    assert list(c['store'].root.iterdir()) == []
+    async with c['owner'].connect() as connection:
+        assert await connection.scalar(text('SELECT count(*) FROM app.ingestion_jobs')) == 0
 
 
 async def test_lost_commit_confirmation_does_not_remove_a_durable_upload(ingestion, monkeypatch):

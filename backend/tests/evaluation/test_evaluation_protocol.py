@@ -13,14 +13,12 @@ from uuid import UUID
 import pytest
 from sqlalchemy import text
 
-from tests.legacy.test_auth import auth_client  # noqa: F401
-from tests.legacy.test_collections import collections  # noqa: F401
+from tests.support.personal import collections, github_login  # noqa: F401
 from tests.database.test_database import WB
 from tests.database.test_database import databases
 from tests.database.test_database import test_urls  # noqa: F401
 from tests.rag.test_ingestion import FIXTURES
 from tests.rag.test_ingestion import ingestion  # noqa: F401
-from tests.legacy.test_memberships import members  # noqa: F401
 from tests.rag.test_retrieval import basis
 from tests.rag.test_retrieval import index
 from tests.rag.test_retrieval import indexed  # noqa: F401

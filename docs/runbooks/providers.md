@@ -1,25 +1,9 @@
-# Hosted compatibility checks
+# Provider configuration
 
-Task 3C has an operator-only fixed synthetic runner. It accepts four built-in requests, not project text, uploads, URLs or client-defined prompts. Its development target guard allows only the migration login on `127.0.0.1:55432/docweave`. Never use the disposable database for paid work.
+Groq is used for hosted query resolution, reranking, generation and planned summaries/judges. Gemini is the embedding exception. Use immutable operator-verified profiles and active index generation; current environment names are in [.env.example](../../.env.example). Configure `RAG_GENERATION_ID`, `EMBEDDING_PROFILE_ID`, `QUERY_PROFILE_ID`, `RERANK_PROFILE_ID` and optional default `ANSWER_PROFILE_ID` along with privately stored keys.
 
-From the repository root in PowerShell:
+Profiles bind provider/model/backend/role/processor IDs, token/attempt bounds and price card. Enabled flags do not repoint identity. Verify actual account, capability, billing/prices and purpose eligibility before enabling. Do not send private content under a public/synthetic exception or billing-unknown/free configuration. Normal dispatch still checks owner/upstream access, source/assessment, consent and conservative global admission.
 
-```powershell
-$env:PYTHONPATH = Join-Path (Get-Location) 'backend/src'
-.\backend\.venv\Scripts\python.exe -m docweave.compatibility
-.\backend\.venv\Scripts\python.exe -m docweave.compatibility --run
-```
+Use current integrations in `backend/src/docweave/integrations/` and admitted orchestration in `services/personal_providers.py`. All roles use bounded no-retry HTTP, provenance-separated structured prompts and validated responses. Completion_unknown cannot be automatically replayed. Tests replace HTTP and establish boundary behavior, not live provider eligibility or invoice costs.
 
-The first command prepares a dedicated synthetic actor/workspace/project, disabled profiles and hash-bound requests without inference. `--run` uses the ignored `.env` keys without printing them. Each exact request receives a persistent reservation and a one-time claim before HTTP. Concurrent callers, cancellation, lost commit acknowledgements and resume cannot automatically repeat paid work. A response or transport failure retains the conservative maximum until billing is reconciled; never delete financial history to retry. Consumed registrations are immutable and share a US$0.25 lifetime maximum across workspaces. The monthly workspace allocation is US$0.25 and the application ceiling remains US$20.
-
-Requests use explicit timeouts, no SDK/transport retries, no environment proxies, no redirects and identity encoding. Compressed responses are rejected before decoding; response size and JSON/model/ranking/vector fields are checked. Groq reranking separates trusted system instructions from a JSON data envelope, with no tools, strict output schema, low reasoning effort and 4096 completion tokens. Gemini Embedding 2 uses query/document prefixes and 768 dimensions. This is not a general project dispatch API or a claim that prompt formatting prevents injection.
-
-## Observed development results, 2026-10-31
-
-All four initial requests succeeded. Gemini query/document vectors had 768 dimensions and norms approximately 1.0000003/0.9999999. Groq 20B returned the expected ID with 469 input, 60 completion and 24 reported reasoning tokens; Groq 120B returned the expected ID with 469 input, 63 completion and 20 reported reasoning tokens. Full completion counts are retained alongside reasoning metadata; provider billing interpretation is still unverified.
-
-The ledger retains **US$0.0364544**, a conservative reservation rather than confirmed invoice cost. The ignored report is `backend/eval/reports/compatibility-v1.json`; result metadata is also durable in PostgreSQL. All profiles remain disabled and account/capability flags remain unverified. Gemini free-tier/billing-unknown status does not authorize private processing.
-
-Rates checked against [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing), [Groq 20B](https://console.groq.com/docs/model/openai/gpt-oss-20b) and [Groq 120B](https://console.groq.com/docs/model/openai/gpt-oss-120b): respectively US$0.20 input; US$0.075 input/US$0.30 output; and US$0.15 input/US$0.60 output per million tokens. The first probes reserve the entire advertised input window, not a provisional tokenizer estimate.
-
-The user separately approved the [frozen public/synthetic fixture pilot](public-pilot.md) with a distinct US$1 maximum. Its live run passed: all four reranked hybrids supported 10/10 questions and passed controls, with US$0.4882432 conservatively retained. The GPT-OSS Harmony tokenizer enforces the evidence/request limits. Ordinary project dispatch, private Gemini processing, billing verification and full answer quality remain unfinished. The existing synthetic-only exception is unchanged.
+[Spending](budget.md), [retrieval](retrieval.md), [personal setup](personal-projects.md) and [remaining verification](../tasks.md) contain the current operating requirements. Historical model/probe results and quoted prices are kept only in [memory](../memory.md); verify current external facts before any live run.

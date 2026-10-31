@@ -1,6 +1,6 @@
-# Personal GitHub Projects Implementation Plan
+# Personal GitHub project plan
 
-Status: user-approved direction, 2026-10-31. Documentation must be updated before code. Implementation has reached the 2026-11-01 checkpoint; preserved-data cutover and release work remain. See the [checkpoint report](../../reports/2026-11-01-personal-projects-checkpoint.md) for implemented behavior, evidence and remaining tasks.
+Current implementation exists; data cutover and remaining acceptance are tracked in [tasks](../../tasks.md). Full release is incomplete.
 
 ## Goal and authority
 
@@ -36,7 +36,7 @@ Query resolution returns required dependency IDs or explicit uncertainty; valida
 
 Persist waiting_for_sources on the original durable turn with required targets and job references. Completion handling and worker recovery reconcile waits and atomically claim continuation once. Recheck ownership, upstream access, context, source eligibility, processing consent and budget before continuation. Reassess dependency requirements when context changed during a wait. Cancellation/deletion prevents resumption but does not cancel shared work needed elsewhere. Preserve one-active-turn and request-idempotency behavior; never replay uncertain provider calls automatically.
 
-Record revisions on turns and summaries. Invalidate/rebuild version-dependent summaries after context changes and distinguish historical version-specific statements from current facts. Old assistant answers are never documentary evidence. Show actual worker stages; use an indeterminate loader unless progress is measurable.
+Record revisions on turns and, when implemented, summaries. Invalidate/rebuild version-dependent summaries after context changes and distinguish historical version-specific statements from current facts. Old assistant answers are never documentary evidence. Show actual worker stages; use an indeterminate loader unless progress is measurable.
 
 ## Interfaces
 
@@ -46,24 +46,19 @@ Implement GET /catalog and return safe catalog coverage/readiness. Project views
 
 Frontend: real GitHub login, repository/goal setup, Projects sidebar, project-required New chat, sync/indexing status, durable turns, evidence and context-change notices. Preserve draft protection, responsive layout, themes and accessibility. No pricing or sharing UI.
 
-## Ordered implementation and acceptance
+## Implementation and acceptance
 
-- [x] Record approved design and execution order in authoritative docs before code changes.
-- [ ] Ownership foundation: add migration preflight and regression tests; map sole-owner workspaces automatically, require explicit mappings for ambiguous ownership and nonproject records. Preserve ledger actor IDs and operation identities rather than merging hashes. Prove cross-user denial through SQL and APIs.
-- [ ] GitHub identity: replace OIDC transport and Keycloak infrastructure using existing session/security primitives. Preserve user UUIDs through explicit verified numeric-GitHub-ID mappings; never email-match. Test callback replay, denied installation, token refresh races and upstream revocation.
-- [ ] Catalog: add public revisions, collections and private selections; adapt source policy, ingestion, publication and retrieval. Test shared-job deduplication, exact generation/version readiness, operator-only mutation, revocation, and private isolation across users.
-- [ ] Repository synchronization: supported static parsers, commit-pinned provenance and semantic diff; test no-op commits, monorepos, partial/unsupported input, force pushes and concurrent new chats.
-- [ ] Conversations and waiting turns: wire existing RAG components; test unrelated questions during indexing, required-source waits, restart reconciliation, exactly-once resume, cancellation, failure and context changes.
-- [ ] Frontend integration and cleanup: replace synthetic-only navigation with the agreed flow, remove obsolete routes/config/callers/fixtures, and update runtime contracts/runbooks as each slice lands.
-- [ ] Cutover verification: rehearse a disposable restored database first; drain workers, back up development database/artifacts, migrate without resetting storage, verify counts/references/hashes/vectors/ledger claims, then resume workers. Remove obsolete runtime tables/functions only after reference and preservation checks pass. Keep historical migrations.
+Core direct ownership, GitHub identity/repository access, shared catalog/retrieval, commit synchronization, durable chat/source waits and frontend integration exist. Their complete acceptance and data cutover remain tracked in [tasks](../../tasks.md); that list is the active execution order. Do not recreate removed OIDC/SaaS implementations or retain obsolete endpoint tests.
 
-Legacy manual projects and their private knowledge remain preserved with repository setup required before new chats. Existing ambiguous records remain inaccessible until explicitly mapped; never pick an arbitrary owner. Do not promote legacy uploads into shared public content based on filename or URL. Historical reports remain intact and explicitly historical after source fingerprints change.
+Run focused meaningful regressions, serial backend tests with warnings as errors, deterministic retrieval/isolation evaluation and frontend build/lint/browser/accessibility checks. Fake-provider tests do not establish actual account or release quality. No paid evaluation rerun without explicit authorization. Preserve all existing development data and uncertain claims; rehearse/drain/back up/verify before cutover. Keep immutable Alembic migrations.
 
-Run focused failing-then-passing tests for each behavior, the full backend suite with warnings as errors, deterministic retrieval/isolation evaluation, frontend build/lint and browser/accessibility checks. No paid evaluation rerun without existing explicit authorization. The original full answer-quality evaluation remains unfinished and is not waived by this refactor.
+Legacy manual projects and their private knowledge remain preserved with repository setup required before new chats. Existing ambiguous records remain inaccessible until explicitly mapped; never pick an arbitrary owner. Do not promote legacy uploads into shared public content based on filename or URL. Keep measured history in memory.md and private machine-generated evidence in operator storage; do not present older fingerprints as current release evidence.
+
+Run focused failing-then-passing tests for each behavior, the full backend suite with warnings as errors, deterministic retrieval/isolation evaluation, frontend build/lint and browser/accessibility checks. No paid evaluation rerun without existing explicit authorization. Full answer-quality evaluation remains unfinished and is not waived by this refactor.
 
 ## Guardrails retained explicitly
 
-User reconfirmed on 2026-10-31: keep the previously approved RAG guardrails. Preserve the distinction between existing enforcement and planned protection; this refactor does not make pending guards implemented by declaration.
+Retain RAG guardrails and distinguish current enforcement from remaining acceptance. See the [guardrail plan](2026-10-31-rag-guardrails.md).
 
 - Keep deterministic injection checks, exact-document-version quarantine and owner review; public catalog reviews require operator authority, while private-document reviews require the project owner.
 - Block strong credential/token/private-key/authorization/connection-string matches before external processing. Neither catalog trust nor owner/operator review waives credential blocking.

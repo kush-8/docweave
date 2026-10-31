@@ -3,7 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from uuid import uuid4
 from tests.database.test_database import A,PA,databases,test_urls
-from tests.legacy.test_budget import profile
+from tests.providers.test_budget import profile
 from docweave.core.settings import database_url
 from docweave.db.engine import make_engine
 

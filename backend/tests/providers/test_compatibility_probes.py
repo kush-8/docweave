@@ -9,9 +9,9 @@ from sqlalchemy.exc import DBAPIError
 
 from docweave.core.security import digest
 from docweave.db.sessions import tenant_session
-from tests.legacy.test_budget import allowance
-from tests.legacy.test_budget import profile
-from tests.legacy.test_budget import reserve
+from tests.providers.test_budget import allowance
+from tests.providers.test_budget import profile
+from tests.providers.test_budget import reserve
 from tests.database.test_database import A
 from tests.database.test_database import B
 from tests.database.test_database import PA

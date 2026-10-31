@@ -3,18 +3,12 @@
 from sqlalchemy import text
 
 
-async def session_user(connection, values):
-    return await connection.execute(text(
-            "SELECT user_id FROM app.auth_sessions WHERE token_hash=:hash AND expires_at>now()"
-        ), values)
 
 
 async def set_actor(connection, values):
     return await connection.execute(text("SELECT set_config('docweave.actor_id',:actor,true)"), values)
 
 
-async def load_user(connection, values):
-    return await connection.execute(text("SELECT id,display_name,email,email_verified FROM app.users WHERE id=:id"), values)
 
 
 async def expire_login_limits(connection):
@@ -54,8 +48,6 @@ async def consume_flow(connection, values):
         """), values)
 
 
-async def provision_identity(connection, values):
-    return await connection.scalar(text("SELECT app.provision_identity(:issuer,:subject,:name,:email)"), values)
 
 
 async def delete_session(connection, values):
@@ -76,3 +68,6 @@ async def identity_user(connection, values):
 
 async def rotate_token(connection, values):
     await connection.execute(text("UPDATE app.auth_sessions SET encrypted_token=:token WHERE token_hash=:hash"), values)
+
+async def provision_identity(connection, values):
+    return await connection.scalar(text("SELECT app.provision_identity(:issuer,:subject,:name,:email)"), values)

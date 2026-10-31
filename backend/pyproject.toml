@@ -21,8 +21,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "authlib>=1.9,<2",
-    "email-validator>=2,<3",
     "anyio>=4,<5",
     "httpx>=0.28,<1",
     "jsonschema[format]>=4.23,<5",
