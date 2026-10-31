@@ -1,5 +1,7 @@
 # Task 3C: hosted retrieval
 
+2026-10-31 update: the separately approved [operator public-fixture pilot](2026-10-31-public-pilot.md) is complete and measured. All four reranked hybrids supported10/10 development questions and passed controls under a separate US$1 cap; every failed variant remains reported. Development is at0012 and the final serial backend suite passed595 tests. This completes the limited public pilot, while private processing, arbitrary-document guardrails and general hosted project dispatch remain unfinished. Older checkpoints below preserve their original scope/evidence.
+
 The user authorized the backend roadmap, requested simple code, and reserved architectural decisions for review. Task 3B is checkpoint `b942fe0`. Keep the frontend deferred and commits local.
 
 ## Scope and constraints

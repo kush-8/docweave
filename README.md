@@ -2,9 +2,9 @@
 
 Project-aware technical documentation and knowledge assistant.
 
-Status: The frontend remains a synthetic preview. The backend implements authentication/tenancy, manual projects, collection grants/consent, conservative budgets, durable TXT/Markdown snapshots and a scoped retrieval/evaluator foundation. Native full-text/SQL BM25 and exact/shared-HNSW paths have deterministic evidence; hosted adapters, account/pricing verification and semantic RAG quality remain incomplete. Readiness stays unavailable; conversations, GitHub setup and frontend integration remain unfinished. See [auth](docs/runbooks/auth.md), [workspaces](docs/runbooks/workspaces.md), [memberships](docs/runbooks/memberships.md), [projects](docs/runbooks/projects.md), [collection policy](docs/runbooks/collection-policy.md), [budget](docs/runbooks/budget.md), [ingestion](docs/runbooks/ingestion.md) and [retrieval/evaluation](docs/runbooks/retrieval.md).
+Status: The frontend remains a synthetic preview. The backend implements authentication/tenancy, manual projects, collection grants/consent, conservative budgets, durable TXT/Markdown snapshots and scoped retrieval/evaluation. Native full-text/SQL BM25 and exact/shared-HNSW paths have deterministic and operator public-pilot evidence; general hosted project dispatch, billing verification and full answer quality remain incomplete. Readiness stays unavailable; conversations, GitHub setup and frontend integration remain unfinished. See [auth](docs/runbooks/auth.md), [workspaces](docs/runbooks/workspaces.md), [memberships](docs/runbooks/memberships.md), [projects](docs/runbooks/projects.md), [collection policy](docs/runbooks/collection-policy.md), [budget](docs/runbooks/budget.md), [ingestion](docs/runbooks/ingestion.md) and [retrieval/evaluation](docs/runbooks/retrieval.md).
 
-Current RAG plan: Groq-hosted LLMs with Gemini embeddings; compare native full-text/BM25 and filtered exact/HNSW retrieval through an end-to-end RAG evaluation pipeline. Deterministic retrieval components exist; live compatibility/pilot and complete RAG evaluation remain planned. See the [backend task order](docs/tasks.md#current-backend-task-order--2026-10-30); frontend integration and the future provider-selecting LLM gateway are deferred.
+Current RAG plan: Groq-hosted LLMs with Gemini embeddings; compare native full-text/BM25 and filtered exact/HNSW retrieval through an end-to-end RAG evaluation pipeline. The [operator public-fixture pilot](docs/runbooks/public-pilot.md) now has live evidence: all four reranked hybrids supported 10/10 development questions and passed controls under its separate US$1 cap. Human labels, private processing, billing verification and full answer evaluation remain unfinished; no production default is selected. See the [backend task order](docs/tasks.md#current-backend-task-order--2026-10-30).
 
 Guardrails and the [structured prompt-writing rule](docs/rules.md#structured-prompt-writing-rule) are confirmed follow-up work: exact-version scanning/quarantine, owner review, credential blocking and validated evidence links. See the [guardrail plan](docs/superpowers/plans/2026-10-31-rag-guardrails.md). Implementation is pending; semantic caching and live guard models are outside the milestone.
 
@@ -25,8 +25,8 @@ docweave/
 │   │   ├── storage/            # Artifact filesystem operations
 │   │   ├── workers/            # Queue lifecycle and recovery
 │   │   ├── rag/                # Parsing, chunking, embeddings, indexing, retrieval,
-│   │   │                       # fusion, reranking, prompts and shared value contracts
-│   │   └── evaluation/         # Datasets, metrics, runner, reports and operator CLI
+│   │   │                       # fusion, reranking, tokenization, prompts and shared contracts
+│   │   └── evaluation/         # Datasets, metrics, component/public-pilot runners and reports
 │   ├── pyproject.toml            # uv-managed Python project metadata/dependencies
 │   ├── openapi.yaml              # Auth and planned domain API contract
 │   ├── alembic/versions/         # Database migration revisions

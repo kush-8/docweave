@@ -2,6 +2,8 @@
 
 Task 3B provides internal indexing/retrieval services and an operator evaluation CLI. It has no new browser/API inference route, production fake provider or hosted adapter. Ordinary uploads still prepare local snapshots; actual hosted indexing/dispatch is Task 3C. Generation records default disabled. Frontend integration remains deferred.
 
+The separately approved [operator public-fixture pilot](public-pilot.md) now executes actual Gemini embeddings, runtime RLS searches, RRF and Groq reranking on pinned public/synthetic inputs. Its four reranked hybrids supported 10/10 questions and passed controls. This limited path does not enable ordinary uploads or private hosted processing, and its development pilot does not establish answer quality or a production default.
+
 ## Planned guardrail gate
 
 Before hosted indexing, implement the [guardrail checkpoint](../superpowers/plans/2026-10-31-rag-guardrails.md). Current RLS/source/processor checks do not enforce human-review quarantine. Gate the exact version used by index input, chunk insertion/activation, retrieval and evidence release on its current assessment/review; a document status label is insufficient. Keep an older eligible index when a replacement is held, rescan on rule changes and never waive credential blocks through owner review. Reranking and later LLM roles also follow the [structured prompt rule](../rules.md#structured-prompt-writing-rule).

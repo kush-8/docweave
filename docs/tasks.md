@@ -1,5 +1,7 @@
 # DocWeave Implementation Plan
 
+2026-10-31 public-pilot checkpoint: the user requested completion of the approved operator-only public/synthetic fixture pilot. It is implemented and measured: all four reranked hybrids support 10/10 development questions and pass denial/version/no-evidence controls. All 16 variants and failures are retained; see [public pilot](runbooks/public-pilot.md). The serial backend suite passed 595 tests; development is at 0012. Public cost conservatively retained: US$0.4882432 under its US$1 cap; the separate US$0.25 synthetic cap is intact. Private processing, billing verification, arbitrary-document guardrails and full answer quality remain unfinished. This completes this public-pilot task and does not restart the cleared full-roadmap goal.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox syntax for tracking.
 
 **Goal:** Build the confirmed multi-tenant, evidence-grounded, conversational DocWeave release.

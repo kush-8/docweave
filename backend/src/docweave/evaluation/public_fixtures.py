@@ -27,10 +27,14 @@ class PublicFixtures:
     def __init__(self, corpus, dataset):
         corpus = Path(corpus)
         manifest = json.loads(pinned_bytes(corpus / "manifest.json", MANIFEST_SHA256))
+        self.manifest = manifest
         self.dataset = Dataset.model_validate_json(pinned_bytes(dataset, DATASET_SHA256))
         self._documents = {item["file"]: parse_text(pinned_bytes(corpus / item["file"], item["sha256"]), item["media_type"])
             for item in manifest["documents"]}
         self._cases = {case.id: case for case in self.dataset.cases}
+
+    def documents(self):
+        return [(item, self._documents[item["file"]]) for item in self.manifest["documents"]]
 
     def document_request(self, file, chunk_index):
         if type(file) is not str or file not in self._documents or type(chunk_index) is not int:

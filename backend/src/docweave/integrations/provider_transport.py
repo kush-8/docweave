@@ -4,7 +4,7 @@ import asyncio, json, httpx
 from docweave.rag.contracts import HostedError, unique_keys
 
 
-async def provider_post(embedding, body, api_key, *, transport=None):
+async def provider_post(embedding, body, api_key, *, transport=None, observed_limits=None):
     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent" if embedding else "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Content-Type": "application/json", "Accept-Encoding": "identity", **({"x-goog-api-key": api_key} if embedding else {"Authorization": "Bearer " + api_key})}
     async with asyncio.timeout(45), httpx.AsyncClient(transport=transport or httpx.AsyncHTTPTransport(retries=0, trust_env=False),
@@ -12,6 +12,9 @@ async def provider_post(embedding, body, api_key, *, transport=None):
         async with client.stream("POST", url, content=body, headers=headers) as response:
             if response.status_code != 200:
                 raise HostedError("provider_http_" + str(response.status_code))
+            if observed_limits is not None:
+                observed_limits.update({name: response.headers[name] for name in
+                    ("x-ratelimit-limit-tokens", "x-ratelimit-remaining-tokens", "x-ratelimit-reset-tokens") if name in response.headers})
             if response.headers.get("content-encoding", "identity").strip().lower() != "identity":
                 raise HostedError("provider_response_encoding")
             response_body = bytearray()
