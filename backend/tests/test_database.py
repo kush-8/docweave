@@ -144,7 +144,7 @@ async def databases(test_urls):
     try:
         async with owner.begin() as connection:
             # Versioned profiles are immutable; this guarded disposable reset names every dependent table.
-            await connection.execute(text("TRUNCATE app.cost_reservations,app.provider_profiles"))
+            await connection.execute(text("TRUNCATE app.compatibility_operations,app.compatibility_requests,app.cost_reservations,app.provider_profiles"))
             await connection.execute(text("DELETE FROM app.workspace_allowances"))
             await connection.execute(text("TRUNCATE app.chunks,app.document_indexes,app.index_generations,app.ingestion_jobs,app.document_versions,app.documents,app.sources,app.documentation_selections"))
             await connection.execute(text("TRUNCATE queue.procrastinate_jobs,queue.procrastinate_events,queue.procrastinate_workers RESTART IDENTITY CASCADE"))

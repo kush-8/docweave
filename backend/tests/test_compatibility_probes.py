@@ -94,3 +94,20 @@ async def test_result_reconciliation_does_not_grant_another_dispatch(databases):
     replay = await claim(owner)
     assert not replay["created"] and replay["result"] == {"outcome": "succeeded", "dimensions": 768}
     assert replay["reservation"]["charged_usd"] == "0.001000000000"
+
+
+async def test_consumed_registration_cannot_erase_lifetime_probe_spend(databases):
+    owner, _ = databases
+    identity = await profile(owner, role="embedding", fixed=Decimal("0.25"), enabled=False, account=False, capabilities=False)
+    await allowance(owner)
+    await register(owner, identity)
+    await claim(owner)
+    for statement in ("DELETE FROM app.compatibility_requests", "UPDATE app.compatibility_requests SET operation_hash=repeat('a',64)"):
+        with pytest.raises(DBAPIError) as error:
+            async with owner.begin() as connection:
+                await connection.execute(text(statement))
+        assert error.value.orig.sqlstate == "22023"
+    await register(owner, identity, "cap-after-retirement")
+    with pytest.raises(DBAPIError) as error:
+        await claim(owner, "cap-after-retirement")
+    assert error.value.orig.sqlstate == "DW016"

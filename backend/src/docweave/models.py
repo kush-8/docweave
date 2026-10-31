@@ -265,6 +265,30 @@ class CostReservation(Record, Base):
     charged_usd: Mapped[Decimal] = mapped_column(Numeric(28, 12), Computed("CASE WHEN status='metered' THEN actual_usd ELSE greatest(maximum_usd,coalesce(actual_usd,0)) END", persisted=True))
 
 
+class CompatibilityRequest(Base):
+    __tablename__ = "compatibility_requests"
+    __table_args__ = (
+        CheckConstraint("operation_hash ~ '^[0-9a-f]{64}$' AND request_hash ~ '^[0-9a-f]{64}$'", name="valid_hashes"),
+        CheckConstraint("input_tokens BETWEEN 0 AND 1000000000 AND output_tokens BETWEEN 0 AND 1000000000", name="valid_tokens"),
+    )
+    operation_hash: Mapped[str] = mapped_column(Text, primary_key=True)
+    request_hash: Mapped[str] = mapped_column(Text)
+    profile_id: Mapped[UUID] = mapped_column(ForeignKey("app.provider_profiles.id", ondelete="RESTRICT"))
+    input_tokens: Mapped[int] = mapped_column(Integer)
+    output_tokens: Mapped[int] = mapped_column(Integer)
+
+
+class CompatibilityOperation(Base):
+    __tablename__ = "compatibility_operations"
+    __table_args__ = (
+        CheckConstraint("request_hash ~ '^[0-9a-f]{64}$'", name="valid_hash"),
+        CheckConstraint("result IS NULL OR (jsonb_typeof(result)='object' AND octet_length(result::text)<=65536)", name="bounded_result"),
+    )
+    reservation_id: Mapped[UUID] = mapped_column(ForeignKey("app.cost_reservations.id", ondelete="RESTRICT"), primary_key=True)
+    request_hash: Mapped[str] = mapped_column(Text)
+    result: Mapped[dict | None] = mapped_column(JSONB)
+
+
 class DocumentationSelection(Record, Base):
     __tablename__ = "documentation_selections"
     __table_args__ = (ForeignKeyConstraint(["project_id", "workspace_id"], ["app.projects.id", "app.projects.workspace_id"], ondelete="RESTRICT"),)
