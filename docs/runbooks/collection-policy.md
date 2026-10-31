@@ -1,5 +1,7 @@
 # Collection access and processor consent
 
+> Migration notice (2026-10-31): this runbook is historical; its retired services and SaaS APIs are not part of the current application. Use [personal-project setup](personal-projects.md). Do not run the old startup instructions below as current setup. The [approved personal GitHub project plan](../superpowers/plans/2026-10-31-personal-github-projects.md) supersedes its future workspace/login/grant/allowance/manual-sync requirements. Preserve data and current safety controls until tested replacement code lands; do not reset development or treat planned features as implemented.
+
 Backend-only APIs; no frontend integration, content ingestion, conversations or hosted AI calls are implemented by this slice. Start with [authentication](auth.md), a [workspace](workspaces.md) and a [manual project](projects.md). All mutations require the session cookie, exact Origin and `/me` CSRF token.
 
 ## Collections and grants

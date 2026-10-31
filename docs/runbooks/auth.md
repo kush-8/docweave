@@ -1,5 +1,7 @@
 # Backend authentication
 
+> Migration notice (2026-10-31): this runbook is historical; its retired services and SaaS APIs are not part of the current application. Use [personal-project setup](personal-projects.md). Do not run the old startup instructions below as current setup. The [approved personal GitHub project plan](../superpowers/plans/2026-10-31-personal-github-projects.md) supersedes its future workspace/login/grant/allowance/manual-sync requirements. Preserve data and current safety controls until tested replacement code lands; do not reset development or treat planned features as implemented.
+
 Implemented 2026-10-30, backend only. The frontend remains a synthetic preview and does not call these routes. Authentication itself creates no memberships. Subsequent [workspace](workspaces.md) and [membership](memberships.md) slices implement explicit owner creation, filtered listing and owner-managed recipient-bound invitations/member changes. Project workflows remain reserved; overall readiness stays 503.
 
 ## Configure and start
@@ -67,7 +69,7 @@ References: [Keycloak OIDC endpoints](https://www.keycloak.org/securing-apps/oid
 docker compose --profile test up -d --wait test-db
 uv run --project backend --locked pytest backend/tests -q -W error
 # Explicit smoke requires the local auth profile; it is not collected by default:
-uv run --project backend --locked pytest backend/tests/smoke_auth.py -q -W error
+uv run --project backend --locked pytest backend/tests/legacy/smoke_auth.py -q -W error
 docker compose --profile test stop test-db
 ```
 

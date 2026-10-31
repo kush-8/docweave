@@ -25,9 +25,9 @@ class IndexGeneration(Record, Base):
 class DocumentIndex(Base):
     __tablename__ = "document_indexes"
     __table_args__ = (ForeignKeyConstraint(["document_id", "workspace_id"], ["app.documents.id", "app.documents.workspace_id"], ondelete="RESTRICT"),)
-    document_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
+    document_id: Mapped[UUID] = mapped_column(ForeignKey("app.documents.id", ondelete="RESTRICT", name="fk_document_indexes_document_id_direct"), primary_key=True)
     generation_id: Mapped[UUID] = mapped_column(ForeignKey("app.index_generations.id", ondelete="RESTRICT"), primary_key=True)
-    workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True))
+    workspace_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     document_version_id: Mapped[UUID] = mapped_column(ForeignKey("app.document_versions.id", ondelete="RESTRICT"))
 
 
@@ -46,10 +46,10 @@ class Chunk(Record, Base):
         Index("ix_chunks_embedding_hnsw", "embedding", postgresql_using="hnsw", postgresql_ops={"embedding": "vector_cosine_ops"},
             postgresql_with={"m": 16, "ef_construction": 64}),
     )
-    workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True))
-    project_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True))
-    collection_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True))
-    document_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True))
+    workspace_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True))
+    project_id: Mapped[UUID | None] = mapped_column(ForeignKey("app.projects.id", ondelete="RESTRICT", name="fk_chunks_project_id_direct"))
+    collection_id: Mapped[UUID] = mapped_column(ForeignKey("app.collections.id", ondelete="RESTRICT", name="fk_chunks_collection_id_direct"))
+    document_id: Mapped[UUID] = mapped_column(ForeignKey("app.documents.id", ondelete="RESTRICT", name="fk_chunks_document_id_direct"))
     document_version_id: Mapped[UUID] = mapped_column(ForeignKey("app.document_versions.id", ondelete="RESTRICT"))
     generation_id: Mapped[UUID] = mapped_column(ForeignKey("app.index_generations.id", ondelete="RESTRICT"))
     start_offset: Mapped[int] = mapped_column(Integer)

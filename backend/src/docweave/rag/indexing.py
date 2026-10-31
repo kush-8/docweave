@@ -1,6 +1,10 @@
 """Verify immutable artifacts, coordinate embeddings, then publish atomically."""
 
 import hashlib, json, time
+from dataclasses import asdict
+from uuid import UUID
+from docweave.core.guardrails import assess_text
+from docweave.repositories import ingestion as ingestion_repository
 from sqlalchemy.exc import DBAPIError
 from docweave.db.sessions import tenant_session
 from docweave.rag.contracts import RetrievalError
@@ -25,6 +29,12 @@ async def index_document(actor, document_id, generation_id, *, worker_engine, st
     parsed = json.loads(store.read(snapshot["version_id"]))
     if hashlib.sha256(parsed["text"].encode()).hexdigest() != snapshot["content_hash"] or parsed["configuration"] != snapshot["configuration"]:
         raise RetrievalError("snapshot_unavailable")
+    assessment=assess_text(parsed['text'],document_version=snapshot['version_id'],parser_config={'configuration':parsed['configuration']})
+    async with tenant_session(worker_engine,actor_id=actor.user_id,workspace_id=actor.workspace_id) as session:
+        if not await ingestion_repository.assess_version(session,UUID(snapshot['version_id']),asdict(assessment)):
+            raise RetrievalError('awaiting_approval')
+        if not await ingestion_repository.document_eligible(session,document_id):
+            raise RetrievalError('awaiting_approval')
     spans = parsed["chunks"]
     rows = []
     if snapshot["existing_chunks"] != len(spans):

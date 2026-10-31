@@ -1,5 +1,15 @@
 # DocWeave — Engineering Rules
 
+## Approved personal-project direction — 2026-10-31
+
+Direct user direction supersedes the old SaaS scope: direct personal ownership, GitHub-only identity/repo access, shared public documentation, automatic trusted stack updates on new chat, current project memory in resumed chats, background ingestion and automatic continuation of source-dependent turns. Frontend integration is authorized within this flow. Older workspace/role, separate-login, manual-review-every-diff and backend-only requirements below are legacy constraints to replace, not requirements to retain. Preserve security, actual processor consent, global spending protection, evidence/version validation and evaluation acceptance. See the [approved implementation plan](superpowers/plans/2026-10-31-personal-github-projects.md).
+
+Documentation was updated first. Implementation has reached a tested personal-project checkpoint; preserved-development-data cutover and release work remain. See the [current checkpoint report](reports/2026-11-01-personal-projects-checkpoint.md). Guardrails are explicitly retained, including pending approved protections. Discuss semantic caching after refactor verification; implementation is deferred until that discussion.
+
+## Historical baseline and retained requirements
+
+The following records the earlier design and milestone evidence. The approved personal-project plan supersedes conflicting identity, ownership and product requirements; the current report owns implementation status.
+
 Status: Backend foundational slices and a separate frontend preview exist. Backend RAG/evaluation planning reconciled 2026-10-30; frontend integration remains deferred.
 
 ## Read order and authority

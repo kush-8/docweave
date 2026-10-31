@@ -1,5 +1,7 @@
 # Bounded text ingestion
 
+> Migration notice (2026-10-31): this runbook describes the existing backend. The [approved personal GitHub project plan](../superpowers/plans/2026-10-31-personal-github-projects.md) supersedes its future workspace/login/grant/allowance/manual-sync requirements. Preserve data and current safety controls until tested replacement code lands; do not reset development or treat planned features as implemented.
+
 Task 3A implements TXT/Markdown upload, replacement, document/version listing, approved single-page source import/refresh, document/source deletion and safe job listing/status. It prepares immutable local snapshots and exact character/line locators. It does not create retrieval indexes or make embedding/LLM calls. A preparation job can be `completed` at `snapshot_published` while its document is `awaiting_approval` or `waiting_capacity`; this does not mean it is searchable. Readiness remains 503.
 
 ## Planned guardrail review

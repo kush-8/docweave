@@ -1,5 +1,7 @@
 # Manual backend projects
 
+> Migration notice (2026-10-31): this runbook describes the existing backend. The [approved personal GitHub project plan](../superpowers/plans/2026-10-31-personal-github-projects.md) supersedes its future workspace/login/grant/allowance/manual-sync requirements. Preserve data and current safety controls until tested replacement code lands; do not reset development or treat planned features as implemented.
+
 These four operations implement manual context. Start the API using the [README](../../README.md#run-the-api-skeleton), sign in using the [auth runbook](auth.md), then create a [workspace](workspaces.md). Frontend project/auth integration is not implemented.
 
 ## Requests

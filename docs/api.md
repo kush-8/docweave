@@ -1,5 +1,15 @@
 # DocWeave API guide
 
+## Approved personal-project direction — 2026-10-31
+
+The current application exposes GitHub-only `/auth/login`, direct-owner `/projects`, shared `GET /catalog`, repository/setup status, conversations/turns and authorized private document/evidence interfaces. Workspace/member/invitation/grant/allowance APIs are no longer mounted. `backend/openapi.yaml` describes the current application; `backend/tests/fixtures/legacy-openapi.yaml` preserves the historical contract. The descriptions below retain older design/reference material and must not be used as the active route inventory. See the [approved implementation plan](superpowers/plans/2026-10-31-personal-github-projects.md) and [active setup guide](runbooks/personal-projects.md).
+
+Documentation was updated first. Implementation has reached a tested personal-project checkpoint; preserved-development-data cutover and release work remain. See the [current checkpoint report](reports/2026-11-01-personal-projects-checkpoint.md).
+
+## Historical baseline and retained requirements
+
+The following records the earlier design and milestone evidence. The approved personal-project plan supersedes conflicting identity, ownership and product requirements; the current report owns implementation status.
+
 Status: backend auth/workspaces/memberships, manual projects, collection grants/consent, configured answer profiles, budgets/usage and bounded TXT/Markdown ingestion are implemented. Internal scoped index/retrieval services and an operator evaluator exist; no new browser inference route is claimed. Explicit uploads/operator-seeded sources create durable preparation jobs; project creation still creates pending documentation requests. Hosted profiles remain unverified/disabled; readiness stays 503. Frontend integration, GitHub setup and conversations remain incomplete. See [ingestion](runbooks/ingestion.md) and [retrieval/evaluation](runbooks/retrieval.md).
 
 [openapi.yaml](../backend/openapi.yaml) is the machine-readable contract, using [OpenAPI 3.1.1](https://spec.openapis.org/oas/v3.1.1.html). Open the file in an OpenAPI 3.1-compatible local viewer to browse operations and schemas. No hosted editor, generated SDK, API server or Swagger UI installation is required by this documentation change. Avoid uploading private specifications or credentials to third-party viewers.

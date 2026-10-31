@@ -4,22 +4,23 @@ from sqlalchemy import text
 from docweave.rag.contracts import RetrievalError
 
 
-SCOPE = "project_id=:project AND collection_id=ANY(CAST(:collections AS uuid[])) AND generation_id=:generation"
+SCOPE = "(project_id=:project OR project_id IS NULL) AND collection_id=ANY(CAST(:collections AS uuid[])) AND generation_id=:generation"
 
 async def authorize(session, project_id, scopes, generation_id):
+    await session.execute(text("SELECT set_config('docweave.personal_project_id',:id,true)"), {'id': str(project_id)})
     await session.execute(text("SELECT set_config('docweave.generation_id',:id,true)"), {"id": str(generation_id)})
     if await session.scalar(text("SELECT id FROM app.projects WHERE id=:id"), {"id": project_id}) is None:
         raise RetrievalError("not_found")
     if not scopes:
         return False
-    found = (await session.execute(text("SELECT id FROM app.collections WHERE project_id=:project AND id=ANY(CAST(:ids AS uuid[]))"),
+    found = (await session.execute(text("SELECT id FROM app.collections WHERE (project_id=:project OR catalog_revision_id IS NOT NULL) AND id=ANY(CAST(:ids AS uuid[]))"),
         {"project": project_id, "ids": scopes})).scalars().all()
     if set(found) != set(scopes):
         raise RetrievalError("not_found")
     if await session.scalar(text("SELECT id FROM app.index_generations WHERE id=:id AND enabled"), {"id": generation_id}) is None:
         raise RetrievalError("generation_unavailable")
     for collection in scopes:
-        if not await session.scalar(text("SELECT app.index_policy(:collection,:generation,'read')"), {"collection": collection, "generation": generation_id}):
+        if not await session.scalar(text("SELECT CASE WHEN nullif(current_setting('docweave.workspace_id',true),'') IS NULL THEN app.personal_index_policy(:collection,:generation) ELSE app.index_policy(:collection,:generation,'read') END"), {"collection": collection, "generation": generation_id}):
             raise RetrievalError("awaiting_approval")
     return True
 

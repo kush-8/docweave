@@ -97,3 +97,11 @@ async def get_source(connection, values):
 
 async def delete_source(connection, values):
     return await connection.scalar(text("SELECT app.delete_ingestion_source(:id)"), values)
+
+
+async def assess_version(connection,version,assessment):
+    import json
+    return await connection.scalar(text('SELECT app.assess_ingestion_version(:version,CAST(:assessment AS jsonb))'),{'version':version,'assessment':json.dumps(assessment)})
+
+async def document_eligible(connection,document):
+    return await connection.scalar(text('SELECT app.personal_document_eligible(:id)'),{'id':document})

@@ -1,5 +1,7 @@
 # Backend workspaces
 
+> Migration notice (2026-10-31): this runbook is historical; its retired services and SaaS APIs are not part of the current application. Use [personal-project setup](personal-projects.md). Do not run the old startup instructions below as current setup. The [approved personal GitHub project plan](../superpowers/plans/2026-10-31-personal-github-projects.md) supersedes its future workspace/login/grant/allowance/manual-sync requirements. Preserve data and current safety controls until tested replacement code lands; do not reset development or treat planned features as implemented.
+
 Implemented 2026-10-30, backend only. Requires [auth](auth.md) and migration `0003_workspaces`. The subsequent [membership slice](memberships.md), revision `0004_memberships`, now implements invitations, member roles/removal and last-owner protection. Frontend, project CRUD and complete Task 1 remain unfinished.
 
 ## Implemented operations
@@ -46,7 +48,7 @@ After restoring the original development credentials, apply migrations using the
 
 ```powershell
 docker compose --profile test up -d --wait test-db
-uv run --project backend --locked pytest backend/tests/test_workspaces.py -q -W error
+uv run --project backend --locked pytest backend/tests/legacy/test_workspaces.py -q -W error
 uv run --project backend --locked pytest backend/tests -q -W error
 docker compose --profile test stop test-db
 ```

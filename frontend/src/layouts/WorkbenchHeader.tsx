@@ -1,14 +1,14 @@
 import type { Ref } from "react";
 import { Monitor, Moon, PanelLeftClose, PanelLeftOpen, Plus, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { WorkbenchView } from "@/routing/workbench";
+
 
 type Props = {
   desktop: boolean;
   sidebarOpen: boolean;
   mobileSidebarOpen: boolean;
   sidebarToggle: Ref<HTMLButtonElement>;
-  workspace: WorkbenchView["workspace"];
+  projectName: string;
   theme: "light" | "dark";
   preference: "light" | "dark" | null;
   onToggleSidebar: () => void;
@@ -16,7 +16,7 @@ type Props = {
   onTheme: (theme: "light" | "dark" | null) => void;
 };
 
-export function WorkbenchHeader({ desktop, sidebarOpen, mobileSidebarOpen, sidebarToggle, workspace, theme, preference, onToggleSidebar, onStartChat, onTheme }: Props) {
+export function WorkbenchHeader({ desktop, sidebarOpen, mobileSidebarOpen, sidebarToggle, projectName, theme, preference, onToggleSidebar, onStartChat, onTheme }: Props) {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-3 sm:px-5">
       <div className="flex min-w-0 items-center gap-2">
@@ -24,7 +24,7 @@ export function WorkbenchHeader({ desktop, sidebarOpen, mobileSidebarOpen, sideb
           aria-expanded={desktop ? sidebarOpen : mobileSidebarOpen} aria-controls="chat-sidebar" onClick={onToggleSidebar}>
           {(desktop ? sidebarOpen : mobileSidebarOpen) ? <PanelLeftClose aria-hidden="true" /> : <PanelLeftOpen aria-hidden="true" />}
         </Button>
-        <span className="truncate text-sm font-medium">{desktop && sidebarOpen ? (workspace === "personal" ? "Personal" : "Engineering") : "DocWeave"}</span>
+        <span className="truncate text-sm font-medium">{desktop && sidebarOpen ? (projectName || "Projects") : "DocWeave"}</span>
       </div>
       <div className="flex items-center gap-1">
         {(!sidebarOpen || !desktop) && <Button variant="ghost" onClick={onStartChat}><Plus aria-hidden="true" /><span className="hidden sm:inline">New chat</span><span className="sr-only sm:hidden">New chat</span></Button>}

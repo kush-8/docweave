@@ -1,5 +1,7 @@
 # Local database
 
+> Migration notice (2026-10-31): this runbook describes the existing backend. The [approved personal GitHub project plan](../superpowers/plans/2026-10-31-personal-github-projects.md) supersedes its future workspace/login/grant/allowance/manual-sync requirements. Preserve data and current safety controls until tested replacement code lands; do not reset development or treat planned features as implemented.
+
 Run these commands from the DocWeave root. Docker Desktop must be running with its Linux engine available. Python 3.12+, uv, and Docker Compose are required. In this workspace uv is available at `C:/Users/acer/AppData/Local/Temp/docweave-test-tools/bin/uv.exe`; if it is absent from PATH, use that executable in place of `uv` below.
 
 ## Credentials and services
@@ -57,7 +59,7 @@ The suite includes API/contract, OIDC/session and database checks. Database test
 To run only the API/contract checks without a database:
 
 ```powershell
-uv run --project backend --locked pytest backend/tests/test_api.py backend/tests/test_health.py backend/tests/test_openapi.py -q
+uv run --project backend --locked pytest backend/tests/api/test_api.py backend/tests/api/test_health.py backend/tests/legacy/test_openapi.py -q
 ```
 
 Tests cover actual restricted logins, denied cross-tenant/no-context reads, required membership, rollback, pooled connection reuse after commit and rollback, refused DML/DDL/role switching/RLS bypass, vector availability, identity uniqueness, named checks and foreign keys. They do not establish complete application authentication or authorization. Windows sandbox execution may need local-loopback permission for Python's internal event-loop sockets.

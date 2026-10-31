@@ -1,5 +1,15 @@
 # DocWeave — Product Requirements
 
+## Approved personal-project direction — 2026-10-31
+
+The approved product is personal-use: GitHub-only login, required repo-linked projects, automatic commit/stack checks when starting chats, shared version-aware public documentation, and private user-owned memory/chats/uploads. Background ingestion blocks only questions needing its pending sources; those turns resume automatically. This supersedes contradictory requirements below, which describe the previous scope. See the [approved implementation plan](superpowers/plans/2026-10-31-personal-github-projects.md).
+
+Documentation was updated first. Implementation has reached a tested personal-project checkpoint; preserved-development-data cutover and release work remain. See the [current checkpoint report](reports/2026-11-01-personal-projects-checkpoint.md). Guardrails are explicitly retained, including pending approved protections. Discuss semantic caching after refactor verification; implementation is deferred until that discussion.
+
+## Historical baseline and retained requirements
+
+The following records the earlier design and milestone evidence. The approved personal-project plan supersedes conflicting identity, ownership and product requirements; the current report owns implementation status.
+
 Status: Backend foundations implemented in scoped slices; RAG planning reconciled on 2026-10-30. Product completion remains subject to the task-specific evidence below.
 
 Current update — 2026-10-31: auth/tenancy/project/collection/budget, bounded TXT/Markdown ingestion and scoped retrieval/component evaluation exist. Hosted adapters, conversations and complete RAG evaluation remain planned. The user chose operator-seeded source approvals (owner API stays Task 7) and SQL BM25 with authorized corpus statistics. Groq-only hosted LLMs with a Gemini embedding exception, native full-text/BM25 and exact/HNSW experiments, and end-to-end RAG evaluation remain confirmed. Backend work stays active on `main`; frontend integration is deferred. These provider decisions supersede the earlier three-answer-provider scope.

@@ -30,7 +30,7 @@ export function WorkbenchLayout({ children, header, sidebar, desktop, sidebarOpe
       {!desktop && <Sheet open={mobileSidebarOpen} onOpenChange={onMobileSidebarOpen}>
         <SheetContent id="chat-sidebar" side="left" className="w-72 max-w-[90vw] gap-3 overflow-y-auto overscroll-contain bg-canvas pb-[env(safe-area-inset-bottom)]"
           onCloseAutoFocus={(event) => { event.preventDefault(); sidebarToggle.current?.focus(); }}>
-          <SheetHeader><SheetTitle>Your chats</SheetTitle><SheetDescription>Workspaces & recent chats</SheetDescription></SheetHeader>
+          <SheetHeader><SheetTitle>Your chats</SheetTitle><SheetDescription>Projects & recent chats</SheetDescription></SheetHeader>
           {sidebar}
         </SheetContent>
       </Sheet>}

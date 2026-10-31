@@ -23,7 +23,7 @@ export function useWorkbenchNavigation(draft: string, onNavigate: () => void) {
       const next = readView(location.search);
       const position = history.state?.docweavePosition ?? historyPosition.current;
       const delta = position - historyPosition.current;
-      if (draft && (next.conversation !== view.conversation || next.workspace !== view.workspace) && delta && !allowTraversal.current) {
+      if (draft && (next.conversation !== view.conversation || next.project !== view.project) && delta && !allowTraversal.current) {
         setPendingHref(location.href);
         setPendingDelta(delta);
         restoringPosition.current = true;
@@ -37,7 +37,7 @@ export function useWorkbenchNavigation(draft: string, onNavigate: () => void) {
     };
     window.addEventListener("popstate", update);
     return () => window.removeEventListener("popstate", update);
-  }, [draft, view.conversation, view.workspace, onNavigate]);
+  }, [draft, view.conversation, view.project, onNavigate]);
 
   useEffect(() => {
     if (!draft) return;
@@ -57,7 +57,7 @@ export function useWorkbenchNavigation(draft: string, onNavigate: () => void) {
 
   function requestNavigate(href: string, reset = false) {
     const params = new URL(href, location.href).searchParams;
-    if (draft && (reset || params.get("conversation") !== view.conversation || (params.get("workspace") ?? "engineering") !== view.workspace)) {
+    if (draft && (reset || params.get("conversation") !== view.conversation || (params.get("project") ?? "") !== view.project)) {
       setPendingDelta(0);
       setPendingHref(href);
     } else navigate(href);

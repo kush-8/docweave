@@ -1,5 +1,19 @@
 # DocWeave Implementation Plan
 
+## Approved personal-project direction — 2026-10-31
+
+Execute the personal GitHub project refactor before the older task sequence: documentation, ownership/data preservation, GitHub identity, shared catalog, commit synchronization, durable chat/source waits, frontend integration, then verified cutover. The approved plan owns the active checklist. Earlier completion evidence remains historical; old SaaS and manual-setup requirements must not be resumed. See the [approved implementation plan](superpowers/plans/2026-10-31-personal-github-projects.md).
+
+Documentation was updated first. Implementation has reached a tested personal-project checkpoint; preserved-development-data cutover and release work remain. See the [current checkpoint report](reports/2026-11-01-personal-projects-checkpoint.md). Guardrails are explicitly retained, including pending approved protections. Discuss semantic caching after refactor verification; implementation is deferred until that discussion.
+
+## Current remaining-work authority
+
+Use the [checkpoint report and acceptance details](reports/2026-11-01-personal-projects-checkpoint.md#remaining-tasks-in-order) for the current grouped backlog, including documentation consolidation. The six workstreams are not an exhaustive implementation checklist. The approved plan's coarse milestones stay unchecked until their full acceptance is verified; substantial code exists within them. Historical task numbering below is not the active execution order.
+
+## Historical baseline and retained requirements
+
+The following records the earlier design and milestone evidence. The approved personal-project plan supersedes conflicting identity, ownership and product requirements; the current report owns implementation status.
+
 2026-10-31 public-pilot checkpoint: the user requested completion of the approved operator-only public/synthetic fixture pilot. It is implemented and measured: all four reranked hybrids support 10/10 development questions and pass denial/version/no-evidence controls. All 16 variants and failures are retained; see [public pilot](runbooks/public-pilot.md). The serial backend suite passed 595 tests; development is at 0012. Public cost conservatively retained: US$0.4882432 under its US$1 cap; the separate US$0.25 synthetic cap is intact. Private processing, billing verification, arbitrary-document guardrails and full answer quality remain unfinished. This completes this public-pilot task and does not restart the cleared full-roadmap goal.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox syntax for tracking.
@@ -10,7 +24,7 @@
 **Spec:** [PRD.md](PRD.md), [architecture.md](architecture.md), and frontend [design.md](design.md).
 **Status:** Plan and GitHub extension reconciled on 2026-10-28. The frontend preview, tested API skeleton, and PostgreSQL/core-schema foundation are implemented as separately authorized slices. Complete authenticated product workflows remain unimplemented. No full-release task below is complete solely because its infrastructure exists.
 
-On 2026-10-29, backend contract tests were added in `backend/tests/test_openapi.py`, with uv-locked dev dependencies. All 70 tests passed; 12 in-memory contract mutations were detected. This validates the draft contract only; the runtime/security/integration tests and task checkboxes below remain unfinished.
+On 2026-10-29, backend contract tests were added in `backend/tests/legacy/test_openapi.py`, with uv-locked dev dependencies. All 70 tests passed; 12 in-memory contract mutations were detected. This validates the draft contract only; the runtime/security/integration tests and task checkboxes below remain unfinished.
 
 Frontend progress on 2026-10-29: a labeled synthetic Ask workbench now implements citation/evidence interaction, responsive shadcn sheets, Tailwind themes, provider selection, and draft/history protection. Build, lint, and 11 browser checks pass, including automated accessibility scans. This preview has no live backend integration and does not complete any full-release task below. See [workbench slice](superpowers/plans/2026-10-29-workbench.md) for scope and evidence.
 
@@ -137,14 +151,14 @@ async def test_cross_workspace_project_is_hidden(owner_a, project_b):
 
 ## Task 2 — Workspace/global cost admission before hosted calls
 
-**Files:** Create `budget.py`, initial `providers.py`, budget migrations/operator configuration, `backend/tests/test_budget.py`.
+**Files:** Create `budget.py`, initial `providers.py`, budget migrations/operator configuration, `backend/tests/legacy/test_budget.py`.
 
 **Consumes:** Actor/policy/DB from Task 1.
 **Produces:** `reserve_cost(actor: Actor, operation_key: str, profile_id: str, max_input_tokens: int, max_output_tokens: int) -> Reservation`; `settle_cost(reservation_id: UUID, actual_usd: Decimal | None, execution_uncertain: bool) -> None`. Reservation stores owner, workspace/month/profile, conservative USD amount, status, and operation key. Price calculations use Decimal, not float.
 
 - [ ] Write `test_concurrent_reservations_respect_workspace_and_global_caps`: a workspace allowance of US$1 permits only one of two concurrent US$0.60 reservations; settlement/retry keys are idempotent.
 - [ ] Add assertions that missing pricing rejects admission, uncertain execution retains its reservation, a new month uses Asia/Calcutta boundaries, and a tenant cannot read/raise another allowance.
-- [ ] Run `uv run --project backend pytest backend/tests/test_budget.py -q`; verify failure before adding budget logic.
+- [ ] Run `uv run --project backend pytest backend/tests/legacy/test_budget.py -q`; verify failure before adding budget logic.
 - [ ] Implement transactional reservation/reconciliation, operator-only workspace caps, own-tenant usage endpoints, initial profile capability/price records, and no-cap waiting behavior. New workspaces need an assigned allowance; global capacity is not a reserved tenant entitlement.
 - [ ] Before enabling new adapters, replace the implemented Gemini-reranker requirement in generation eligibility with the actual Gemini-embedding/Groq-LLM pipeline requirements. Add a migration and role-specific consent/admission regressions; preserve immutable historical profiles and charges.
 - [ ] Run tests and migration upgrade/downgrade on the disposable test DB; expect no double settlement, race overspend, float drift, or tenant financial disclosure.
@@ -181,7 +195,7 @@ async def test_cross_workspace_project_is_hidden(owner_a, project_b):
 - [ ] Run initial synthetic compatibility probes under reservations with a **US$0.25 total cap**. Pin eligible profiles only after evidence; missing credentials/prices/access keep hosted work waiting while fake-provider tests continue. Determine a working bounded Groq ranking output allowance rather than inheriting the old Gemini 512-token assumption.
 - [ ] Implement up to 30 candidates/channel, deterministic deduplication and RRF `k=60`; rerank at most 20 bounded candidates with Groq, returning at most eight chunks/6,000 evidence tokens. Revalidate consent/access before external calls and evidence release; validate exact spans and source/version state.
 - [ ] Embed the frozen corpus/queries through verified profiles, reuse compatible vectors within the authorized evaluation scope and execute all registered baselines/four hybrid configurations on identical inputs. Run the retrieval pilot without reranking and then with fixed Groq reranking. At least one pilot configuration must retrieve supporting passages in the final eight for 9/10 answerable questions; report failed variants explicitly and require isolation/version/no-evidence checks for every configuration. Do not select a production winner from ten questions alone.
-- [ ] Run `uv run --project backend pytest backend/tests/test_ingestion.py backend/tests/test_retrieval.py backend/tests/test_evaluation_protocol.py -q`; record actual execution plans and results. Deliver 3A/3B/3C as separate reviewable checkpoints without claiming completion of unfinished stages.
+- [ ] Run `uv run --project backend pytest backend/tests/rag/test_ingestion.py backend/tests/rag/test_retrieval.py backend/tests/evaluation/test_evaluation_protocol.py -q`; record actual execution plans and results. Deliver 3A/3B/3C as separate reviewable checkpoints without claiming completion of unfinished stages.
 
 **Learning/completion:** Explain hashes/version activation, RLS versus physical ANN filtering, exact versus approximate recall, native ranking versus BM25, RRF and LLM reranking. Task 4 adds backend answers and the end-to-end RAG pilot; frontend Task 5 is deferred.
 
@@ -324,7 +338,7 @@ assert fake_github.fetched_paths == []
 - [ ] Add deterministic metric tests for labeled context precision/recall, Recall/MRR/nDCG where labels support them, ANN Recall@k versus exact search, underfill and structural citation/span checks. Add semantic answer correctness/required-fact coverage, faithfulness to supplied evidence, response relevance and citation-to-claim support; faithfulness is not a substitute for correctness.
 - [ ] Evaluate abstention/clarification, follow-ups, summary continuity, version/staleness/conflicts, adversarial documents, source/upstream revocation and tenant/conversation isolation. Security failures disqualify a configuration rather than being averaged into its quality score. Record scenario and turn counts separately.
 - [ ] Add guardrail regressions for structured sections/fake roles, injection flags/benign examples, credentials, owner-review races, changed rules/hashes, safe older indexes, quarantine/deletion/revocation and rejected-output persistence. Assert forbidden inputs never reach fake providers; report false positives/outcomes/overhead without claiming complete detection. Keep the 150-scenario split/human-review protocol; add deterministic boundary cases separately.
-- [ ] Run `uv run --project backend pytest backend/tests/test_evaluation_protocol.py -q`; observe missing evaluator/protocol failures.
+- [ ] Run `uv run --project backend pytest backend/tests/evaluation/test_evaluation_protocol.py -q`; observe missing evaluator/protocol failures.
 - [ ] Implement the CLI/report runner incrementally and human-verify reference labels. Compare native full-text/BM25 crossed with exact/HNSW vectors plus lexical-only/vector-only baselines, first at retrieval and then through complete generation with the same Groq answer profile, prompts/history, reranker settings, evidence budgets and query embeddings. Choose defaults using broader development end-to-end quality, latency/cost and operational complexity; prefer the simpler path when results are effectively tied.
 - [ ] Assess Ragas for semantic metrics without committing to it before Groq compatibility/cost validation. Configure all hosted judge LLM calls explicitly through Groq, with Gemini used only for any required embeddings; no framework-default provider calls. Capture per-stage/end-to-end p50/p95, token/cost totals, query plans, HNSW settings, index build time/size, machine identity, failures and configuration differences.
 - [ ] Human-review 30 development outputs to calibrate any automated judge; freeze rubric/prompts/profiles/targets. Budget the actual turn/summary/reranking/judging workload, not just 150 generation calls.

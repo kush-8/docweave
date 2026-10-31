@@ -49,12 +49,12 @@ Unit numbers refer to the guide. A new file has no saved Git introduction yet. T
 | backend/src/docweave/settings.py | 9, 10 | Explicit database URL loading and validation | saved | d43cba2 | 24 | 90ec949a8b628e8c |
 | backend/tests/conftest.py | 7 | Shared ASGI client/app/async backend fixtures | saved | d43cba2 | 22 | f38116395ebea9cb |
 | backend/tests/fixtures/.gitkeep | 5, 18 | Empty directory placeholder; future work, not feature implementation | saved | c7f1f4d | 0 | e3b0c44298fc1c14 |
-| backend/tests/smoke_auth.py | 12 | Live local auth smoke helper; inspect before executing | new | uncommitted | 150 | f7af2a2bb36b7359 |
-| backend/tests/test_api.py | 7, 12 | Runtime/error/contract/route dependency behavior tests | modified | d43cba2 | 128 | 00d278f807bf649d |
-| backend/tests/test_auth.py | 12 | Configuration/protocol/session/CSRF/auth failure regressions | new | uncommitted | 228 | 3a8c0e898c2621dd |
-| backend/tests/test_database.py | 8, 9, 10 | Guarded real-database migration, constraint, isolation, privilege tests | modified | d43cba2 | 328 | 408081a4e91741ac |
-| backend/tests/test_health.py | 7 | Liveness behavior test | saved | d43cba2 | 20 | dacb9ae75cb511e2 |
-| backend/tests/test_openapi.py | 6 | Draft contract and payload/schema checks | saved | d43cba2 | 176 | 7dcf7214a38f5cde |
+| backend/tests/legacy/smoke_auth.py | 12 | Live local auth smoke helper; inspect before executing | new | uncommitted | 150 | f7af2a2bb36b7359 |
+| backend/tests/api/test_api.py | 7, 12 | Runtime/error/contract/route dependency behavior tests | modified | d43cba2 | 128 | 00d278f807bf649d |
+| backend/tests/legacy/test_auth.py | 12 | Configuration/protocol/session/CSRF/auth failure regressions | new | uncommitted | 228 | 3a8c0e898c2621dd |
+| backend/tests/database/test_database.py | 8, 9, 10 | Guarded real-database migration, constraint, isolation, privilege tests | modified | d43cba2 | 328 | 408081a4e91741ac |
+| backend/tests/api/test_health.py | 7 | Liveness behavior test | saved | d43cba2 | 20 | dacb9ae75cb511e2 |
+| backend/tests/legacy/test_openapi.py | 6 | Draft contract and payload/schema checks | saved | d43cba2 | 176 | 7dcf7214a38f5cde |
 | backend/uv.lock | 17 | Resolved Python dependency graph and distribution metadata | modified | d43cba2 | 1406 | f14d079e76048880 |
 | compose.yaml | 9, 11 | Supporting service definitions, networking, storage, profiles | modified | d43cba2 | 84 | b364ae7c7fb44494 |
 | docs/PRD.md | 1, 2 | Product requirements, release outcomes, accepted scope | saved | c7f1f4d | 108 | 67192bbbd0d3e2f2 |
@@ -195,10 +195,10 @@ This is file-level coverage of all saved commits, including deletions. Read the 
 | backend/src/docweave/routes.py | 71 | 0 |
 | backend/src/docweave/settings.py | 24 | 0 |
 | backend/tests/conftest.py | 22 | 0 |
-| backend/tests/test_api.py | 113 | 0 |
-| backend/tests/test_database.py | 325 | 0 |
-| backend/tests/test_health.py | 20 | 0 |
-| backend/tests/test_openapi.py | 176 | 0 |
+| backend/tests/api/test_api.py | 113 | 0 |
+| backend/tests/database/test_database.py | 325 | 0 |
+| backend/tests/api/test_health.py | 20 | 0 |
+| backend/tests/legacy/test_openapi.py | 176 | 0 |
 | backend/uv.lock | 1183 | 0 |
 | compose.yaml | 42 | 0 |
 | docs/PRD.md | 6 | 0 |
@@ -248,8 +248,8 @@ M	backend/openapi.yaml
 M	backend/pyproject.toml
 M	backend/src/docweave/main.py
 M	backend/src/docweave/models.py
-M	backend/tests/test_api.py
-M	backend/tests/test_database.py
+M	backend/tests/api/test_api.py
+M	backend/tests/database/test_database.py
 M	backend/uv.lock
 M	compose.yaml
 M	docs/design.md
@@ -265,8 +265,8 @@ M	frontend/tests/workbench.spec.ts
 NEW	backend/alembic/versions/0002_auth.py
 NEW	backend/infra/keycloak/docweave-realm.json
 NEW	backend/src/docweave/auth.py
-NEW	backend/tests/smoke_auth.py
-NEW	backend/tests/test_auth.py
+NEW	backend/tests/legacy/smoke_auth.py
+NEW	backend/tests/legacy/test_auth.py
 NEW	docs/superpowers/plans/2026-10-30-auth.md
 NEW	frontend/src/components/agent-elements/LICENSE
 NEW	frontend/src/components/agent-elements/suggestions.tsx

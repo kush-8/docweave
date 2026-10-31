@@ -52,7 +52,7 @@ Approved documents remain untrusted. Provider preflight inspects segment provena
 
 ## Checkpoint 1 — Document assessments, owner review and model-use gates
 
-**Files/responsibilities:** Add `backend/src/docweave/guardrails.py` for bounded scanners and assessment/review services; extend domain models, a new migration after the current schema, ingestion/retrieval/worker integration and API schemas. Add `backend/tests/test_guardrails.py` and extend ingestion/retrieval authorization tests. Reconcile OpenAPI only during implementation.
+**Files/responsibilities:** Add `backend/src/docweave/guardrails.py` for bounded scanners and assessment/review services; extend domain models, a new migration after the current schema, ingestion/retrieval/worker integration and API schemas. Add `backend/tests/rag/test_guardrails.py` and extend ingestion/retrieval authorization tests. Reconcile OpenAPI only during implementation.
 
 **Interfaces:** Internal version-bound assessments; owner-only `GET`/`PUT /documents/{id}/versions/{version_id}/guard-review`; safe per-version assessment/review metadata on existing document/source/job views.
 

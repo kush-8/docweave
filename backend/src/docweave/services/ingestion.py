@@ -2,6 +2,8 @@ import hashlib, inspect, json, subprocess, time
 from uuid import UUID, uuid4
 from urllib.parse import urlsplit
 from docweave.rag.contracts import CONFIGURATION
+from dataclasses import asdict
+from docweave.core.guardrails import assess_text
 from docweave.repositories import ingestion as repository
 from docweave.db.sessions import domain_session
 from docweave.core.errors import DomainError
@@ -45,6 +47,11 @@ async def run_ingestion(job_id, *, engine, store, parser=container_parse, fetche
                 unpublished_artifact = None
                 async with connection.begin():
                     result = await repository.publish_version(connection, {"id": job_id, "token": token, "version": version_id, "hash": parsed["sha256"], "config": parsed["configuration"]})
+                    if result and result.get("version_id"):
+                        accepted_version=UUID(result['version_id'])
+                        assessment=assess_text(parsed['text'],document_version=str(accepted_version),parser_config={'configuration':parsed['configuration']})
+                        if not await repository.assess_version(connection,accepted_version,asdict(assessment)):
+                            raise ValueError('Assessment authority changed')
                 if not result or result.get("version_id") != str(version_id):
                     unpublished_artifact = version_id
                 if result and result.get("retry"):

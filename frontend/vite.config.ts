@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: { proxy: { "/api": { target: "http://127.0.0.1:58000", changeOrigin: false } } },
   plugins: [react(), tailwindcss()],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
 });

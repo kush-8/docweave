@@ -1,5 +1,4 @@
 from fastapi import HTTPException, APIRouter
-from docweave.api.routes.auth import router
 from docweave.schemas.health import Health, ApiError
 
 

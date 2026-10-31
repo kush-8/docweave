@@ -11,7 +11,7 @@ Using Superpowers planning/TDD/inline execution and Ponytail's smallest complete
 - `backend/src/docweave/db.py`: allow the existing transaction helper to carry actor-only context with an empty selected workspace for these narrow functions; selected-tenant reads stay unchanged.
 - `backend/src/docweave/policy.py`: immutable `Actor(user_id,workspace_id)`, `require_actor(request)` and `require_owner(request)` from verified sessions and current DB membership. Nonexistent/nonmember workspaces return the same safe 404; visible insufficient roles return 403/forbidden. Do not cache membership across requests or trust role/actor fields in request payloads.
 - `backend/src/docweave/main.py`: register the two real operations; protect reserved `/workspaces/{workspace_id}/...` operations with membership checks and owner checks where their contracts require it. Keep origin/CSRF on mutations and existing auth errors. Document cookie AND CSRF for real POST operation.
-- Tests: `backend/tests/test_workspaces.py`, affected auth/API/database checks, model/schema alignment. Docs: API/runtime status, workspace runbook, task/memory evidence.
+- Tests: `backend/tests/legacy/test_workspaces.py`, affected auth/API/database checks, model/schema alignment. Docs: API/runtime status, workspace runbook, task/memory evidence.
 
 ## Execution
 

@@ -6,11 +6,11 @@ from docweave.rag.tokenization import count_evidence_tokens
 import json
 
 
-def bounded_ranking_request(query, candidates):
+def bounded_ranking_request(query, candidates, *, model="openai/gpt-oss-20b"):
     accepted, payload = [], None
     for candidate in candidates[:20]:
         trial = accepted + [candidate]
-        request = ranking_request(query, sorted(trial, key=lambda hit: hit["chunk_id"]), "openai/gpt-oss-20b")
+        request = ranking_request(query, sorted(trial, key=lambda hit: hit["chunk_id"]), model)
         encoded = json.dumps(request, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         if count_evidence_tokens(encoded) <= 3000:
             accepted, payload = trial, request

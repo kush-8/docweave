@@ -1,5 +1,15 @@
 # DocWeave — Frontend Design and App Flow
 
+## Approved personal-project direction — 2026-10-31
+
+Target flow: GitHub login, repository/branch/app-folder and short-goal setup, Projects sidebar, then project-bound chats. Show repository synchronization separately from document indexing. Let unrelated questions proceed; show stage-based loading for a durable question waiting for required sources and continue automatically when ready. Retain draft protection, evidence drawer, responsive layout and themes. Workspace presentation below is legacy preview behavior. See the [approved implementation plan](superpowers/plans/2026-10-31-personal-github-projects.md).
+
+Documentation was updated first. Implementation has reached a tested personal-project checkpoint; preserved-development-data cutover and release work remain. See the [current checkpoint report](reports/2026-11-01-personal-projects-checkpoint.md).
+
+## Historical baseline and retained requirements
+
+The following records the earlier design and milestone evidence. The approved personal-project plan supersedes conflicting identity, ownership and product requirements; the current report owns implementation status.
+
 Code organization — 2026-10-31: `pages/WorkbenchPage` coordinates the current screen; `layouts` owns the presentational shell/header/sidebar, `components` owns conversation/composer/evidence/dialog rendering, `hooks` owns navigation/draft protection and browser preferences, `routing` owns URL parsing/building, and `data` owns synthetic fixtures. This separation preserves the current UI and introduces no backend integration or new screens.
 
 ## Current UI direction — 2026-10-30

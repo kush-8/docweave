@@ -1,5 +1,7 @@
 # Financial admission and configured profiles
 
+> Migration notice (2026-10-31): this runbook describes the existing backend. The [approved personal GitHub project plan](../superpowers/plans/2026-10-31-personal-github-projects.md) supersedes its future workspace/login/grant/allowance/manual-sync requirements. Preserve data and current safety controls until tested replacement code lands; do not reset development or treat planned features as implemented.
+
 This backend slice makes no hosted calls. It implements exact-cost reservation/reconciliation, operator monthly allowances, configured profile metadata and tenant usage. [Collection consent](collection-policy.md), provider capability/account/price checks, worker dispatch and budget are separate gates; a reservation does not authorize private-content processing.
 
 ## Read APIs

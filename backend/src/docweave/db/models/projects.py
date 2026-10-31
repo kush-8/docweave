@@ -1,5 +1,5 @@
 from uuid import UUID
-from sqlalchemy import CheckConstraint, ForeignKey, ForeignKeyConstraint, Integer, Text, UniqueConstraint, text
+from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, ForeignKeyConstraint, Integer, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from docweave.db.base import Base, Record
@@ -14,8 +14,16 @@ class Project(Record, Base):
         CheckConstraint("context_revision >= 1", name="positive_context_revision"),
         CheckConstraint("processing_revision >= 1", name="positive_processing_revision"),
         CheckConstraint("jsonb_typeof(stack) = 'array'", name="stack_array"),
+        CheckConstraint("repository_id > 0", name="positive_repository_id"),
     )
-    workspace_id: Mapped[UUID] = mapped_column(ForeignKey("app.workspaces.id", ondelete="RESTRICT"), index=True)
+    workspace_id: Mapped[UUID | None] = mapped_column(ForeignKey("app.workspaces.id", ondelete="RESTRICT"), index=True)
+    owner_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("app.users.id", ondelete="RESTRICT"), index=True)
+    repository_id: Mapped[int | None] = mapped_column(BigInteger)
+    repository_branch: Mapped[str | None] = mapped_column(Text)
+    application_path: Mapped[str | None] = mapped_column(Text)
+    last_commit_sha: Mapped[str | None] = mapped_column(Text)
+    stack_fingerprint: Mapped[str | None] = mapped_column(Text)
+    sync_status: Mapped[str] = mapped_column(Text, server_default=text("'repository_required'"))
     name: Mapped[str] = mapped_column(Text)
     goal: Mapped[str] = mapped_column(Text)
     stack: Mapped[list] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))

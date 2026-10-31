@@ -1,51 +1,28 @@
 import type { MouseEvent } from "react";
-import { ChevronDown, Folder, MessageSquare, Plus } from "lucide-react";
+import { Folder, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { viewHref } from "@/routing/workbench";
 import type { WorkbenchView } from "@/routing/workbench";
 
 type Props = {
   view: WorkbenchView;
+  projects: { id: string; name: string }[];
+  conversations: { id: string; name: string; project: string }[];
   onNavigate: (event: MouseEvent<HTMLAnchorElement>) => void;
   onStartChat: () => void;
 };
-
-export function WorkbenchSidebar({ view, onNavigate, onStartChat }: Props) {
-  const fresh = view.conversation === "new";
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-7 px-3 pb-5">
-      <Button variant="outline" className="w-full justify-start rounded-lg bg-background" onClick={onStartChat}><Plus aria-hidden="true" />New chat</Button>
-      <nav aria-label="Workspaces" className="space-y-2">
-        <h2 className="px-3 text-xs font-medium text-muted-foreground">Workspaces</h2>
-        <details open className="group">
-          <summary className="flex items-center gap-2 rounded-lg px-3 text-sm hover:bg-accent">
-            <Folder aria-hidden="true" size={16} />Engineering<ChevronDown aria-hidden="true" size={14} className="ml-auto group-open:rotate-180" />
-          </summary>
-          <a href={viewHref("sample")} onClick={onNavigate} aria-current={!fresh ? "page" : undefined}
-            className="ml-6 flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground hover:bg-accent hover:text-foreground aria-[current]:bg-accent aria-[current]:text-primary">
-            <MessageSquare aria-hidden="true" size={15} />Team files
-          </a>
-        </details>
-        <details className="group">
-          <summary className="flex items-center gap-2 rounded-lg px-3 text-sm hover:bg-accent">
-            <Folder aria-hidden="true" size={16} />Personal<ChevronDown aria-hidden="true" size={14} className="ml-auto group-open:rotate-180" />
-          </summary>
-          <p className="ml-6 px-3 py-2 text-xs text-muted-foreground">No chats yet</p>
-          <a href={viewHref("new", undefined, "personal")} onClick={onNavigate}
-            aria-current={view.workspace === "personal" ? "page" : undefined}
-            className="ml-6 flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground hover:bg-accent hover:text-foreground aria-[current]:bg-accent">
-            <Plus aria-hidden="true" size={15} />Start a chat
-          </a>
-        </details>
-      </nav>
-      <nav aria-label="Recent chats" className="space-y-2">
-        <h2 className="px-3 text-xs font-medium text-muted-foreground">Recent chats</h2>
-        <a href={viewHref("sample")} onClick={onNavigate} aria-current={!fresh ? "page" : undefined}
-          className="flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground hover:bg-accent hover:text-foreground aria-[current]:bg-accent aria-[current]:text-primary">
-          <MessageSquare aria-hidden="true" size={15} />Team files
-        </a>
-      </nav>
-      <p className="mt-auto px-3 text-xs text-muted-foreground">Example workspaces & chats</p>
-    </div>
-  );
+export function WorkbenchSidebar({ view, projects, conversations, onNavigate, onStartChat }: Props) {
+  return <div className="flex min-h-0 flex-1 flex-col gap-7 px-3 pb-5">
+    <Button variant="outline" className="w-full justify-start rounded-lg bg-background" onClick={onStartChat}><Plus aria-hidden="true" />New chat</Button>
+    <nav aria-label="Projects" className="space-y-2">
+      <h2 className="px-3 text-xs font-medium text-muted-foreground">Projects</h2>
+      {projects.map((project) => <a key={project.id} href={viewHref("new", undefined, project.id)} onClick={onNavigate} aria-current={view.project === project.id ? "page" : undefined} className="flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm hover:bg-accent aria-[current]:bg-accent"><Folder aria-hidden="true" size={16} />{project.name}</a>)}
+      <a href={viewHref("new")} onClick={onNavigate} className="flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm hover:bg-accent"><Plus aria-hidden="true" size={16} />Add project</a>
+    </nav>
+    <nav aria-label="Recent chats" className="space-y-2">
+      <h2 className="px-3 text-xs font-medium text-muted-foreground">Recent chats</h2>
+      {conversations.map((chat) => <a key={chat.id} href={viewHref(chat.id, undefined, chat.project)} onClick={onNavigate} aria-current={view.conversation === chat.id ? "page" : undefined} className="flex min-h-11 items-center rounded-lg px-3 text-sm hover:bg-accent aria-[current]:bg-accent">{chat.name}</a>)}
+      {!conversations.length && <p className="px-3 text-xs text-muted-foreground">Your chats appear here after you start one.</p>}
+    </nav>
+  </div>;
 }

@@ -14,10 +14,12 @@ class Collection(Record, Base):
         CheckConstraint("name ~ '[^[:space:]]'", name="nonblank_name"),
         CheckConstraint("grant_revision >= 1", name="positive_grant_revision"),
         CheckConstraint("processing_revision >= 1", name="positive_processing_revision"),
+        CheckConstraint("(project_id IS NOT NULL AND catalog_revision_id IS NULL) OR (project_id IS NULL AND workspace_id IS NULL AND catalog_revision_id IS NOT NULL)", name="exact_parent"),
         Index("uq_collections_default_project", "project_id", unique=True, postgresql_where=text("is_default")),
     )
-    workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), index=True)
-    project_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), index=True)
+    workspace_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), index=True)
+    project_id: Mapped[UUID | None] = mapped_column(ForeignKey("app.projects.id", ondelete="RESTRICT", name="fk_collections_project_id_direct"), index=True)
+    catalog_revision_id: Mapped[UUID | None] = mapped_column(ForeignKey("app.public_catalog_revisions.id", ondelete="RESTRICT"))
     name: Mapped[str] = mapped_column(Text)
     is_default: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     grant_revision: Mapped[int] = mapped_column(Integer, server_default=text("1"))
@@ -57,7 +59,7 @@ class ProjectProcessorApproval(Base):
     __table_args__ = (ForeignKeyConstraint(["project_id", "workspace_id"], ["app.projects.id", "app.projects.workspace_id"], ondelete="RESTRICT"),)
     project_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
     processor_id: Mapped[str] = mapped_column(ForeignKey("app.processors.id", ondelete="RESTRICT"), primary_key=True)
-    workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True))
+    workspace_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     approved_by: Mapped[UUID] = mapped_column(ForeignKey("app.users.id", ondelete="RESTRICT"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -67,6 +69,6 @@ class CollectionProcessorApproval(Base):
     __table_args__ = (ForeignKeyConstraint(["collection_id", "workspace_id"], ["app.collections.id", "app.collections.workspace_id"], ondelete="RESTRICT"),)
     collection_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
     processor_id: Mapped[str] = mapped_column(ForeignKey("app.processors.id", ondelete="RESTRICT"), primary_key=True)
-    workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True))
+    workspace_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     approved_by: Mapped[UUID] = mapped_column(ForeignKey("app.users.id", ondelete="RESTRICT"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

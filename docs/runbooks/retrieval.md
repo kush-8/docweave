@@ -1,5 +1,7 @@
 # Scoped retrieval and component evaluation
 
+> Migration notice (2026-10-31): this runbook describes the existing backend. The [approved personal GitHub project plan](../superpowers/plans/2026-10-31-personal-github-projects.md) supersedes its future workspace/login/grant/allowance/manual-sync requirements. Preserve data and current safety controls until tested replacement code lands; do not reset development or treat planned features as implemented.
+
 Task 3B provides internal indexing/retrieval services and an operator evaluation CLI. It has no new browser/API inference route, production fake provider or hosted adapter. Ordinary uploads still prepare local snapshots; actual hosted indexing/dispatch is Task 3C. Generation records default disabled. Frontend integration remains deferred.
 
 The separately approved [operator public-fixture pilot](public-pilot.md) now executes actual Gemini embeddings, runtime RLS searches, RRF and Groq reranking on pinned public/synthetic inputs. Its four reranked hybrids supported 10/10 questions and passed controls. This limited path does not enable ordinary uploads or private hosted processing, and its development pilot does not establish answer quality or a production default.
@@ -37,7 +39,7 @@ Run the complete deterministic setup/CLI smoke on the guarded test service:
 
 ```powershell
 docker compose --profile test up -d --wait test-db
-uv run --project backend --locked pytest backend/tests/test_evaluation_protocol.py -q
+uv run --project backend --locked pytest backend/tests/evaluation/test_evaluation_protocol.py -q
 ```
 
 The test uses real HTTP ingestion, scoped indexing and a separate CLI process. It retains a public/synthetic [component report](../../backend/eval/reports/component-smoke.json) in the ignored reports directory. The report verifies actual corpus hashes, records immutable generation identity, physical shared-index bytes, measured publication time, candidate IDs/ranks/scores, SQL plans, latency, eligibility counts, ANN recall and supporting-passage recall. No paid keys are used.

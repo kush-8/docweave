@@ -56,9 +56,10 @@ class CostReservation(Record, Base):
         CheckConstraint("maximum_usd >= 0 AND maximum_usd <= 1000000000000 AND (actual_usd IS NULL OR (actual_usd >= 0 AND actual_usd <= 1000000000000))", name="valid_cost"),
         CheckConstraint("status IN ('reserved','uncertain','metered') AND (status<>'metered' OR actual_usd IS NOT NULL) AND (status<>'reserved' OR actual_usd IS NULL)", name="valid_status"),
         Index("ix_cost_reservations_month", "month"),
+        Index("uq_personal_cost_operation", "actor_id", "operation_hash", unique=True, postgresql_where=text("workspace_id IS NULL")),
         Index("ix_cost_reservations_workspace_month", "workspace_id", "month"),
     )
-    workspace_id: Mapped[UUID] = mapped_column(ForeignKey("app.workspaces.id", ondelete="RESTRICT"))
+    workspace_id: Mapped[UUID | None] = mapped_column(ForeignKey("app.workspaces.id", ondelete="RESTRICT"))
     actor_id: Mapped[UUID] = mapped_column(ForeignKey("app.users.id", ondelete="RESTRICT"))
     project_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     profile_id: Mapped[UUID] = mapped_column(ForeignKey("app.provider_profiles.id", ondelete="RESTRICT"))
@@ -96,3 +97,10 @@ class CompatibilityOperation(Base):
     reservation_id: Mapped[UUID] = mapped_column(ForeignKey("app.cost_reservations.id", ondelete="RESTRICT"), primary_key=True)
     request_hash: Mapped[str] = mapped_column(Text)
     result: Mapped[dict | None] = mapped_column(JSONB)
+
+
+class PersonalProviderCall(Base):
+    __tablename__='personal_provider_calls'
+    operation_hash:Mapped[str]=mapped_column(Text,primary_key=True)
+    body_hash:Mapped[str]=mapped_column(Text)
+    reservation_id:Mapped[UUID]=mapped_column(ForeignKey('app.cost_reservations.id',ondelete='RESTRICT'))

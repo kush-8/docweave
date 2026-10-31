@@ -66,3 +66,13 @@ async def create_session(connection, values):
     return await connection.execute(text("""
             INSERT INTO app.auth_sessions(token_hash,user_id,encrypted_token,expires_at) VALUES (:hash,:user,:token,:expiry)
         """), values)
+
+
+async def locked_session(connection, values):
+    return (await connection.execute(text("SELECT user_id,encrypted_token FROM app.auth_sessions WHERE token_hash=:hash AND expires_at>now() FOR UPDATE"), values)).mappings().first()
+
+async def identity_user(connection, values):
+    return (await connection.execute(text("SELECT id,display_name,email,issuer,subject FROM app.users WHERE id=:id"), values)).mappings().first()
+
+async def rotate_token(connection, values):
+    await connection.execute(text("UPDATE app.auth_sessions SET encrypted_token=:token WHERE token_hash=:hash"), values)

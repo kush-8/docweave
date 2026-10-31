@@ -1,5 +1,15 @@
 # DocWeave — Architecture
 
+## Approved personal-project direction — 2026-10-31
+
+Target ownership is user -> project -> private knowledge/conversations. Public catalog revisions own shared indexed documentation; private project selections authorize its use. All SQL/RLS/publication/worker scopes must migrate together. GitHub App login replaces Keycloak, and new-chat synchronization replaces manual-only rescans. Existing algorithms and provider/security invariants remain. Legacy architecture below records historical implementation and older design; conflicting target requirements are superseded. See the [approved implementation plan](superpowers/plans/2026-10-31-personal-github-projects.md).
+
+Documentation was updated first. Implementation has reached a tested personal-project checkpoint; preserved-development-data cutover and release work remain. See the [current checkpoint report](reports/2026-11-01-personal-projects-checkpoint.md).
+
+## Historical baseline and retained requirements
+
+The following records the earlier design and milestone evidence. The approved personal-project plan supersedes conflicting identity, ownership and product requirements; the current report owns implementation status.
+
 Status: Confirmed direction and GitHub extension, reconciled 2026-10-28. Backend auth/workspaces/memberships, manual projects, collection grants, processor consent, configured answer profiles and financial admission/usage are implemented. Documentation requests remain pending; real profile/account verification, adapters, approved imports, GitHub setup and conversations remain incomplete. See [auth](runbooks/auth.md), [workspace](runbooks/workspaces.md), [membership](runbooks/memberships.md), [project](runbooks/projects.md), [collection policy](runbooks/collection-policy.md) and [budget](runbooks/budget.md) evidence.
 Product: [PRD.md](PRD.md). Frontend: [design.md](design.md). Delivery: [tasks.md](tasks.md).
 Numeric settings are explicit engineering defaults; quality/performance targets below require development baselining before release evaluation.

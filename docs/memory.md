@@ -1,5 +1,15 @@
 # DocWeave — Session Memory
 
+## Personal implementation and cleanup checkpoint — 2026-11-01
+
+The user narrowed the current request to finishing this checkpoint, cleaning redundant files/root logs and organizing tests, then listing remaining tasks. Personal GitHub/API/worker/shared RAG code is implemented with controlled end-to-end tests; old SaaS/OIDC exclusive runtime code moved into legacy test fixtures. Tests are now packaged by subsystem (650 cases); 13 root logs live under ignored logs/development. Actual development data, .env, backups and paid-operation history were not migrated/reset. Follow the [checkpoint report](reports/2026-11-01-personal-projects-checkpoint.md) and [execution ledger](superpowers/plans/2026-10-31-personal-github-progress.md); do not claim the full refactor or release complete.
+
+## Approved personal-project direction — 2026-10-31
+
+User approved personal GitHub projects and instructed docs first, code second. Plan records all decisions, migration requirements and pending code tasks. Preserve existing development data; no resets. Shared public indexes are reused across projects; private data stays owner-scoped. That initial docs-only update preceded the implementation checkpoint above; it is not the current runtime status. See the [approved implementation plan](superpowers/plans/2026-10-31-personal-github-projects.md).
+
+Documentation was updated first. Implementation has reached a tested personal-project checkpoint; preserved-development-data cutover and release work remain. See the [current checkpoint report](reports/2026-11-01-personal-projects-checkpoint.md). Guardrails are explicitly retained, including pending approved protections. Discuss semantic caching after refactor verification; implementation is deferred until that discussion.
+
 ## Public-fixture pilot completed — 2026-10-31
 
 The user asked to complete the current public-pilot task; the broader roadmap goal remains cleared. Preserved external responsibility-separation checkpoint2adda62 and used its new layers. Implemented public fixture service/repository/evaluator plus pinned tiktoken0.12.0 Harmony counts, real indexed Gemini vectors and scoped native/BM25/exact/HNSW/RRF/Groq reranking. Public input is pinned to manifest/document/dataset hashes; no arbitrary private text can enter this operator CLI. Separate lifetime buckets remain US$0.25 synthetic and US$1 public; development migrated to0012 and alembic check is clean. All hosted profiles remain disabled/account-unverified/capability-unverified for ordinary project data.
@@ -242,7 +252,7 @@ On 2026-10-29, the user requested an MCP server as a future goal. Build and eval
 
 ## Backend contract tests — 2026-10-29
 
-At the user's request, added `backend/tests/test_openapi.py` and a pytest dev dependency group with JSON Schema/OpenAPI validators, pytest discovery configuration, and `backend/uv.lock`. Runtime dependencies remain empty. Test commands and the contract-only scope are documented in README.
+At the user's request, added `backend/tests/legacy/test_openapi.py` and a pytest dev dependency group with JSON Schema/OpenAPI validators, pytest discovery configuration, and `backend/uv.lock`. Runtime dependencies remain empty. Test commands and the contract-only scope are documented in README.
 
 Verification: `uv run --project backend --locked pytest backend/tests -q` passed all 70 tests. Coverage includes OpenAPI validity, declared session/CSRF requirements, project/manual-or-reviewed-stack requests, revision and input validation, idempotency-key requirements, decimal money, turn states, blocked-message/result omission, and retained citation IDs. Twelve in-memory mutations confirmed that the tests detect representative regressions without editing the contract. No running API, database, identity provider, tenant isolation, worker, or paid provider behavior was tested; implementation milestones remain unchecked. uv was downloaded into a temporary tool directory because it was absent from PATH; the isolated backend environment was synchronized. In this sandbox, uv needed an explicit writable cache directory under `backend/.venv/`.
 
