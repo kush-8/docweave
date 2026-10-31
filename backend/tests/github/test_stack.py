@@ -1,4 +1,74 @@
 from docweave.integrations.stack import parse_stack
+import json
+import pytest
+
+
+PNPM = b"""lockfileVersion: '9.0'
+importers:
+  web:
+    dependencies:
+      react: {specifier: ^19, version: 19.1.0}
+  sibling:
+    dependencies:
+      react: {specifier: ^18, version: 18.3.1}
+packages:
+  react@19.1.0: {resolution: {integrity: sha512-test}}
+  react@18.3.1: {resolution: {integrity: sha512-test}}
+snapshots:
+  react@19.1.0: {}
+  react@18.3.1: {}
+"""
+
+
+def test_pnpm_ancestor_importer_does_not_mix_sibling_versions():
+    files = {'web/package.json': b'{"dependencies":{"react":"^19"}}', 'pnpm-lock.yaml': PNPM,
+        'pnpm-workspace.yaml': b'packages: [web, sibling]'}
+    scan = parse_stack(files, 'web')
+    assert scan.complete, scan.issues
+    assert [(d.name, d.resolved_version, d.declared_constraint) for d in scan.dependencies] == [('react', '19.1.0', '^19')]
+
+
+@pytest.mark.parametrize('lock', [
+    PNPM.replace(b"'9.0'", b"'6.0'"),
+    PNPM.replace(b'specifier: ^19', b'specifier: ^18'),
+    PNPM.replace(b'  web:', b'  missing:'),
+    PNPM + b'importers: {}\n',
+    b"lockfileVersion: '9.0'\nimporters: &alias {web: *alias}\n",
+    b"!!python/object/apply:os.system ['echo private-marker']",
+    PNPM.replace(b'version: 19.1.0', b'version: link:../private'),
+    PNPM.replace(b'react@19.1.0: {}', b'react@19.1.0: {dependencies: {missing: 1.0.0}}'),
+])
+def test_pnpm_invalid_stale_or_unresolved_locks_are_incomplete(lock):
+    scan = parse_stack({'web/package.json': b'{"dependencies":{"react":"^19"}}', 'pnpm-lock.yaml': lock}, 'web')
+    assert not scan.complete
+    assert 'private-marker' not in str(scan.issues)
+
+
+def test_pnpm_root_peer_suffix_and_transitive_graph_are_scoped():
+    lock = PNPM.replace(b'  web:', b'  .:').replace(b'version: 19.1.0}', b'version: 19.1.0(peer@1.0.0)}')
+    lock = lock.replace(b'  react@19.1.0: {}', b'  react@19.1.0(peer@1.0.0): {dependencies: {scheduler: 1.0.0}}\n  scheduler@1.0.0: {}')
+    lock = lock.replace(b'packages:\n', b'packages:\n  scheduler@1.0.0: {resolution: {integrity: sha512-test}}\n')
+    scan = parse_stack({'package.json': b'{"dependencies":{"react":"^19"}}', 'pnpm-lock.yaml': lock})
+    assert scan.complete, scan.issues
+    assert {(d.name, d.resolved_version, d.direct) for d in scan.dependencies} == {('react', '19.1.0', True), ('scheduler', '1.0.0', False)}
+
+
+def test_npm_ancestor_uses_nearest_node_modules_and_ignores_siblings():
+    lock = {'lockfileVersion': 3, 'packages': {
+        '': {}, 'web': {'dependencies': {'react': '^19'}},
+        'node_modules/react': {'version': '18.3.1'},
+        'web/node_modules/react': {'version': '19.1.0', 'dependencies': {'scheduler': '^1'}},
+        'node_modules/scheduler': {'version': '1.0.0'},
+        'sibling/node_modules/unrelated': {'version': '2.0.0'},
+        'node_modules/web': {'link': True, 'resolved': 'web'},
+    }}
+    files = {'web/package.json': b'{"dependencies":{"react":"^19"}}', 'package-lock.json': json.dumps(lock).encode()}
+    scan = parse_stack(files, 'web')
+    assert scan.complete, scan.issues
+    assert {(d.name, d.resolved_version, d.direct) for d in scan.dependencies} == {('react', '19.1.0', True), ('scheduler', '1.0.0', False)}
+    lock['packages']['web']['dependencies']['react'] = '^18'
+    files['package-lock.json'] = json.dumps(lock).encode()
+    assert not parse_stack(files, 'web').complete
 
 
 def test_python_constraints_resolution_and_semantic_fingerprint():

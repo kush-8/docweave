@@ -26,6 +26,8 @@ async def scan_repository(client, token, repository_id, branch, application_path
             issues.append("repository tree entry limit exceeded")
         if any(not isinstance(row, dict) or not safe_path(row.get("path")) for row in entries[:20_001]):
             issues.append("invalid repository tree")
+        elif len({row['path'] for row in entries[:20_001]}) != len(entries[:20_001]):
+            issues.append('duplicate repository tree paths')
         if any(isinstance(row, dict) and isinstance(row.get("path"), str) and len(row["path"].split("/")) > 8 for row in entries[:20_001]):
             issues.append("repository tree depth exceeded")
         files = {}
@@ -35,10 +37,11 @@ async def scan_repository(client, token, repository_id, branch, application_path
             pending = [prefix + name for name in sorted(METADATA_NAMES) if prefix + name in by_path]
             enclosing = set()
             if root:
-                for parent in PurePosixPath(root).parents:
-                    for name in ("uv.lock", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "poetry.lock", "Pipfile.lock"):
-                        path = str(parent / name)
-                        if path in by_path:
+                for name in ('uv.lock', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'poetry.lock', 'Pipfile.lock'):
+                    if prefix + name not in by_path:
+                        path = next((str(parent / name) for parent in PurePosixPath(root).parents
+                            if str(parent / name) in by_path), None)
+                        if path:
                             enclosing.add(path)
                 pending.extend(sorted(enclosing))
             seen = set()
@@ -77,9 +80,11 @@ async def scan_repository(client, token, repository_id, branch, application_path
                     issues.append("LFS metadata skipped")
                     continue
                 files[path] = data
-                if PurePosixPath(path).name in ("yarn.lock", "poetry.lock", "Pipfile", "Pipfile.lock", "pnpm-workspace.yaml"):
+                if PurePosixPath(path).name in ("yarn.lock", "poetry.lock", "Pipfile", "Pipfile.lock"):
                     issues.append("unsupported dependency metadata")
-                if path in enclosing:
+                if path.endswith('pnpm-workspace.yaml') and prefix + 'pnpm-lock.yaml' not in by_path:
+                    issues.append('pnpm workspace requires a supported lock')
+                if path in enclosing and PurePosixPath(path).name not in ('package-lock.json', 'pnpm-lock.yaml'):
                     issues.append("enclosing workspace lock requires scoped parsing")
                 if path.endswith((".txt", ".in")):
                     try:

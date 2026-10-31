@@ -12,7 +12,7 @@ Users own projects and private conversations/collections. Projects bind a GitHub
 
 Catalog publication and review require operator/service authority. Public indexing is deduplicated by revision/document/version/generation/stage and uses a stable accounting identity. A selection does not confer publication authority. Readiness comes from eligible atomic index publication in the active generation, not fetched/parsed flags. Revocation fences dependent turns/citations without deleting shared indexes selected elsewhere.
 
-Retained workspace tables/functions support existing records, financial operations and data-preservation migration. They are not a product API. Additive migrations reach `0027_personal_source_scope`; startup does not migrate. Actual development cutover needs a backed-up restored-copy rehearsal, explicit ambiguous ownership/verified numeric GitHub identity mapping and preservation checks. No email auto-link or data reset.
+Retained workspace tables/functions support financial operations and deliberate restoration of older backups. They are not a product API. Development is freshly initialized at `0027_personal_source_scope`; startup does not migrate. The private pre-reset backup has passed isolated restoration and row comparisons. Archived incurred/unknown charges need reconciliation before paid processing. Restoring older users requires explicit ambiguous ownership/verified numeric GitHub identity mapping and preservation checks; no email auto-link.
 
 ## Requests and jobs
 

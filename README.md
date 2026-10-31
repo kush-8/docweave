@@ -4,7 +4,7 @@ A personal, GitHub-linked technical documentation assistant and AI engineering p
 
 Sign in with GitHub, connect a repository/branch/application folder, provide a short goal, and start project-bound chats. New chats check commit-pinned dependency metadata. Trusted, version-matching public documentation can be indexed once and reused across projects; repository facts, uploads and conversations remain private.
 
-Current checkpoint: the personal API, workers, shared catalog/index scope, guardrail boundaries and frontend are implemented and exercised with disposable PostgreSQL and mocked provider HTTP. The full refactor is **not yet release-complete**. Real account verification, preserved-development-data cutover and the remaining product/reliability work are listed in the [checkpoint report](docs/reports/2026-11-01-personal-projects-checkpoint.md).
+Current checkpoint: the personal API, workers, shared catalog/index scope, guardrail boundaries and frontend are implemented and exercised with disposable PostgreSQL and mocked provider HTTP. The full refactor is **not yet release-complete**. Real account verification, post-reset accounting/schema review and the remaining product/reliability work are listed in the [checkpoint report](docs/reports/2026-11-01-personal-projects-checkpoint.md).
 
 Retrieval remains hybrid: keyword search (native full text/BM25) plus vector search (exact/HNSW), RRF fusion and Groq reranking. The personal worker currently defaults to BM25 plus exact vector search; these are provisional operational choices, not a claim of a benchmark winner. Gemini embeddings, Groq LLM roles, processor consent, source/version eligibility, credential blocking and citation validation remain. Semantic answer caching is not enabled.
 
@@ -27,7 +27,7 @@ docweave/
   backups/             # Ignored private backups
 ```
 
-The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Legacy database rows, models and migration functions remain deliberately preserved pending validated cutover; they do not constitute a collaboration product.
+The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Development is freshly initialized at `0027_personal_source_scope`; old data is retained in a privately verified backup. Retained models/migration functions still need reference checks before removal; they do not constitute a collaboration product. Archived incurred/unknown charges need reconciliation before paid processing.
 
 ## Run and verify
 

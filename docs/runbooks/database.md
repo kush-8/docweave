@@ -13,10 +13,14 @@ docker compose --profile test up -d --wait test-db
 uv run --project backend --locked pytest backend/tests -q -W error
 ```
 
-Run database suites serially. Fixtures migrate/clear only the guarded local test service. Startup does not run migrations. Code migration head is `0027_personal_source_scope`; this does not describe the revision of an uninspected development database.
+Run database suites serially. Fixtures migrate/clear only the guarded local test service. Startup does not run migrations. Code and the freshly initialized development database are at `0027_personal_source_scope`. Development contains no old application data; the built-in public-catalog service identity is expected.
 
 ## Existing-data cutover
 
-Follow [personal setup/preservation](personal-projects.md#preserved-data-migration): read-only ownership preflight, verified numeric GitHub identity linking, explicit ambiguous ownership, backup, isolated restore/rehearsal, count/reference/hash/vector/ledger comparisons, drain/migrate/resume. Migrations keep previous user UUIDs and operation identities; do not merge financial hashes or turn uploads into public catalog entries. Keep historical Alembic migrations and currently referenced schema/functions until safe removal is proved. No development migration/reset is part of source cleanup.
+The authorized fresh start has a private database/role/artifact backup in `backups/before-reset-20261101T025020/`, verified by isolated restore and exact comparison of 32 original application/queue tables. Old local records are cleared; archived incurred/unknown charges need reconciliation before paid processing. Retired Keycloak storage and the disposable test database were not reset.
+
+If older data is deliberately restored, follow [personal setup/preservation](personal-projects.md#preserved-data-migration): read-only ownership preflight, verified numeric GitHub identity linking, explicit ambiguous ownership, backup, isolated restore/rehearsal, count/reference/hash/vector/ledger comparisons, drain/migrate/resume. Migrations keep previous user UUIDs and operation identities; do not merge financial hashes or turn uploads into public catalog entries. Keep historical Alembic migrations and currently referenced schema/functions until safe removal is proved.
+
+`python -m docweave.preservation --snapshot <private-file>` captures read-only database/artifact fingerprints; `--compare <private-file>` checks a restored copy, including original columns across additive migrations. Select that copy with `--database-url-env RESTORED_MIGRATION_DATABASE_URL` and `--artifacts <restored-directory>`. This creates comparison evidence, not a backup. The [personal runbook](personal-projects.md#operator-commands) documents private identity manifests, worker drain and explicit `docweave.ownership --apply` for a future deliberate restore.
 
 Recovery scripts under `backend/infra/postgres/` are explicit operator tools, not startup steps. Supply credentials privately, never as logged command values. Verify narrow role grants after recovery. See [tasks](../tasks.md) for outstanding rehearsal, cleanup/retention and readiness acceptance.

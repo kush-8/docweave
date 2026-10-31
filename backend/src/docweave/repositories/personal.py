@@ -24,6 +24,9 @@ async def conversation(connection, identity):
 async def create_conversation(connection, project_id, profile_id):
     return await connection.scalar(text('SELECT app.personal_create_conversation(:project,:profile)'), {'project':project_id,'profile':profile_id})
 
+async def retry_sync(connection, identity):
+    return await connection.scalar(text('SELECT app.personal_retry_sync(:id)'), {'id':identity})
+
 async def list_conversations(connection, project_id):
     return list((await connection.execute(text('SELECT app.personal_list_conversations(:id)'), {'id':project_id})).scalars())
 

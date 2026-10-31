@@ -8,6 +8,15 @@ A, B, P, Q = [UUID(int=i) for i in range(1, 5)]
 def test_sole_owner_maps_without_changing_project_ids():
     assert ownership_mapping([{"project_id": P, "owners": [A]}]) == {P: A}
 
+
+def test_existing_personal_owner_takes_precedence_over_legacy_memberships():
+    assert ownership_mapping([{"project_id": P, "owner_user_id": B, "owners": [A]}]) == {P: B}
+
+
+def test_migration_override_cannot_transfer_an_owned_project():
+    with pytest.raises(ValueError, match="already assigned"):
+        ownership_mapping([{"project_id": P, "owner_user_id": A, "owners": [A]}], {P: B})
+
 @pytest.mark.parametrize("owners", [[], [A, B]])
 def test_ambiguous_owner_requires_explicit_mapping(owners):
     with pytest.raises(ValueError, match="explicit owner"):

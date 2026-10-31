@@ -10,6 +10,7 @@ class Conversation(Record,Base):
     project_id:Mapped[UUID]=mapped_column(ForeignKey('app.projects.id',ondelete='RESTRICT'))
     answer_profile_id:Mapped[UUID|None]=mapped_column(ForeignKey('app.provider_profiles.id',ondelete='RESTRICT'))
     status:Mapped[str]=mapped_column(Text,server_default='initializing')
+    progress:Mapped[str|None]=mapped_column(Text)
     deleted_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True))
 
 class Turn(Record,Base):

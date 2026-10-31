@@ -23,4 +23,6 @@ Validate structured claims, membership, exact spans/locators/version and current
 
 ## Verification
 
+Follow TDD with Karpathy Guidelines and Ponytail: one behavior at a time, a focused failing test, the smallest implementation, then a passing check. Reuse existing helpers; avoid speculative abstractions, unrelated refactors and redundant tests. Read targeted files and keep tool output bounded. Run broader suites when shared behavior or integration risk justifies them.
+
 Nontrivial changes require focused meaningful tests, followed by appropriate suite checks. Keep deterministic mocks separate from live evidence. Preserve the full 150-scenario/100-development/50-held-out protocol and separate 30-output human reviews with the quality thresholds in [PRD](PRD.md). Report failures and denominators; do not claim release readiness from infrastructure or scanner unit tests. Live provider/GitHub setup, full evaluation and data cutover remain separate verification tasks.

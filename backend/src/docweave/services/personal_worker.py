@@ -72,6 +72,9 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
                 if result['unchanged']:
                     memory={'stack':project['stack'],'stack_fingerprint':job.get('stack_fingerprint'), 'last_commit_sha':result['commit_sha'],'context_revision':project['context_revision']}
                 else:
+                    if not result['scan'].complete:
+                        output={'status':'failed','progress':'Dependency metadata is incomplete: '+ '; '.join(result['scan'].issues[:8])+'. Correct the metadata or application folder, then retry repository synchronization.'}
+                        return
                     memory=update_memory(project_id,project['stack'],job.get('stack_fingerprint'),project['context_revision'],result['scan'],result['commit_sha'])
                 output={'status':'ready','expected_revision':project['context_revision'],**memory}
             else:
@@ -104,7 +107,11 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
             await client.repository(access,repo['repository_id'])
         except HostedError as error:
             output={'status':'completion_unknown' if str(error)=='completion_unknown' else 'blocked_policy','progress':'The provider result is uncertain and will not be replayed automatically.' if str(error)=='completion_unknown' else 'An approved provider profile, current processing consent, or valid evidence is required.'}
-        except (DomainError,ValueError,KeyError):
+        except DomainError as error:
+            progress = ('GitHub is temporarily unavailable or rate limited. Retry repository synchronization later.'
+                if error.code == 'not_ready' else 'Sign in with GitHub again, check App installation, repository access and branch, then retry repository synchronization.')
+            output={'status':'blocked_policy','progress':progress}
+        except (ValueError,KeyError):
             output={'status':'blocked_policy','progress':'Repository access or complete stack metadata could not be verified. Check setup and sign in again.'}
         except Exception:
             output={'status':'failed','progress':'Processing failed. Check service status before retrying.'}

@@ -103,7 +103,28 @@ async def test_lfs_pointer_and_ancestor_locks_cannot_claim_complete():
     result = await scan_repository(client, "token", 42, "main", "web")
     assert not result["scan"].complete
     assert "LFS metadata skipped" in result["scan"].issues
-    assert "enclosing workspace lock requires scoped parsing" in result["scan"].issues
+    assert any('package-lock.json' in issue for issue in result['scan'].issues)
+
+
+async def test_pnpm_ancestor_is_fetched_at_pinned_sha_and_scoped():
+    from docweave.services.repository_sync import scan_repository
+    from tests.github.test_stack import PNPM
+    client, requests = fixture_client({'web/package.json': b'{"dependencies":{"react":"^19"}}',
+        'pnpm-lock.yaml': PNPM, 'pnpm-workspace.yaml': b'packages: [web, sibling]',
+        'sibling/package.json': b'{"dependencies":{"wrong":"1"}}'})
+    result = await scan_repository(client, 'token', 42, 'main', 'web')
+    assert result['scan'].complete, result['scan'].issues
+    assert [(dep.name, dep.resolved_version) for dep in result['scan'].dependencies] == [('react', '19.1.0')]
+    assert not any('sibling/package.json' in request.url.path for request in requests)
+
+
+async def test_duplicate_tree_paths_cannot_silently_select_metadata():
+    from docweave.services.repository_sync import scan_repository
+    row = {'path': 'web/package.json', 'mode': '100644', 'type': 'blob', 'size': 2}
+    client, requests = fixture_client({'web/package.json': b'{}'}, entries=[row, row])
+    result = await scan_repository(client, 'token', 42, 'main', 'web')
+    assert not result['scan'].complete
+    assert not any('/contents/' in request.url.path for request in requests)
 
 
 @pytest.mark.parametrize("application_path", ["../web", "web/../app", "/web", "web\\app", "web//app"])

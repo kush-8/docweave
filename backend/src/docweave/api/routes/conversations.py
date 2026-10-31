@@ -37,6 +37,13 @@ async def create_conversation(project_id:UUID,body:ConversationCreate,request:Re
 async def conversation(conversation_id:UUID,request:Request,user=Depends(require_github_user)):
     return await conversation_access(request,user,conversation_id)
 
+@router.post('/conversations/{conversation_id}/sync-retry',status_code=202)
+async def retry_sync(conversation_id:UUID,request:Request,user=Depends(require_github_csrf)):
+    await conversation_access(request,user,conversation_id)
+    _,engine,_=github_service(request)
+    async with domain_session(engine,UUID(user['id'])) as session:
+        return await repository.retry_sync(session,conversation_id)
+
 @router.delete('/conversations/{conversation_id}',status_code=204)
 async def delete_conversation(conversation_id:UUID,request:Request,user=Depends(require_github_csrf)):
     await conversation_access(request,user,conversation_id)
