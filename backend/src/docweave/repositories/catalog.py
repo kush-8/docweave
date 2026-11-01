@@ -1,5 +1,6 @@
 """Shared catalog worker SQL; no direct table grants to workers."""
 import json
+from uuid import NAMESPACE_URL, uuid5
 from sqlalchemy import text
 from docweave.repositories.rag.vector import vector_literal
 
@@ -28,3 +29,30 @@ async def wake_waits(connection):
 
 async def embedding_authorized(connection,job,token,profile):
     return await connection.scalar(text('SELECT app.catalog_embedding_authorized(:job,:token,:profile)'),{'job':job,'token':token,'profile':profile})
+
+
+async def publish_manifest(connection, entries, digest, *, approved):
+    if await connection.scalar(text('SELECT current_user')) != 'docweave_migrator':
+        raise ValueError('Catalog publication requires the migration role')
+    identities = []
+    for index, entry in enumerate(entries):
+        candidate = uuid5(NAMESPACE_URL, f'docweave:catalog:{digest}:{index}:candidate')
+        identity = uuid5(NAMESPACE_URL, f'docweave:catalog:{digest}:{index}:approved') if approved else candidate
+        if approved:
+            await connection.execute(text('UPDATE app.public_catalog_revisions SET enabled=false WHERE id=:id AND NOT source_approved'), {'id': candidate})
+        await connection.execute(text('''INSERT INTO app.public_catalog_revisions
+            (id,technology,ecosystem,docs_target,coverage,package_aliases,origin,path_prefix,source_url,attribution,source_hash,enabled,source_approved)
+            VALUES(:id,:technology,:ecosystem,:docs_target,CAST(:coverage AS jsonb),CAST(:package_aliases AS jsonb),:origin,:path_prefix,:source_url,:attribution,:source_hash,true,:approved)
+            ON CONFLICT(id) DO NOTHING'''), {**entry, 'coverage': json.dumps(entry['coverage']), 'package_aliases': json.dumps(entry['package_aliases']), 'id': identity, 'approved': approved})
+        current = (await connection.execute(text('SELECT enabled,source_approved FROM app.public_catalog_revisions WHERE id=:id FOR SHARE'), {'id': identity})).one()
+        if not current.enabled or current.source_approved != approved:
+            raise ValueError('Catalog revision was replaced or revoked; review a new manifest')
+        identities.append(str(identity))
+    return identities
+
+
+async def revoke_revision(connection, identity):
+    if await connection.scalar(text('SELECT current_user')) != 'docweave_migrator':
+        raise ValueError('Catalog revocation requires the migration role')
+    result = await connection.execute(text('UPDATE app.public_catalog_revisions SET enabled=false,source_approved=false WHERE id=:id'), {'id': identity})
+    return result.rowcount == 1

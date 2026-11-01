@@ -13,7 +13,7 @@ docker compose --profile test up -d --wait test-db
 uv run --project backend --locked pytest backend/tests -q -W error
 ```
 
-Run database suites serially. Fixtures migrate/clear only the guarded local test service. Startup does not run migrations. Code and the freshly initialized development database are at `0027_personal_source_scope`. Development contains no old application data; the built-in public-catalog service identity is expected.
+Run database suites serially. Fixtures migrate/clear only the guarded local test service. Startup does not run migrations. Code and the freshly initialized development database are at `0028_sync_retries`; fresh-start migration is complete. Development contains no old application data; the built-in public-catalog service identity is expected.
 
 ## Existing-data cutover
 

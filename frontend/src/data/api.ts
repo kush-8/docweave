@@ -1,7 +1,7 @@
 export type Project = { id: string; name: string; goal: string; stack?: { technology: string; declared_version?: string | null; resolved_version?: string | null; docs_target?: string | null }[]; context_revision?: number; repository?: { repository_id: number; branch: string; application_path: string; commit_sha?: string } | null; sync_state?: string; docs_state?: string };
 export type Citation = { id: string; title: string };
 export type Turn = { id: string; message: string; status: string; answer?: string | null; citations?: Citation[]; context_revision?: number; progress?: string | null };
-export type Conversation = { id: string; status: string };
+export type Conversation = { id: string; status: string; progress?: string | null };
 export type Profile = { id: string; name?: string; display_name?: string; provider?: string; model?: string; enabled?: boolean };
 export class ApiError extends Error { status: number; constructor(status: number) { super(status === 401 ? "Sign in with GitHub to continue." : status === 403 ? "Access was denied. Check your GitHub repository access and sign in again." : `Request failed (${status}). Please try again.`); this.status = status; } }
 export async function api<T>(path: string, body?: unknown, csrf?: string, signal?: AbortSignal, method?: "POST" | "PUT" | "DELETE"): Promise<T> {

@@ -12,9 +12,11 @@ Set `RAG_GENERATION_ID`, `EMBEDDING_PROFILE_ID`, `QUERY_PROFILE_ID`, `RERANK_PRO
 
 Run the ingestion worker and the personal worker separately. Both use `WORKER_DATABASE_URL`; personal retrieval uses the restricted `DATABASE_URL`. Public catalog ingestion reuses existing source-fetch, parser, chunking and embedding contracts. Its current source format support remains bounded TXT/Markdown.
 
+Use Project documentation to review source/version coverage and explicitly accept broader versions. The [catalog runbook](catalog.md) documents owner decisions, operator manifest review/revocation, immutable source hashes and remaining discovery/catalog limits. This implementation adds migration `0030_documentation_review`; this chat has tested it only on disposable PostgreSQL, not applied it to development.
+
 ## Preserved-data migration
 
-Development is a fresh `0027_personal_source_scope` database after an explicitly authorized reset. It contains only the built-in public-catalog service identity, with no old projects, documents, vectors, profiles, sessions, jobs or local charge records. Private pre-reset backups remain under `backups/before-reset-20261101T025020/`; the database archive was restored in isolation and all 32 original application/queue tables matched before reset. Historical conservative charges of US$0.524697600000 remain in that archive and must be reconciled before paid processing is enabled. A local reset does not undo provider charges or resolve uncertain calls.
+Development is fresh at `0028_sync_retries`; the authorized fresh-start migration is complete. It contains only the built-in public-catalog service identity, with no old projects, documents, vectors, profiles, sessions, jobs or local charge records. Private pre-reset backups remain under `backups/before-reset-20261101T025020/`; the database archive was restored in isolation and all 32 original application/queue tables matched before reset. Historical conservative charges of US$0.524697600000 remain in that archive and must be reconciled before paid processing is enabled. A local reset does not undo provider charges or resolve uncertain calls.
 
 The procedure below applies if older data is deliberately restored. Old-user mapping is unnecessary for the current fresh start. Do not discard retained backups or assume archived paid operations are eligible for replay.
 
@@ -26,7 +28,7 @@ The procedure below applies if older data is deliberately restored. Old-user map
 6. Dry-run the identity command, then rehearse `--apply` on the isolated copy. It verifies `/user` with each user token, rejects duplicate/conflicting/stale identities and owner transfers, locks application/queue tables, requires drained jobs and atomically checks every row against the exact intended changes. Only issuer/subject, previously unassigned project owners and sessions of changed identities may change. A mismatch rolls the operation back. Existing GitHub identities cannot be reassigned; email is never used to match accounts.
 7. Only after actual restored-data acceptance and explicit cutover authorization, repeat backup/drain/migrate/link/verify on development. Check owner access and new login, repository-required state, preserved private knowledge, financial/unknown claims and role grants before resuming workers. Retain all legacy schema/functions until preservation-backed removal is safe.
 
-Sole workspace owners backfill directly. Ambiguous legacy projects remain unassigned; legacy manual projects require a repository before starting new chats. Additive migrations currently reach `0027_personal_source_scope`; application startup never runs them automatically.
+Sole workspace owners backfill directly. Ambiguous legacy projects remain unassigned; legacy manual projects require a repository before starting new chats. Additive migrations currently reach `0028_sync_retries`; application startup never runs them automatically.
 
 ### Operator commands
 
@@ -65,7 +67,8 @@ Successful application preserves UUIDs, emails, artifacts, vectors, references, 
 
 ## Operational limits and recovery
 
-- Partial/unsupported stack scans retain good memory and block the initializing chat rather than asserting freshness. pnpm and some ancestor monorepo lock mappings remain explicit unsupported cases.
+- Partial/unsupported stack scans retain good memory and block the initializing chat with a safe explanation. After correcting access or metadata, use **Retry repository sync** in that chat; the API queues a durable background job and polling resumes. Duplicate retry requests reuse initializing work. No answer/provider operation is replayed.
+- Supported JavaScript locks: local npm v2/v3 and pnpm lockfile 9.0, plus selected-app pnpm importers and npm v2/v3 ancestor lock paths. Ancestor traversal uses the nearest lock of each kind and rejects conflicting package managers. Only the selected app's reachable registry dependencies enter its stack, including installed npm peers. Stale importer constraints, missing required peers, overlapping installed versions, patched packages, unresolved workspace links, aliases/catalog specifiers, other pnpm versions and ancestor uv/Poetry/Yarn mappings stay incomplete. No package manager or repository code is executed.
 - A turn waits only for identified required dependencies with active ingestion work. Completion wakes its original durable intent; query-resolution results are retained across a source wait. Failed, approval-blocked and capacity states must not be shown as indexing progress.
 - Unknown completion is never replayed automatically. Provider claims retain conservative charges even if a response or publication acknowledgement is lost.
 - Guardrail review binds the exact document version/hash/rules. Credentials cannot be waived. Shared catalog review requires operator authority; ordinary project APIs cannot publish or mutate shared catalog content.

@@ -44,9 +44,9 @@ BEGIN
  PERFORM app.personal_enqueue(p_id,NULL,'sync');
  RETURN app.personal_conversation(p_id);
 END $$;
-REVOKE ALL ON FUNCTION app.personal_retry_sync(uuid) FROM PUBLIC,docweave_runtime,docweave_worker;
-GRANT EXECUTE ON FUNCTION app.personal_retry_sync(uuid) TO docweave_runtime;
 """)
+    op.execute('REVOKE ALL ON FUNCTION app.personal_retry_sync(uuid) FROM PUBLIC,docweave_runtime,docweave_worker')
+    op.execute('GRANT EXECUTE ON FUNCTION app.personal_retry_sync(uuid) TO docweave_runtime')
 
 
 def downgrade():

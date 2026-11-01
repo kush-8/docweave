@@ -14,6 +14,21 @@ from docweave.db.engine import make_engine
 pytestmark = pytest.mark.anyio
 
 
+async def test_sync_retry_migration_roundtrip_preserves_rows_and_role_grants(databases, test_urls):
+    from tests.database.test_database import migrate
+    from docweave.repositories.ownership import preservation_snapshot
+    owner, _ = databases
+    async with owner.begin() as connection:
+        before = await preservation_snapshot(connection)
+    await migrate(test_urls[1], '0027_personal_source_scope', downgrade=True)
+    await migrate(test_urls[1], 'head')
+    await owner.dispose()
+    async with owner.begin() as connection:
+        assert await preservation_snapshot(connection) == before
+        assert await connection.scalar(text("SELECT has_function_privilege('docweave_runtime','app.personal_retry_sync(uuid)','EXECUTE')")) is True
+        assert await connection.scalar(text("SELECT has_function_privilege('docweave_worker','app.personal_retry_sync(uuid)','EXECUTE')")) is False
+
+
 async def test_blocked_chat_retry_is_async_deduplicated_and_authorized(github_login):
     from docweave.main import create_app
     settings, runtime, owner, github, state, cookie, _, _ = github_login
@@ -97,5 +112,84 @@ async def test_partial_sync_preserves_good_memory_and_retry_rechecks_commit(gith
             assert current['repository']['commit_sha'] == 'a' * 40
             assert current['context_revision'] == 6
             assert seen == ['b' * 40, 'b' * 40]
+    finally:
+        await worker.dispose()
+
+
+async def test_concurrent_sync_jobs_refresh_context_after_project_lock(github_login, monkeypatch):
+    from docweave.integrations.stack import parse_stack
+    from docweave.services.github_auth import session_context
+    from docweave.services.personal_worker import run_personal_job
+    from docweave.repositories import personal
+    from docweave.db.sessions import domain_session
+    settings, runtime, owner, client, _, cookie, _, _ = github_login
+    user, _ = await session_context(settings, runtime, client, cookie)
+    actor = UUID(user['id'])
+    async def repository(token, identity):
+        return {'id': identity, 'name': 'repo', 'default_branch': 'main'}
+    client.repository = repository
+    async with domain_session(runtime, actor) as session:
+        project = await personal.create_project(session, {'name': 'Repo', 'goal': 'Help', 'repository_id': 42, 'branch': 'main'})
+        for _ in range(2):
+            await personal.create_conversation(session, UUID(project['id']), None)
+    async with owner.connect() as connection:
+        jobs = list((await connection.execute(text('SELECT id FROM app.personal_jobs ORDER BY created_at,id'))).scalars())
+    entered, release = asyncio.Event(), asyncio.Event()
+    seen = []
+    async def scan(*args, **kwargs):
+        seen.append(kwargs['previous_commit'])
+        if len(seen) == 1:
+            entered.set()
+            await release.wait()
+        # Same dependency facts after a force-push must not increment context again.
+        return {'commit_sha': ('a' if len(seen) == 1 else 'b') * 40,
+            'scan': parse_stack({'package.json': b'{"dependencies":{"react":"^19"}}'}), 'unchanged': False}
+    monkeypatch.setattr('docweave.services.personal_worker.scan_repository', scan)
+    worker = make_engine(database_url('TEST_WORKER_DATABASE_URL'))
+    first = asyncio.create_task(run_personal_job(jobs[0], engine=worker, settings=settings, client=client))
+    second = None
+    try:
+        await asyncio.wait_for(entered.wait(), 5)
+        second = asyncio.create_task(run_personal_job(jobs[1], engine=worker, settings=settings, client=client))
+        release.set()
+        await asyncio.wait_for(asyncio.gather(first, second), 10)
+        assert seen == [None, 'a' * 40]
+        async with domain_session(runtime, actor) as session:
+            current = await personal.project(session, UUID(project['id']))
+            assert current['context_revision'] == 2
+            assert current['repository']['commit_sha'] == 'b' * 40
+        async with owner.connect() as connection:
+            assert list((await connection.execute(text('SELECT status FROM app.conversations'))).scalars()) == ['ready', 'ready']
+    finally:
+        release.set()
+        for task in (first, second):
+            if task is not None and not task.done():
+                task.cancel()
+        await asyncio.gather(*(task for task in (first, second) if task is not None), return_exceptions=True)
+        await worker.dispose()
+
+
+async def test_stale_sync_publication_reports_rejected_without_overwriting_memory(github_login):
+    from docweave.services.github_auth import session_context
+    from docweave.repositories import personal
+    from docweave.db.sessions import domain_session
+    settings, runtime, owner, client, _, cookie, _, _ = github_login
+    user, _ = await session_context(settings, runtime, client, cookie)
+    async with domain_session(runtime, UUID(user['id'])) as session:
+        project = await personal.create_project(session, {'name': 'Repo', 'goal': 'Help', 'repository_id': 42, 'branch': 'main'})
+        chat = await personal.create_conversation(session, UUID(project['id']), None)
+    async with owner.connect() as connection:
+        job = await connection.scalar(text('SELECT id FROM app.personal_jobs WHERE conversation_id=CAST(:id AS uuid)'), {'id': chat['id']})
+    worker = make_engine(database_url('TEST_WORKER_DATABASE_URL'))
+    try:
+        async with worker.begin() as connection:
+            claimed = await personal.claim_job(connection, job)
+        async with worker.begin() as connection:
+            assert await personal.finish_job(connection, job, UUID(claimed['lease_token']), {'status': 'ready',
+                'expected_revision': 0, 'context_revision': 1, 'stack': [], 'stack_fingerprint': 'stale', 'last_commit_sha': 'a' * 40}) is False
+        async with domain_session(runtime, UUID(user['id'])) as session:
+            current = await personal.project(session, UUID(project['id']))
+            assert current['context_revision'] == 1 and current['repository']['commit_sha'] is None
+            assert (await personal.conversation(session, UUID(chat['id'])))['status'] == 'blocked'
     finally:
         await worker.dispose()

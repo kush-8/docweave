@@ -22,4 +22,6 @@ Source-fetch allowlists, DNS pinning, no private network targets, strict parsers
 
 The implemented core and its limitations are recorded in the [current report](reports/2026-11-01-personal-projects-checkpoint.md). Full release remains incomplete. The agreed evaluation includes 150 scenarios (100 development, 50 held-out), separate 30-output human reviews, Recall@10 >= 0.85, required-fact coverage >= 0.80, abstention recall >= 0.90, 100% structural citation validity and no severe unsupported operational/security claims or unauthorized disclosures. Report denominators, false positives, latency and cost; component tests do not establish semantic quality.
 
+All 29 agreed catalog entries require verified bounded official-source coverage before full release. Representative publisher pages do not satisfy that catalog gate. Unknown sources require publisher-linked review, with private approvals remaining project-scoped and public publication operator-only; accepting version coverage never promotes a private source into the public catalog.
+
 Semantic caching requires a later discussion. Webhooks, repository-code ingestion, public catalog administration UI, team sharing and established-project rebinding are omitted. See [remaining tasks](tasks.md), [architecture](architecture.md) and [guardrails](superpowers/plans/2026-10-31-rag-guardrails.md).

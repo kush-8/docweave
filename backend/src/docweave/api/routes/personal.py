@@ -6,7 +6,8 @@ from docweave.core.errors import DomainError
 from docweave.core.pagination import decode_cursor, page
 from docweave.db.sessions import domain_session
 from docweave.repositories import personal as repository
-from docweave.schemas.personal import PersonalProjectCreate, RepositorySetup,ProcessingPolicyInput,DocumentReviewInput
+from docweave.schemas.personal import PersonalProjectCreate, RepositorySetup,ProcessingPolicyInput,DocumentReviewInput,DocumentationChoiceInput
+from docweave.services.catalog import documentation_coverage
 
 router=APIRouter(prefix='/api/v1',tags=['Projects'])
 
@@ -62,7 +63,39 @@ async def link_repository(project_id:UUID,body:RepositorySetup,request:Request,u
 async def catalog(request:Request):
     _,engine,_=github_service(request)
     async with engine.connect() as session:
-        return {'items':await repository.catalog(session),'next_cursor':None}
+        return {'items':await repository.catalog(session, catalog_generation(request)),'next_cursor':None}
+
+
+def catalog_generation(request):
+    value = request.app.state.runtime_config.get('RAG_GENERATION_ID')
+    return UUID(value) if value else None
+
+
+async def project_documentation(request, user, project_id):
+    project = await project_access(request, user, project_id)
+    _, engine, _ = github_service(request)
+    generation = catalog_generation(request)
+    async with domain_session(engine, UUID(user['id'])) as session:
+        entries = await repository.catalog(session, generation)
+    return {'context_revision': project['context_revision'], 'generation_id': str(generation) if generation else None,
+        'items': documentation_coverage(project, entries, str(generation) if generation else '')}
+
+
+@router.get('/projects/{project_id}/documentation')
+async def documentation(project_id:UUID, request:Request, user=Depends(require_github_user)):
+    return await project_documentation(request, user, project_id)
+
+
+@router.put('/projects/{project_id}/documentation/{dependency_id}')
+async def choose_documentation(project_id:UUID, dependency_id:str, body:DocumentationChoiceInput, request:Request, user=Depends(require_github_csrf)):
+    await project_access(request, user, project_id)
+    if not dependency_id or len(dependency_id) > 200:
+        raise HTTPException(422)
+    _, engine, _ = github_service(request)
+    async with domain_session(engine, UUID(user['id'])) as session:
+        await repository.choose_documentation(session, project_id, dependency_id, body.expected_revision,
+            body.revision_id, body.accept_fallback, catalog_generation(request))
+    return await project_documentation(request, user, project_id)
 
 
 @router.get('/projects/{project_id}/processing-policy')

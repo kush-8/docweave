@@ -1,6 +1,6 @@
 # Personal GitHub project plan
 
-Current implementation exists; post-reset accounting/schema review and remaining acceptance are tracked in [tasks](../../tasks.md). Development is fresh at `0027_personal_source_scope` with a verified private backup of old data. The user's later explicit reset instruction supersedes preservation-based development cutover; the preservation requirements below still apply to deliberate restoration of older data. Full release is incomplete.
+Current implementation exists; fresh-start database migration is complete at `0028_sync_retries` with a verified private backup of old data. Separate accounting reconciliation, retained-schema cleanup and remaining acceptance are tracked in [tasks](../../tasks.md). The user's later explicit reset instruction supersedes preservation-based development cutover; the preservation requirements below still apply to deliberate restoration of older data. Full release is incomplete.
 
 ## Goal and authority
 

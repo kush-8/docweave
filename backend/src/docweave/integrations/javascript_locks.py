@@ -59,7 +59,7 @@ def pnpm_dependencies(raw, importer, manifest):
         if not NAME.fullmatch(name) or not isinstance(reference, str):
             raise ValueError('unsupported pnpm reference')
         version = reference.split('(', 1)[0]
-        if not VERSION.fullmatch(version):
+        if not VERSION.fullmatch(version) or 'patch_hash=' in reference:
             raise ValueError('nonregistry pnpm reference')
         key = name + '@' + reference
         result.append((name, version, role, direct))
@@ -68,7 +68,10 @@ def pnpm_dependencies(raw, importer, manifest):
         if (key, role) in seen:
             continue
         seen.add((key, role))
-        resolution = packages[name + '@' + version]['resolution']
+        package = packages[name + '@' + version]
+        if package.get('patched') or name + '@' + version in data.get('patchedDependencies', {}):
+            raise ValueError('patched pnpm package unsupported')
+        resolution = package['resolution']
         if not resolution.get('integrity') or set(resolution) - {'integrity'}:
             raise ValueError('nonregistry pnpm resolution')
         snapshot = snapshots[key]
@@ -88,15 +91,17 @@ def npm_dependencies(raw, importer, manifest):
     for field, role in FIELDS:
         if manifest.get(field, {}) != selected.get(field, {}):
             raise ValueError('stale npm importer')
-        pending.extend((importer, name, role, True) for name in manifest.get(field, {}))
+        pending.extend((importer, name, role, True, False) for name in manifest.get(field, {}))
     while pending:
-        location, name, role, direct = pending.pop()
+        location, name, role, direct, optional_peer = pending.pop()
         if not NAME.fullmatch(name):
             raise ValueError('invalid npm name')
         parents = (PurePosixPath(location), *PurePosixPath(location).parents)
         found = next((str(parent / 'node_modules' / name) for parent in parents
             if parent.name != 'node_modules' and str(parent / 'node_modules' / name) in packages), None)
         if found is None:
+            if optional_peer:
+                continue
             raise ValueError('missing npm resolution')
         package = packages[found]
         version = package['version']
@@ -112,6 +117,9 @@ def npm_dependencies(raw, importer, manifest):
             continue
         seen.add((found, role))
         for field in ('dependencies', 'optionalDependencies'):
-            pending.extend((found, child, 'optional' if field == 'optionalDependencies' else role, False)
+            pending.extend((found, child, 'optional' if field == 'optionalDependencies' else role, False, False)
                 for child in package.get(field, {}))
+        for child in package.get('peerDependencies', {}):
+            optional_peer = package.get('peerDependenciesMeta', {}).get(child, {}).get('optional') is True
+            pending.append((found, child, 'optional' if optional_peer else role, False, optional_peer))
     return result

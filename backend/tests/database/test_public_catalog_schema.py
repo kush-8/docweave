@@ -18,12 +18,12 @@ def test_public_catalog_models_have_explicit_parents_and_nullable_public_scope()
     assert Base.metadata.tables['app.public_catalog_revisions'].c.enabled.server_default is not None
 
 
-async def add_revision(connection, *, enabled=False, approved=False):
+async def add_revision(connection, *, enabled=False, approved=False, source_hash='a' * 64):
     return await connection.scalar(text("""INSERT INTO app.public_catalog_revisions
         (technology,ecosystem,docs_target,coverage,origin,path_prefix,source_url,attribution,source_hash,enabled,source_approved)
         VALUES ('react','javascript','19.1.0','{"granularity":"exact","version":"19.1.0"}',
             'https://react.dev','/','https://react.dev/reference','React',:hash,:enabled,:approved) RETURNING id"""),
-        {'hash': 'a' * 64, 'enabled': enabled, 'approved': approved})
+        {'hash': source_hash, 'enabled': enabled, 'approved': approved})
 
 
 @pytest.mark.anyio

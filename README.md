@@ -27,7 +27,7 @@ docweave/
   backups/             # Ignored private backups
 ```
 
-The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Development is freshly initialized at `0027_personal_source_scope`; old data is retained in a privately verified backup. Retained models/migration functions still need reference checks before removal; they do not constitute a collaboration product. Archived incurred/unknown charges need reconciliation before paid processing.
+The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Fresh-start development migration is complete at `0028_sync_retries`; old data is retained in a privately verified backup. Retained models/migration functions still need reference checks before removal; they do not constitute a collaboration product. Archived incurred/unknown charges need reconciliation before paid processing.
 
 ## Run and verify
 
@@ -41,6 +41,8 @@ uv run --project backend --locked uvicorn docweave.main:create_app --factory --a
 Run `npm ci`, then `npm run dev` from `frontend/` (Node.js 22.12+). Vite proxies `/api` to port 58000; local `APP_ORIGIN` must match the browser's frontend origin. No private state is persisted in browser storage.
 
 The ingestion worker is `python -m docweave.worker`; the personal conversation/shared-catalog worker is `python -m docweave.workers.personal`, using the backend source environment. Normal hosted processing requires explicitly configured immutable generation/profile IDs, verified account/capability/pricing and current processing approvals. API keys alone do not enable processing. Do not run paid work merely to test configuration.
+
+The [catalog runbook](docs/runbooks/catalog.md) covers project documentation choices, explicit broader-version acceptance and operator-only public source review. The shipped publisher-page manifest is for review; it is not automatically published or indexed. Full catalog/discovery acceptance remains in progress.
 
 Start only the disposable database for tests:
 

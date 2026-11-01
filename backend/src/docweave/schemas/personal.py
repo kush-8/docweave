@@ -43,3 +43,9 @@ class DocumentReviewInput(StrictInput):
     document_version_id:UUID
     content_hash:str=Field(pattern='^[0-9a-f]{64}$')
     rule_revision:Nonblank=Field(max_length=100)
+
+
+class DocumentationChoiceInput(StrictInput):
+    expected_revision: int = Field(ge=1, strict=True)
+    revision_id: UUID | None = None
+    accept_fallback: bool = Field(default=False, strict=True)

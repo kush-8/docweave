@@ -14,8 +14,13 @@ async def link_repository(connection, identity, body):
 async def list_projects(connection, after, identity, limit):
     return list((await connection.execute(text('SELECT app.personal_list_projects(:after,:id,:limit)'), {'after':after,'id':identity,'limit':limit})).scalars())
 
-async def catalog(connection):
-    return [dict(row) for row in (await connection.execute(text('SELECT id AS revision_id,technology,ecosystem,docs_target,coverage,source_url,attribution FROM app.public_catalog_revisions ORDER BY technology,id'))).mappings()]
+async def catalog(connection, generation=None):
+    return list((await connection.execute(text('SELECT app.catalog_entries(:generation)'), {'generation': generation})).scalars())
+
+
+async def choose_documentation(connection, project, dependency, expected, revision, fallback, generation):
+    return await connection.scalar(text('SELECT app.personal_choose_documentation(:project,:dependency,:expected,:revision,:fallback,:generation)'),
+        {'project': project, 'dependency': dependency, 'expected': expected, 'revision': revision, 'fallback': fallback, 'generation': generation})
 
 
 async def conversation(connection, identity):
@@ -50,6 +55,9 @@ async def finish_job(connection, identity, token, result):
 
 async def pending_jobs(connection):
     return list((await connection.execute(text('SELECT * FROM app.personal_pending_jobs()'))).mappings())
+
+async def recover_jobs(connection):
+    return await connection.scalar(text('SELECT app.personal_recover_jobs()'))
 
 async def lock_project(connection, identity):
     await connection.execute(text('SELECT pg_advisory_lock(hashtextextended(:id,730004))'), {'id':str(identity)})

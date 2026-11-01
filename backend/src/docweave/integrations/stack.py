@@ -99,12 +99,20 @@ def parse_stack(files: dict[str, bytes], application_path: str = '') -> StackSca
             else:
                 requirement(line)
 
+    locks = {}
+    parents = (PurePosixPath(root or '.'),)
+    if prefix + 'package.json' in usable:
+        parents += tuple(PurePosixPath(root or '.').parents)
+    for name in ('package-lock.json', 'pnpm-lock.yaml'):
+        for parent in parents:
+            if str(parent / name) in usable:
+                locks[name] = str(parent / name)
+                break
+    if len(locks) > 1:
+        issues.append('multiple JavaScript lockfiles require review')
     recognized = False
     for filename in ('requirements.txt', 'pyproject.toml', 'uv.lock', 'package.json', 'package-lock.json', 'pnpm-lock.yaml'):
-        path = prefix + filename
-        if filename in ('package-lock.json', 'pnpm-lock.yaml') and path not in usable and root:
-            path = next((str(parent / filename) for parent in PurePosixPath(root).parents
-                if str(parent / filename) in usable), path)
+        path = locks.get(filename, prefix + filename)
         if path not in usable:
             continue
         recognized = True
@@ -147,19 +155,7 @@ def parse_stack(files: dict[str, bytes], application_path: str = '') -> StackSca
                         add(name, 'javascript', constraint, role)
                         if not re.fullmatch(r'[0-9v<>=~^*| .xX+-]+', constraint):
                             issues.append('nonregistry or unsupported JavaScript constraint')
-            elif filename == 'package-lock.json':
-                if path != prefix + filename:
-                    importer = str(PurePosixPath(root).relative_to(PurePosixPath(path).parent))
-                    manifest = json.loads(usable[prefix + 'package.json'])
-                    locked = npm_dependencies(raw, importer, manifest)
-                    direct_versions = {(name, role): version for name, version, role, direct in locked if direct}
-                    dependencies = [replace(dep, resolved_version=direct_versions[(dep.name, dep.role)],
-                        documentation_target=direct_versions[(dep.name, dep.role)])
-                        if dep.ecosystem == 'javascript' and (dep.name, dep.role) in direct_versions else dep for dep in dependencies]
-                    for name, version, role, direct in locked:
-                        if not direct:
-                            add(name, 'javascript', version=version, role=role, direct=False)
-                    continue
+            elif filename == 'package-lock.json' and path == prefix + filename:
                 data = json.loads(raw)
                 if data.get('lockfileVersion') not in (2, 3) or not isinstance(data.get('packages'), dict):
                     raise ValueError('unsupported npm lock format')
@@ -173,7 +169,7 @@ def parse_stack(files: dict[str, bytes], application_path: str = '') -> StackSca
             else:
                 importer = str(PurePosixPath(root or '.').relative_to(PurePosixPath(path).parent))
                 manifest = json.loads(usable[prefix + 'package.json'])
-                locked = pnpm_dependencies(raw, importer, manifest)
+                locked = (pnpm_dependencies if filename == 'pnpm-lock.yaml' else npm_dependencies)(raw, importer, manifest)
                 direct_versions = {(name, role): version for name, version, role, direct in locked if direct}
                 dependencies = [replace(dep, resolved_version=direct_versions[(dep.name, dep.role)],
                     documentation_target=direct_versions[(dep.name, dep.role)])
@@ -194,6 +190,8 @@ def parse_stack(files: dict[str, bytes], application_path: str = '') -> StackSca
     for dep in dependencies:
         if dep.resolved_version:
             resolved.setdefault((dep.ecosystem, dep.name), set()).add(dep.resolved_version)
+    if any(len(versions) > 1 for versions in resolved.values()):
+        issues.append('ambiguous resolved dependency versions')
     merged: list[Dependency] = []
     direct_names = {(dep.ecosystem, dep.name) for dep in dependencies if dep.direct}
     for dep in dependencies:

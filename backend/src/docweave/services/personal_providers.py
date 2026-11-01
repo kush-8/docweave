@@ -26,10 +26,13 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
     await authorize()
     try:
         async with engine.begin() as c:
-            reservation=await repository.claim(c,project_id,actor_id,profile_id,operation,body_hash,incoming,outgoing)
+            reservation=await repository.resume(c,project_id,actor_id,profile_id,operation,body_hash,incoming,outgoing,hashlib.sha256(str(operation_key).encode()).hexdigest())
     except DBAPIError as error:
         code=getattr(error.orig,'sqlstate',None)
         raise HostedError('completion_unknown' if code=='DW014' else 'provider_unavailable') from None
+    if 'response' in reservation:
+        await authorize()
+        return reservation['response']
     expected=reservation['model']
     actual_model=payload.get('model','').removeprefix('models/')
     if actual_model!=expected or (reservation['role']=='embedding') != embedding or reservation['provider']!=('gemini' if embedding else 'groq'):
@@ -47,5 +50,7 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
         actual=(Decimal(in_count)*Decimal(reservation['input_rate'])+Decimal(out_count)*Decimal(reservation['output_rate']))/1000000+Decimal(reservation['fixed_usd'])
         async with engine.begin() as c:
             await repository.settle(c,UUID(reservation['id']),actual)
+    async with engine.begin() as c:
+        await repository.checkpoint(c,UUID(reservation['id']),result)
     await authorize()
     return result

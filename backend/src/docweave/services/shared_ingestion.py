@@ -1,5 +1,6 @@
 """Fetch, scan and atomically index one immutable approved public source."""
 from dataclasses import asdict
+import asyncio
 import hashlib
 import inspect
 import json
@@ -26,6 +27,7 @@ async def run_catalog_job(job_id,*,engine,store,parser=container_parse,fetcher=f
         async with engine.begin() as c:
             return await repository.index_input(c,job_id,token)
     status='failed'
+    interrupted=False
     try:
         async with engine.begin() as c:
             current=await repository.snapshot(c,job_id,token)
@@ -37,6 +39,8 @@ async def run_catalog_job(job_id,*,engine,store,parser=container_parse,fetcher=f
         else:
             content,media=await fetcher(job['source'],authorize=authorized)
             await authorized()
+            if hashlib.sha256(content).hexdigest() != job['source']['source_hash']:
+                raise ValueError('Source content changed; operator review requires a new catalog revision')
             parsed=parser(content,media)
             if inspect.isawaitable(parsed):
                 parsed=await parsed
@@ -64,7 +68,11 @@ async def run_catalog_job(job_id,*,engine,store,parser=container_parse,fetcher=f
         async with engine.begin() as c:
             await repository.publish_index(c,job_id,token,rows,len(parsed['chunks']))
         status='completed'
+    except asyncio.CancelledError:
+        interrupted=True
+        raise
     finally:
-        async with engine.begin() as c:
-            await repository.finish(c,job_id,token,status)
-            await repository.wake_waits(c)
+        if not interrupted:
+            async with engine.begin() as c:
+                await repository.finish(c,job_id,token,status)
+                await repository.wake_waits(c)

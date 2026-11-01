@@ -1,0 +1,49 @@
+{
+  "entries": [
+    {
+      "path_prefix": "/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/",
+      "package_aliases": [],
+      "docs_target": "0.28.1",
+      "source_url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/quickstart.md",
+      "coverage": {
+        "version": "0.28.1",
+        "granularity": "exact"
+      },
+      "source_hash": "9f8351551dd18be0ed7e40dea2f1c231523a2e8833a0bb5c471630178ec2aea8",
+      "ecosystem": "python",
+      "technology": "httpx",
+      "attribution": "HTTPX authors, BSD-3-Clause; QuickStart page only.",
+      "origin": "https://raw.githubusercontent.com"
+    },
+    {
+      "path_prefix": "/pydantic/pydantic/7cedbfb03df82ac55c844c97e6f975359cb51bb9/docs/",
+      "package_aliases": [],
+      "docs_target": "2.9.2",
+      "source_url": "https://raw.githubusercontent.com/pydantic/pydantic/7cedbfb03df82ac55c844c97e6f975359cb51bb9/docs/concepts/models.md",
+      "coverage": {
+        "version": "2.9.2",
+        "granularity": "exact"
+      },
+      "source_hash": "54b3c77238be8288dcade1bb43897f27c99c42c30b11782689a3a351c84a2fe1",
+      "ecosystem": "python",
+      "technology": "pydantic",
+      "attribution": "Pydantic authors, MIT; Models page only; API directives are not expanded.",
+      "origin": "https://raw.githubusercontent.com"
+    },
+    {
+      "path_prefix": "/encode/starlette/46131a1af875a5be2190d91713a43ee80c8311c6/docs/",
+      "package_aliases": [],
+      "docs_target": "0.41.0",
+      "source_url": "https://raw.githubusercontent.com/encode/starlette/46131a1af875a5be2190d91713a43ee80c8311c6/docs/applications.md",
+      "coverage": {
+        "version": "0.41.0",
+        "granularity": "exact"
+      },
+      "source_hash": "70fe8d0c86cdb6dc3f117cc7fc910b85325c2ae50fcb8e0ef0b1449c975be9d6",
+      "ecosystem": "python",
+      "technology": "starlette",
+      "attribution": "Starlette authors, BSD-3-Clause; Applications page only; API directives are not expanded.",
+      "origin": "https://raw.githubusercontent.com"
+    }
+  ]
+}

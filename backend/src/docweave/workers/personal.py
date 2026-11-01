@@ -2,6 +2,8 @@
 import argparse
 import asyncio
 import os
+import sys
+from datetime import datetime, timezone
 from dotenv import dotenv_values
 from uuid import UUID
 import procrastinate
@@ -16,6 +18,15 @@ from docweave.repositories import personal as repository
 from docweave.services.personal_worker import run_personal_job
 from docweave.services.answer_engine import AnswerEngine
 from docweave.services.catalog_embeddings import make_embedder
+
+
+async def recover_jobs(queue, engine):
+    stalled = await queue.job_manager.get_stalled_jobs(queue='personal')
+    for job in stalled:
+        if job.task_name in ('docweave.personal', 'docweave.catalog'):
+            await queue.job_manager.retry_job_by_id_async(job.id, retry_at=datetime.now(timezone.utc))
+    async with engine.begin() as connection:
+        await repository.recover_jobs(connection)
 
 async def run_worker(*,once=False):
     settings=GitHubSettings.load()
@@ -40,12 +51,16 @@ async def run_worker(*,once=False):
         await run_catalog_job(UUID(job_id),engine=engine,store=store,embedder_factory=lambda job,token:make_embedder(job,token,engine=engine,config=values))
     try:
         async with queue.open_async():
-            # Durable recovery also covers missed source-completion notifications.
-            async with engine.connect() as connection:
-                pending=await repository.pending_jobs(connection)
-            for job in pending:
-                await process.configure(lock='personal:'+str(job['project_id'])).defer_async(job_id=str(job['id']))
-            await queue.run_worker_async(queues=['personal'],wait=not once,concurrency=1)
+            await recover_jobs(queue, engine)
+            async def maintain():
+                while True:
+                    await asyncio.sleep(10)
+                    await recover_jobs(queue, engine)
+            async with asyncio.TaskGroup() as tasks:
+                maintenance = tasks.create_task(maintain())
+                await queue.run_worker_async(queues=['personal'],wait=not once,concurrency=1,
+                    install_signal_handlers=False,update_heartbeat_interval=10,stalled_worker_timeout=30)
+                maintenance.cancel()
     finally:
         await engine.dispose()
         await read_engine.dispose()
@@ -54,7 +69,7 @@ def main():
     parser=argparse.ArgumentParser(description='Run durable personal project jobs')
     parser.add_argument('--once',action='store_true')
     args=parser.parse_args()
-    asyncio.run(run_worker(once=args.once))
+    asyncio.run(run_worker(once=args.once),loop_factory=asyncio.SelectorEventLoop if sys.platform=='win32' else None)
 
 if __name__=='__main__':
     main()

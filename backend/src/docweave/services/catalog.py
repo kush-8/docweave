@@ -59,6 +59,8 @@ def match_documentation(
             status, reason = 'pending_review', 'source approval required'
         elif not exact and entry['revision_id'] not in accepted:
             status, reason = 'pending_review', 'version fallback approval required'
+        elif entry.get('status') == 'blocked_policy':
+            status, reason = 'pending_review', 'source or processing approval required'
         elif entry.get('status') in ('failed', 'consent_required', 'capacity', 'pending_review'):
             status, reason = entry['status'], 'documentation requires action'
         elif (
@@ -70,7 +72,26 @@ def match_documentation(
             status, reason = ('waiting_for_sources', 'current generation is not atomically indexed') if entry.get('active_job') is True else ('missing', 'no active indexing work')
         else:
             status, reason = 'ready', 'matching eligible indexed coverage'
-        matches.append(({'ready': 0, 'waiting_for_sources': 1, 'pending_review': 2, 'consent_required': 3, 'capacity': 4, 'failed': 5, 'missing': 6}[status], not exact, str(entry.get('revision_id', '')), {'status': status, 'entry': entry, 'reason': reason}))
+        matches.append((not exact, {'ready': 0, 'waiting_for_sources': 1, 'pending_review': 2, 'consent_required': 3, 'capacity': 4, 'failed': 5, 'missing': 6}[status], str(entry.get('revision_id', '')), {'status': status, 'entry': entry, 'reason': reason}))
     if not matches:
         return {'status': 'missing', 'entry': None, 'reason': 'no eligible matching version coverage'}
     return min(matches, key=lambda match: match[:3])[3]
+
+
+def documentation_coverage(project, entries, generation):
+    """One current selection per dependency; acceptance never crosses a target change."""
+    selections = {item['dependency_id']: item for item in project.get('catalog_selections', [])}
+    result = []
+    for item in project['stack']:
+        dependency = Dependency(item.get('ecosystem', ''), item['technology'], documentation_target=item.get('docs_target'))
+        selection = selections.get(item['id'])
+        accepted = [selection['revision_id']] if selection and selection.get('fallback_accepted') and selection.get('accepted_docs_target') == item.get('docs_target') else []
+        candidates = [match_documentation(dependency, [entry], generation, accepted_fallback_revision_ids=accepted) for entry in entries]
+        candidates = [candidate for candidate in candidates if candidate['entry']]
+        chosen = next((candidate for candidate in candidates if selection and candidate['entry']['revision_id'] == selection['revision_id']), None)
+        match = chosen or match_documentation(dependency, entries, generation, accepted_fallback_revision_ids=accepted)
+        if item['id'] in project.get('excluded_documentation', []):
+            match = {'status': 'missing', 'entry': None, 'reason': 'documentation selection removed'}
+        result.append({'dependency_id': item['id'], 'technology': item['technology'], 'docs_target': item.get('docs_target'),
+            **match, 'selected_revision_id': selection['revision_id'] if chosen else None, 'candidates': candidates})
+    return result

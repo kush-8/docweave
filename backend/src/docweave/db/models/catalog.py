@@ -14,6 +14,7 @@ class PublicCatalogRevision(Record, Base):
         CheckConstraint("ecosystem IN ('python','javascript')", name='valid_ecosystem'),
         CheckConstraint("jsonb_typeof(coverage)='object' AND coalesce(coverage->>'granularity','') IN ('exact','major','minor') AND jsonb_typeof(coverage->'version')='string' AND coalesce(coverage->>'version','') ~ '[^[:space:]]'", name='valid_coverage'),
         CheckConstraint("source_hash ~ '^[0-9a-f]{64}$'", name='valid_source_hash'),
+        CheckConstraint("jsonb_typeof(package_aliases)='array'", name='aliases_array'),
     )
     technology: Mapped[str] = mapped_column(Text)
     ecosystem: Mapped[str] = mapped_column(Text)
@@ -24,6 +25,7 @@ class PublicCatalogRevision(Record, Base):
     source_url: Mapped[str] = mapped_column(Text)
     attribution: Mapped[str] = mapped_column(Text)
     source_hash: Mapped[str] = mapped_column(Text)
+    package_aliases: Mapped[list] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
     enabled: Mapped[bool] = mapped_column(Boolean, server_default=text('false'))
     source_approved: Mapped[bool] = mapped_column(Boolean, server_default=text('false'))
 
@@ -38,3 +40,5 @@ class ProjectCatalogSelection(Record, Base):
     dependency_id: Mapped[str] = mapped_column(Text)
     catalog_revision_id: Mapped[UUID] = mapped_column(ForeignKey('app.public_catalog_revisions.id', ondelete='RESTRICT'))
     fallback_accepted: Mapped[bool] = mapped_column(Boolean, server_default=text('false'))
+    accepted_docs_target: Mapped[str | None] = mapped_column(Text)
+    active: Mapped[bool] = mapped_column(Boolean, server_default=text('true'))

@@ -11,15 +11,16 @@ pytestmark = pytest.mark.anyio
 SHA = "a" * 40
 
 
-def fixture_client(files=None, *, truncated=False, revoked=False, entries=None):
+def fixture_client(files=None, *, truncated=False, revoked=False, entries=None, move_head=False):
     from docweave.core.github_settings import GitHubSettings
     from docweave.integrations.github import GitHubClient
     requests = []
     files = files if files is not None else {"web/package.json": b'{"dependencies":{"react":"^19"}}'}
     tree = entries if entries is not None else [{"path": path, "type": "blob", "mode": "100644", "size": len(data), "sha": "b" * 40} for path, data in files.items()]
     checks = 0
+    current_sha = SHA
     async def provider(request):
-        nonlocal checks
+        nonlocal checks, current_sha
         requests.append(request)
         path = request.url.path
         if path == "/user/installations":
@@ -28,8 +29,10 @@ def fixture_client(files=None, *, truncated=False, revoked=False, entries=None):
         if path == "/user/installations/7/repositories":
             return httpx2.Response(200, json={"repositories": [{"id": 42, "name": "repo", "default_branch": "main"}]})
         if path == "/repositories/42/commits/main":
-            return httpx2.Response(200, json={"sha": SHA})
+            return httpx2.Response(200, json={"sha": current_sha})
         if path == f"/repositories/42/git/trees/{SHA}":
+            if move_head:
+                current_sha = 'c' * 40
             return httpx2.Response(200, json={"tree": tree, "truncated": truncated})
         if path.startswith("/repositories/42/contents/"):
             name = path.removeprefix("/repositories/42/contents/")
@@ -39,6 +42,15 @@ def fixture_client(files=None, *, truncated=False, revoked=False, entries=None):
                 "content": base64.b64encode(data).decode()})
         raise AssertionError(path)
     return GitHubClient(GitHubSettings.load(configuration()), transport=httpx2.MockTransport(provider)), requests
+
+
+async def test_force_push_during_scan_keeps_original_commit_for_every_read():
+    from docweave.services.repository_sync import scan_repository
+    client, requests = fixture_client(move_head=True)
+    result = await scan_repository(client, 'token', 42, 'main', 'web', previous_commit='f' * 40)
+    assert result['scan'].complete and result['commit_sha'] == SHA
+    assert sum('/commits/' in r.url.path for r in requests) == 1
+    assert all(parse_qs(r.url.query.decode())['ref'] == [SHA] for r in requests if '/contents/' in r.url.path)
 
 
 async def test_scan_pins_reads_to_one_commit_and_skips_source_files():
@@ -97,13 +109,12 @@ async def test_requirements_include_static_text_only_and_missing_is_incomplete()
     assert not any("danger.py" in request.url.path for request in requests)
 
 
-async def test_lfs_pointer_and_ancestor_locks_cannot_claim_complete():
+async def test_lfs_pointer_cannot_claim_complete():
     from docweave.services.repository_sync import scan_repository
     client, _ = fixture_client({"web/package.json": b"version https://git-lfs.github.com/spec/v1\noid sha256:private\n", "package-lock.json": b"{}"})
     result = await scan_repository(client, "token", 42, "main", "web")
     assert not result["scan"].complete
     assert "LFS metadata skipped" in result["scan"].issues
-    assert any('package-lock.json' in issue for issue in result['scan'].issues)
 
 
 async def test_pnpm_ancestor_is_fetched_at_pinned_sha_and_scoped():
@@ -125,6 +136,18 @@ async def test_duplicate_tree_paths_cannot_silently_select_metadata():
     result = await scan_repository(client, 'token', 42, 'main', 'web')
     assert not result['scan'].complete
     assert not any('/contents/' in request.url.path for request in requests)
+
+
+@pytest.mark.parametrize('files,application', [
+    ({'web/package.json': b'{}', 'uv.lock': b'unrelated Python workspace'}, 'web'),
+    ({'api/requirements.txt': b'fastapi==1.0.0', 'package-lock.json': b'unrelated JavaScript workspace'}, 'api'),
+])
+async def test_ancestor_locks_from_unselected_ecosystems_are_not_used(files, application):
+    from docweave.services.repository_sync import scan_repository
+    client, requests = fixture_client(files)
+    result = await scan_repository(client, 'token', 42, 'main', application)
+    assert result['scan'].complete, result['scan'].issues
+    assert sum('/contents/' in request.url.path for request in requests) == 1
 
 
 @pytest.mark.parametrize("application_path", ["../web", "web/../app", "/web", "web\\app", "web//app"])

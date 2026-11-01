@@ -101,6 +101,9 @@ class CompatibilityOperation(Base):
 
 class PersonalProviderCall(Base):
     __tablename__='personal_provider_calls'
+    __table_args__=(Index('ix_personal_provider_key','key_hash'),)
     operation_hash:Mapped[str]=mapped_column(Text,primary_key=True)
     body_hash:Mapped[str]=mapped_column(Text)
+    key_hash:Mapped[str|None]=mapped_column(Text)
+    response:Mapped[dict|None]=mapped_column(JSONB)
     reservation_id:Mapped[UUID]=mapped_column(ForeignKey('app.cost_reservations.id',ondelete='RESTRICT'))

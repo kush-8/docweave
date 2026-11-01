@@ -38,6 +38,11 @@ async def scan_repository(client, token, repository_id, branch, application_path
             enclosing = set()
             if root:
                 for name in ('uv.lock', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'poetry.lock', 'Pipfile.lock'):
+                    if name in ('package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'):
+                        if prefix + 'package.json' not in by_path:
+                            continue
+                    elif not any(prefix + manifest in by_path for manifest in ('pyproject.toml', 'requirements.txt', 'Pipfile')):
+                        continue
                     if prefix + name not in by_path:
                         path = next((str(parent / name) for parent in PurePosixPath(root).parents
                             if str(parent / name) in by_path), None)

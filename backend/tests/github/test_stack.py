@@ -71,6 +71,45 @@ def test_npm_ancestor_uses_nearest_node_modules_and_ignores_siblings():
     assert not parse_stack(files, 'web').complete
 
 
+def test_conflicting_package_managers_and_deep_yaml_do_not_claim_complete():
+    files = {'package.json': b'{}', 'package-lock.json': b'{"lockfileVersion":3,"packages":{"":{}}}',
+        'pnpm-lock.yaml': b"lockfileVersion: '9.0'\nimporters: {'.': {}}\n"}
+    assert not parse_stack(files).complete
+
+    files.pop('package-lock.json')
+    files['pnpm-lock.yaml'] = b'[' * 50 + b']' * 50
+    assert not parse_stack(files).complete
+
+
+def test_npm_ancestor_includes_installed_peers_and_allows_absent_optional_peers():
+    packages = {'web': {'dependencies': {'react-dom': '^19'}},
+        'node_modules/react-dom': {'version': '19.1.0', 'peerDependencies': {'react': '^19', 'optional-peer': '*'},
+            'peerDependenciesMeta': {'optional-peer': {'optional': True}}},
+        'node_modules/react': {'version': '19.1.0'}}
+    files = {'web/package.json': b'{"dependencies":{"react-dom":"^19"}}',
+        'package-lock.json': json.dumps({'lockfileVersion': 3, 'packages': packages}).encode()}
+    scan = parse_stack(files, 'web')
+    assert scan.complete, scan.issues
+    assert {(d.name, d.resolved_version) for d in scan.dependencies} == {('react-dom', '19.1.0'), ('react', '19.1.0')}
+    del packages['node_modules/react']
+    files['package-lock.json'] = json.dumps({'lockfileVersion': 3, 'packages': packages}).encode()
+    assert not parse_stack(files, 'web').complete
+
+
+def test_pnpm_overlapping_direct_and_transitive_versions_stay_explicitly_incomplete():
+    lock = PNPM.replace(b'  web:', b'  .:').replace(b'  react@19.1.0: {}', b'  react@19.1.0: {dependencies: {react: 18.3.1}}')
+    scan = parse_stack({'package.json': b'{"dependencies":{"react":"^19"}}', 'pnpm-lock.yaml': lock})
+    assert not scan.complete
+    assert 'ambiguous resolved dependency versions' in scan.issues
+
+
+def test_pnpm_patched_package_cannot_claim_ordinary_registry_coverage():
+    lock = PNPM.replace(b'  web:', b'  .:').replace(b'version: 19.1.0}', b'version: 19.1.0(patch_hash=abc)}')
+    lock = lock.replace(b'  react@19.1.0: {}', b'  react@19.1.0(patch_hash=abc): {}')
+    lock += b'patchedDependencies: {react@19.1.0: {hash: abc, path: patches/react.patch}}\n'
+    assert not parse_stack({'package.json': b'{"dependencies":{"react":"^19"}}', 'pnpm-lock.yaml': lock}).complete
+
+
 def test_python_constraints_resolution_and_semantic_fingerprint():
     files = {
         'pyproject.toml': b'[project]\nname="demo"\ndependencies=["Fast_API>=1,<2"]\n',

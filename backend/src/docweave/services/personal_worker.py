@@ -1,5 +1,6 @@
 """Durable personal jobs; provider execution remains explicitly admitted by its adapter."""
 import json
+import asyncio
 import re
 import time
 from uuid import UUID
@@ -8,7 +9,7 @@ from docweave.core.errors import DomainError
 from docweave.rag.contracts import HostedError
 from docweave.core.guardrails import assess_text
 from docweave.integrations.stack import Dependency
-from docweave.services.catalog import match_documentation
+from docweave.services.catalog import match_documentation, documentation_coverage
 from docweave.services.turn_readiness import decide_turn_readiness
 from docweave.services.project_memory import update_memory
 from docweave.services.repository_sync import scan_repository
@@ -33,7 +34,14 @@ async def prepare_answer(turn,project,dependency_states,*,answerer=None,resolver
     if status=='failed':
         return {'status':'failed','progress':'Required documentation processing failed. Retry its ingestion before retrying the question.'}
     if status not in ('ready',):
-        return {'status':'completed','answer':'I do not have eligible documentation for this question yet. Review the project documentation coverage or clarify the technology and version.','citations':[]}
+        explanation = {
+            'pending_review': 'Documentation needs approval. Review version coverage in Project documentation; unknown public sources require operator approval.',
+            'consent_required': 'Processing permission is required. Review the project processing permissions.',
+            'capacity': 'Documentation is waiting for processing capacity or an approved embedding profile. Check Project documentation for its status.',
+            'abstain': 'Documentation is missing for this question. Review Project documentation or clarify the technology and version.',
+            'clarify': 'Clarify which project technology and version this question needs.',
+        }
+        return {'status':'completed','answer':explanation[status],'citations':[]}
     if answerer is None:
         return {'status':'completed','answer':'I do not have eligible documentation to support an answer to this question.','citations':[]}
     return await answerer(turn,project,required)
@@ -47,10 +55,11 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
             return
         project=job['project']
         project_id=UUID(project['id'])
-        await repository.lock_project(connection,project_id)
-        await connection.commit()
+        interrupted = False
         output={'status':'failed','progress':'Processing was interrupted.'}
         try:
+            await repository.lock_project(connection,project_id)
+            await connection.commit()
             async with connection.begin():
                 current=await repository.job_context(connection,job_id,UUID(job['lease_token']))
             if current is None:
@@ -82,12 +91,10 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
                     entries=await repository.catalog_state(connection,job_id,UUID(job['lease_token']),generation_id)
                 states={}
                 choices=[]
-                for entry in project['stack']:
-                    dependency=Dependency(entry.get('ecosystem',''),entry['technology'],documentation_target=entry.get('docs_target'))
-                    match=match_documentation(dependency,entries,str(generation_id) if generation_id else '')
-                    states[entry['id']]={**match,'active_job':bool(match.get('entry') and match['entry'].get('active_job'))}
+                for match in documentation_coverage(project, entries, str(generation_id) if generation_id else ''):
+                    states[match['dependency_id']]={**match,'active_job':bool(match.get('entry') and match['entry'].get('active_job'))}
                     if match.get('entry') and match['status'] in ('ready','waiting_for_sources','missing'):
-                        choices.append({'dependency_id':entry['id'],'revision_id':str(match['entry']['revision_id'])})
+                        choices.append({'dependency_id':match['dependency_id'],'revision_id':str(match['entry']['revision_id'])})
                 async with connection.begin():
                     await repository.select_catalog(connection,job_id,UUID(job['lease_token']),choices)
                 if answerer_factory is not None:
@@ -105,6 +112,9 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
                     resolver=pipeline.resolve
                 output=await prepare_answer(job['turn'],project,states,answerer=answerer,resolver=resolver)
             await client.repository(access,repo['repository_id'])
+        except asyncio.CancelledError:
+            interrupted = True
+            raise
         except HostedError as error:
             output={'status':'completion_unknown' if str(error)=='completion_unknown' else 'blocked_policy','progress':'The provider result is uncertain and will not be replayed automatically.' if str(error)=='completion_unknown' else 'An approved provider profile, current processing consent, or valid evidence is required.'}
         except DomainError as error:
@@ -117,17 +127,21 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
             output={'status':'failed','progress':'Processing failed. Check service status before retrying.'}
         finally:
             try:
-                async with connection.begin():
-                    published=await repository.finish_job(connection,job_id,UUID(job['lease_token']),output)
-                    if published and job['kind']=='sync' and output['status']=='ready':
-                        entries=await catalog_repository.definitions(connection)
-                        choices=[]
-                        for item in output['stack']:
-                            dependency=Dependency(item.get('ecosystem',''),item['technology'],documentation_target=item.get('docs_target'))
-                            match=match_documentation(dependency,entries,str(generation_id) if generation_id else '')
-                            if match.get('entry') and match['status']!='pending_review':
-                                choices.append({'dependency_id':item['id'],'revision_id':str(match['entry']['revision_id'])})
-                        await catalog_repository.reconcile(connection,project_id,UUID(job['actor_id']),choices,generation_id)
+                if interrupted:
+                    await connection.rollback()
+                    # Keep the original lease/intent recoverable after shutdown.
+                else:
+                    async with connection.begin():
+                        published=await repository.finish_job(connection,job_id,UUID(job['lease_token']),output)
+                        if published and job['kind']=='sync' and output['status']=='ready':
+                            entries=await catalog_repository.definitions(connection)
+                            choices=[]
+                            for item in output['stack']:
+                                dependency=Dependency(item.get('ecosystem',''),item['technology'],documentation_target=item.get('docs_target'))
+                                match=match_documentation(dependency,entries,str(generation_id) if generation_id else '')
+                                if match.get('entry') and match['status']!='pending_review':
+                                    choices.append({'dependency_id':item['id'],'revision_id':str(match['entry']['revision_id'])})
+                            await catalog_repository.reconcile(connection,project_id,UUID(job['actor_id']),choices,generation_id)
             finally:
                 await repository.unlock_project(connection,project_id)
                 await connection.commit()

@@ -1,5 +1,6 @@
 """Shared jobs are deduplicated and become searchable only after publication."""
 from uuid import UUID
+import hashlib
 import pytest
 from sqlalchemy import text
 from tests.database.test_database import A,B,PA,PB,databases,test_urls
@@ -39,7 +40,7 @@ async def test_public_source_is_scanned_and_indexed_before_ready(databases,tmp_p
     owner,_=databases
     async with owner.begin() as c:
         await c.execute(text('UPDATE app.projects SET owner_user_id=:a,stack=CAST(:s AS jsonb) WHERE id=:p'),{'a':A,'p':PA,'s':'[{"id":"react","technology":"react","docs_target":"19.1.0","role":"runtime","direct":true}]'})
-        revision=await add_revision(c,enabled=True,approved=True)
+        revision=await add_revision(c,enabled=True,approved=True,source_hash=hashlib.sha256(b'React state uses hooks.').hexdigest())
         generation=await c.scalar(text("INSERT INTO app.index_generations(model,backend,dimensions,normalization,chunker,processor_ids,enabled) VALUES ('fixture','fixture',768,'unit-l2',:config,'[\"fixture\"]',true) RETURNING id"),{'config':CONFIGURATION})
     worker=make_engine(database_url('TEST_WORKER_DATABASE_URL'))
     store=ArtifactStore(tmp_path)
@@ -58,5 +59,29 @@ async def test_public_source_is_scanned_and_indexed_before_ready(databases,tmp_p
             assert await c.scalar(text('SELECT status FROM app.catalog_jobs WHERE id=:id'),{'id':job})=='completed'
             assert await c.scalar(text('SELECT count(*) FROM app.document_indexes WHERE generation_id=:g'),{'g':generation})==1
             assert await c.scalar(text('SELECT count(*) FROM app.document_assessments WHERE complete AND NOT credential_blocked'))==1
+    finally:
+        await worker.dispose()
+
+
+async def test_changed_catalog_source_never_reaches_parser_or_paid_embedding(databases, tmp_path):
+    from tests.database.test_public_catalog_schema import add_revision
+    from docweave.services.shared_ingestion import run_catalog_job
+    from docweave.storage.artifacts import ArtifactStore
+    owner, _ = databases
+    async with owner.begin() as c:
+        revision = await add_revision(c, enabled=True, approved=True)
+        generation = await c.scalar(text("INSERT INTO app.index_generations(model,backend,dimensions,normalization,chunker,processor_ids,enabled) VALUES('fixture','fixture',768,'unit-l2','fixture','[\"fixture\"]',true) RETURNING id"))
+        job = await c.scalar(text('INSERT INTO app.catalog_jobs(catalog_revision_id,generation_id) VALUES(:r,:g) RETURNING id'), {'r': revision, 'g': generation})
+    async def changed(*args, **kwargs):
+        return b'Changed publisher content', 'text/plain'
+    def forbidden_parser(*args):
+        raise AssertionError('Changed content must not be parsed')
+    worker = make_engine(database_url('TEST_WORKER_DATABASE_URL'))
+    try:
+        with pytest.raises(ValueError, match='Source content changed'):
+            await run_catalog_job(job, engine=worker, store=ArtifactStore(tmp_path), fetcher=changed, parser=forbidden_parser)
+        async with owner.connect() as c:
+            assert await c.scalar(text('SELECT count(*) FROM app.document_versions')) == 0
+            assert await c.scalar(text('SELECT status FROM app.catalog_jobs WHERE id=:id'), {'id': job}) == 'failed'
     finally:
         await worker.dispose()

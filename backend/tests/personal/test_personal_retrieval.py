@@ -9,12 +9,12 @@ from docweave.rag.retrieval import retrieve_channels
 
 pytestmark=pytest.mark.anyio
 
-async def seed(owner, *, model="fixture", backend="fixture", processor_ids=None):
+async def seed(owner, *, model="fixture", backend="fixture", processor_ids=None, coverage=None):
     vector=[1.0]+[0.0]*767
     async with owner.begin() as c:
         await c.execute(text("UPDATE app.projects SET owner_user_id=CASE WHEN id=:pa THEN CAST(:a AS uuid) ELSE CAST(:b AS uuid) END WHERE id IN (:pa,:pb)"),{'pa':PA,'pb':PB,'a':A,'b':B})
         generation=await c.scalar(text("INSERT INTO app.index_generations(model,backend,dimensions,normalization,chunker,processor_ids,enabled) VALUES (:model,:backend,768,'unit-l2','fixture',CAST(:processors AS jsonb),true) RETURNING id"),{'model':model,'backend':backend,'processors':__import__('json').dumps(processor_ids or ['fixture'])})
-        revision=await c.scalar(text("""INSERT INTO app.public_catalog_revisions(technology,ecosystem,docs_target,coverage,origin,path_prefix,source_url,attribution,source_hash,enabled,source_approved) VALUES('react','javascript','19','{"granularity":"exact","version":"19"}','https://react.dev','/','https://react.dev/reference','React',:hash,true,true) RETURNING id"""),{'hash':'a'*64})
+        revision=await c.scalar(text("""INSERT INTO app.public_catalog_revisions(technology,ecosystem,docs_target,coverage,origin,path_prefix,source_url,attribution,source_hash,enabled,source_approved) VALUES('react','javascript','19',CAST(:coverage AS jsonb),'https://react.dev','/','https://react.dev/reference','React',:hash,true,true) RETURNING id"""),{'hash':'a'*64,'coverage':__import__('json').dumps(coverage or {'granularity':'exact','version':'19'})})
         collection=await c.scalar(text("INSERT INTO app.collections(catalog_revision_id,name) VALUES(:r,'Public') RETURNING id"),{'r':revision})
         selection=await c.scalar(text("""INSERT INTO app.documentation_selections(catalog_revision_id,approved_by,technology,docs_target,coverage,origin,path_prefix,source_url,attribution) SELECT id,:a,technology,docs_target,coverage,origin,path_prefix,source_url,attribution FROM app.public_catalog_revisions WHERE id=:r RETURNING id"""),{'a':A,'r':revision})
         source=await c.scalar(text('INSERT INTO app.sources(collection_id,source_selection_id) VALUES(:c,:s) RETURNING id'),{'c':collection,'s':selection})

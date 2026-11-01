@@ -1,17 +1,17 @@
 # Current implementation and cleanup report
 
-DocWeave is a personal GitHub-linked documentation assistant. Core implementation and repository cleanup are present; post-reset accounting/schema review and full release acceptance remain unfinished. Development is freshly initialized with a verified private backup of old data. Historical progress and measurements are kept only in [memory](../memory.md).
+DocWeave is a personal GitHub-linked documentation assistant. Core implementation, repository cleanup and the fresh-start database migration are complete. Accounting reconciliation, retained-schema cleanup and full release acceptance remain unfinished. Development is at `0028_sync_retries` with a verified private backup of old data. Historical progress and measurements are kept only in [memory](../memory.md).
 
 ## What changed
 
 | Area | Current result |
 | --- | --- |
 | Identity/API | GitHub-only sessions, direct-owner projects, immutable repository bindings, conversations/turns, consent and evidence interfaces. No workspace/member/invitation/grant/allowance or email/Google-login endpoints. |
-| Project memory | Bounded SHA-pinned Python/npm metadata scanning, semantic dependency/context revisions, no-op reuse and last-good preservation on incomplete scans. |
-| Knowledge/RAG | Immutable version-aware shared public catalog selections/indexes, isolated private knowledge, hybrid retrieval/RRF/reranking and validated structured answers/citations. Source-dependent waits retain query resolution and resume the original durable turn. |
+| Project memory | Bounded SHA-pinned Python/npm/pnpm metadata scanning, selected-app npm/pnpm ancestor lock resolution, semantic dependency/context revisions, no-op reuse and last-good preservation on incomplete scans. Blocked chats retry through durable same-chat background jobs with safe progress details. |
+| Knowledge/RAG | Immutable version-aware shared public catalog selections/indexes, isolated private knowledge, hybrid retrieval/RRF/reranking and validated structured answers/citations. Owner coverage decisions bind exact dependency targets; retrieval and retained public evidence share selection checks. Operator manifests stage/review/revoke public sources; source bytes are hash-pinned before parsing. Source-dependent waits retain query resolution and resume the original durable turn. |
 | Safety/cost | Version/hash/parser/rule-bound assessments, credential blocks, owner review, current evidence authority, explicit processor consent and conservative global provider admission. Unknown paid completion does not replay automatically. |
-| Preserved-data tooling | Migration-role-only ownership preflight respects direct owners; explicit numeric GitHub linking verifies user tokens, preserves UUIDs and checks exact transactional row changes. Read-only database/artifact fingerprints support restored-copy comparisons. Development is fresh at 0027 after the authorized reset; actual old-data backup restoration and 32-table comparison passed. No old-user mapping is needed for this fresh start. |
-| Frontend | API-backed login/project/chat/consent/evidence, durable progress, context notices, draft protection, accessible responsive layout and safe sign-out state. |
+| Preserved-data tooling | Migration-role-only ownership preflight respects direct owners; explicit numeric GitHub linking verifies user tokens, preserves UUIDs and checks exact transactional row changes. Read-only database/artifact fingerprints support restored-copy comparisons. Fresh-start migration is complete at 0028; actual old-data backup restoration and 32-table comparison passed and backup hashes are verified. No old-user mapping is needed for this fresh start. |
+| Frontend | API-backed login/project/chat/consent/evidence, a Project documentation review panel with explicit broader-version acceptance, distinct source states and actual safe worker stages, durable progress, context notices, draft protection, accessible responsive layout and safe sign-out state. |
 | Cleanup | Deleted copied legacy test application, obsolete SaaS/OIDC endpoint tests and identity/contract fixtures, unused auth/policy implementations and retired manual-workspace seed. Removed Authlib/email-validator and their exclusive transitive dependencies. Root logs live under ignored logs/development. |
 | Tests | Seven current subsystem suites plus support/fixtures. Useful ingestion/retrieval/evaluation/profile regressions now use the current GitHub app and API-created personal projects; ownership and selected-scope checks replace obsolete sharing flows. Financial/preservation tests remain for actively referenced internals. |
 | Documentation | PRD, architecture, rules, UI, API, tasks, runbooks and learning guides describe current behavior. Removed 19 superseded plan/runbook files; history belongs only in memory.md. |
@@ -28,16 +28,17 @@ The current-project fixture exposed a NULL-workspace source-indexing bug. Additi
 
 ## Verification
 
-- Full current backend suite: **411 passed** in 122.32 seconds with warnings treated as errors.
+- Focused sync backend verification: **73 passed** with warnings treated as errors. Covers bounded parser/transport behavior, owner/CSRF/deletion gates, retry deduplication, partial-memory retention, force-push pinning, serialized refresh and stale publication rejection. Additive `0029_sync_publication` protects the latter; this sync work did not apply it to development.
+- Broader backend run: **449 passed, 1 failed**. `test_runtime_matches_checked_contract_and_has_no_saas_domains` found two concurrent documentation-review routes absent from the checked API contract. That integration remains pending; no clean full-suite result is claimed for the current combined worktree.
 - Preservation checks cover verified/mock identity dry-run/apply/repeat, stale/conflicting/unresolved mapping rejection, no owner transfer, session revocation, mismatch rollback, worker-drain and migration-role gates, original-column comparisons and artifact-byte drift.
 - Actual `pg_dump`/`pg_restore` on the guarded disposable database preserves vector values, references and a 12-decimal uncertain charge exactly. This is synthetic test data, not a rehearsal of the actual development backup.
-- Frontend: **13 passed** in Chrome; production build and lint passed.
+- Sync frontend checkpoint: **14 passed** in Chrome; production build and lint passed. Concurrent documentation-review UI changes need their own updated verification.
 - NULL-workspace source-indexing regression passed against additive migration 0027.
 - Lockfile consistency, current documentation links/encoding, removed-target checks and git diff whitespace checks passed.
 
-Both operator command help paths and focused repository-layer checks pass. Focused review found no remaining actionable issues. Frontend verification above is unchanged from the prior checkpoint; this backend/operator change did not rerun it.
+Both operator command help paths and focused repository-layer checks pass. Focused sync review found no remaining actionable issues after fixing omitted npm peers, overlapping installed versions and patched pnpm handling. Unsupported formats and layouts remain incomplete; these checks do not establish live GitHub or release acceptance.
 
-Fresh development verification: Alembic head `0027_personal_source_scope`; `alembic check` reports no new upgrade operations; 20 old-data tables and the queue are empty; only the built-in public-catalog service identity remains. Migrator/runtime/worker logins retain restricted role flags. The temporary restore database is removed. No hosted/GitHub processing was dispatched by the reset.
+Fresh development verification: Alembic head `0028_sync_retries`; `alembic check` reports no new upgrade operations; 20 old-data tables and the queue are empty; only the built-in public-catalog service identity remains. Migrator/runtime/worker logins retain restricted role flags. The original backup hashes match. The 0028 upgrade preserves all original-column row fingerprints except the expected Alembic revision change; artifacts are unchanged. Focused retry/preservation/identity checks: **23 passed** with warnings as errors. The temporary restore database is removed. No hosted/GitHub processing was dispatched by migration.
 
 Integration tests use guarded disposable PostgreSQL and mocked provider HTTP, not production accounts. The smaller suite excludes obsolete product endpoint/contract tests; current ingestion/retrieval/financial/migration checks remain. Old suite measurements are retained only in memory.md.
 
@@ -45,9 +46,9 @@ Integration tests use guarded disposable PostgreSQL and mocked provider HTTP, no
 
 The actionable [task list](../tasks.md) covers these workstreams:
 
-1. **In progress:** reconcile archived incurred/unknown charges before paid enablement and review retained schema references before removal. Fresh development initialization and actual old-data backup/restore comparison are verified; old-user mapping is unnecessary unless older data is deliberately restored.
+1. Migration is complete. Reconcile archived incurred/unknown charges before paid enablement and review retained schema references before removing obsolete structures; these remain separate acceptance tasks. Old-user mapping is unnecessary unless older data is deliberately restored.
 2. Actual GitHub App/installation/public-private/org/SSO/revocation verification; verified immutable profile/generation/account/pricing and private consent setup.
-3. Supported pnpm/ancestor monorepo locks, force-push/concurrent/incomplete-sync cases and actionable retries; unknown-source review, explicit version-fallback acceptance and real catalog coverage states.
+3. Complete sync operational acceptance and expand/verify catalog coverage. Owner fallback/coverage decisions and operator manifest review are implemented, with three bounded publisher-page examples. Publisher-linked discovery, private unknown-source review and all 29 required catalog entries remain open; see the [catalog runbook](../runbooks/catalog.md).
 4. Crash/lease/restart/duplicate continuation, cancellation/deletion and changed-context wait acceptance; current access/consent/budget rechecks throughout recovery.
 5. Guardrail rule-update/rescan/review/audit/recovery and dependent memory/citation invalidation; private hosted-indexing completion and cleanup/retention/backup verification.
 6. Durable revision-aware summaries beyond recent 6000-token history, full agreed quality/privacy/latency/cost evaluation and truthful readiness. Readiness remains 503.
