@@ -13,7 +13,7 @@ docker compose --profile test up -d --wait test-db
 uv run --project backend --locked pytest backend/tests -q -W error
 ```
 
-Run database suites serially. Fixtures migrate/clear only the guarded local test service. Startup does not run migrations. Code and the freshly initialized development database are at `0028_sync_retries`; fresh-start migration is complete. Development contains no old application data; the built-in public-catalog service identity is expected.
+Run database suites serially, including runs from other chats. Fixtures migrate/clear only the guarded local test service. Startup does not run migrations. Development is verified at `0033_recovery_release`, including the separately authorized recovery migration. Its private dump was restored and rehearsed before upgrading the original. Rows, artifacts, columns, functions, canonical grants and sequence values match the accepted rehearsal; all three restricted logins pass. Live GitHub identity/session data was preserved. Later catalog/source migrations require separate acceptance and authorization.
 
 ## Existing-data cutover
 

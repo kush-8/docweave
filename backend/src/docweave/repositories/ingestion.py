@@ -19,6 +19,10 @@ async def job_authorized(connection, values):
     return await connection.scalar(text("SELECT app.ingestion_authorized(:id,:token)"), values)
 
 
+async def source_media(connection, job, token, media):
+    return await connection.scalar(text('SELECT app.ingestion_source_media(:job,:token,:media)'),{'job':job,'token':token,'media':media})
+
+
 async def publish_version(connection, values):
     return await connection.scalar(text("SELECT app.publish_ingestion(:id,:token,:version,:hash,:config)"), values)
 

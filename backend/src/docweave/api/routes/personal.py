@@ -1,5 +1,7 @@
 """Personal project transport; repository visibility is checked before private release."""
 from uuid import UUID
+from uuid import uuid4
+import hashlib
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from docweave.api.routes.github_auth import github_service, require_github_user, require_github_csrf
 from docweave.core.errors import DomainError
@@ -7,7 +9,11 @@ from docweave.core.pagination import decode_cursor, page
 from docweave.db.sessions import domain_session
 from docweave.repositories import personal as repository
 from docweave.schemas.personal import PersonalProjectCreate, RepositorySetup,ProcessingPolicyInput,DocumentReviewInput,DocumentationChoiceInput
+from docweave.schemas.personal import PublisherLookupInput, PrivateSourceReviewInput
 from docweave.services.catalog import documentation_coverage
+from docweave.services.source_review import seal_candidate, open_candidate, review_values
+from docweave.repositories import ingestion as ingestion_repository
+from docweave.rag.contracts import CONFIGURATION
 
 router=APIRouter(prefix='/api/v1',tags=['Projects'])
 
@@ -66,6 +72,12 @@ async def catalog(request:Request):
         return {'items':await repository.catalog(session, catalog_generation(request)),'next_cursor':None}
 
 
+@router.get('/catalog/references')
+async def catalog_references():
+    from docweave.services.reference_catalog import reference_catalog
+    return reference_catalog()
+
+
 def catalog_generation(request):
     value = request.app.state.runtime_config.get('RAG_GENERATION_ID')
     return UUID(value) if value else None
@@ -77,6 +89,7 @@ async def project_documentation(request, user, project_id):
     generation = catalog_generation(request)
     async with domain_session(engine, UUID(user['id'])) as session:
         entries = await repository.catalog(session, generation)
+        entries += await repository.private_source_entries(session, project_id, generation)
     return {'context_revision': project['context_revision'], 'generation_id': str(generation) if generation else None,
         'items': documentation_coverage(project, entries, str(generation) if generation else '')}
 
@@ -96,6 +109,62 @@ async def choose_documentation(project_id:UUID, dependency_id:str, body:Document
         await repository.choose_documentation(session, project_id, dependency_id, body.expected_revision,
             body.revision_id, body.accept_fallback, catalog_generation(request))
     return await project_documentation(request, user, project_id)
+
+
+def review_dependency(project, dependency_id, expected):
+    if project['context_revision'] != expected:
+        raise DomainError('revision_conflict')
+    dependency = next((item for item in project['stack'] if item['id'] == dependency_id), None)
+    if dependency is None or not dependency.get('docs_target'):
+        raise DomainError('invalid_request')
+    return dependency
+
+
+@router.post('/projects/{project_id}/documentation/{dependency_id}/discover')
+async def discover_documentation(project_id:UUID, dependency_id:str, body:PublisherLookupInput, request:Request, user=Depends(require_github_csrf)):
+    from docweave.integrations.publisher_metadata import discover_publisher
+    project = await project_access(request, user, project_id)
+    dependency = review_dependency(project, dependency_id, body.expected_revision)
+    settings, engine, _ = github_service(request)
+    async def authorize():
+        current = await project_access(request, user, project_id)
+        review_dependency(current, dependency_id, body.expected_revision)
+    async with engine.connect() as connection:
+        locked = await ingestion_repository.acquire_worker_lock(connection)
+        await connection.commit()
+        if not locked:
+            raise DomainError('not_ready')
+        try:
+            candidates = await discover_publisher(dependency, consent=body.allow_public_lookup, authorize=authorize)
+            await authorize()
+        except ValueError:
+            raise DomainError('invalid_request') from None
+        finally:
+            await ingestion_repository.release_worker_lock(connection)
+            await connection.commit()
+    return {'context_revision': project['context_revision'], 'items': [
+        {**candidate, 'candidate_token': seal_candidate(settings.encryption_key, user['id'], project, dependency, candidate)}
+        for candidate in candidates]}
+
+
+@router.post('/projects/{project_id}/documentation/{dependency_id}/review-source', status_code=202)
+async def review_private_source(project_id:UUID, dependency_id:str, body:PrivateSourceReviewInput, request:Request, user=Depends(require_github_csrf)):
+    project = await project_access(request, user, project_id)
+    dependency = review_dependency(project, dependency_id, body.expected_revision)
+    settings, engine, _ = github_service(request)
+    try:
+        candidate = open_candidate(settings.encryption_key, body.candidate_token, user['id'], project, dependency_id)
+        values = review_values(dependency, candidate, body.coverage.model_dump(), body.accept_fallback)
+    except (ValueError, KeyError):
+        raise DomainError('invalid_request') from None
+    async with domain_session(engine, UUID(user['id'])) as session:
+        selection = await repository.review_source(session, project_id, dependency_id, body.expected_revision, values)
+        media = 'text/markdown' if values['source_url'].endswith(('.md', '.markdown')) else 'text/plain'
+        result = await ingestion_repository.enqueue_source(session, {'job': uuid4(), 'collection': UUID(selection['collection_id']),
+            'selection': UUID(selection['selection_id']), 'title': dependency['technology'] + ' documentation',
+            'hash': hashlib.sha256(values['source_url'].encode()).hexdigest(), 'config': CONFIGURATION + ':' + media,
+            'media': media, 'request': UUID(request.state.request_id)})
+    return {'selection_id': selection['selection_id'], 'job_id': result['job_id'], 'status_url': f"/api/v1/jobs/{result['job_id']}"}
 
 
 @router.get('/projects/{project_id}/processing-policy')

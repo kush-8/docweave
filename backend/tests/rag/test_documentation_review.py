@@ -1,4 +1,3 @@
-from docweave.integrations.stack import Dependency
 from docweave.services.catalog import match_documentation
 from docweave.services.catalog import documentation_coverage
 from docweave.services.personal_worker import prepare_answer

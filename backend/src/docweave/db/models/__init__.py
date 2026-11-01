@@ -16,3 +16,5 @@ from .guardrails import DocumentAssessment
 from .catalog_jobs import CatalogJob
 
 from .budget import PersonalProviderCall
+
+from .private_index_jobs import PrivateIndexJob

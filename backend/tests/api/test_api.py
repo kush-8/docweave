@@ -26,7 +26,9 @@ async def test_anonymous_private_operations_are_denied(client,app,method,path,op
     url=re.sub(r'\{[^}]+\}','97f0d4a6-86c2-4bec-91cc-329f97d228d2',path)
     app.state.github=None
     response=await client.request(method,'/api/v1'+url)
-    if path in ('/providers','/catalog'):
+    if path == '/catalog/references':
+        assert response.status_code == 200
+    elif path in ('/providers','/catalog'):
         assert_error(response,503,'not_ready',True)
     else:
         assert_error(response,401,'unauthenticated')

@@ -18,6 +18,29 @@ from docweave.integrations.stack import parse_stack
 pytestmark = pytest.mark.anyio
 
 
+async def test_stalled_delivery_retry_is_atomic_and_tolerates_recovered_jobs(databases):
+    owner, _ = databases
+    async with owner.begin() as connection:
+        await connection.execute(text('SET LOCAL search_path=queue,pg_catalog'))
+        identity = await connection.scalar(text("INSERT INTO queue.procrastinate_jobs(queue_name,task_name,status) VALUES('personal','docweave.personal','doing') RETURNING id"))
+    worker = make_engine(database_url('TEST_WORKER_DATABASE_URL'))
+    async def retry():
+        async with worker.begin() as connection:
+            return await personal.retry_stalled(connection, identity)
+    try:
+        assert sorted(await asyncio.gather(retry(), retry())) == [False, True]
+        async with owner.connect() as connection:
+            assert await connection.scalar(text('SELECT status FROM queue.procrastinate_jobs WHERE id=:id'), {'id': identity}) == 'todo'
+        assert await retry() is False
+        async with owner.begin() as connection:
+            await connection.execute(text('SET LOCAL search_path=queue,pg_catalog'))
+            healthy = await connection.scalar(text('INSERT INTO queue.procrastinate_workers DEFAULT VALUES RETURNING id'))
+            await connection.execute(text("UPDATE queue.procrastinate_jobs SET status='doing',worker_id=:worker WHERE id=:id"), {'worker': healthy, 'id': identity})
+        assert await retry() is False
+    finally:
+        await worker.dispose()
+
+
 async def test_recovery_migrations_roundtrip_preserve_rows_and_restrict_runtime(databases, test_urls):
     from tests.database.test_database import migrate
     from docweave.repositories.ownership import preservation_snapshot
@@ -96,12 +119,14 @@ async def test_provider_response_recovery_reuses_charge_and_rechecks_consent(dat
     from tests.database.test_database import A, PA
     from docweave.services.personal_providers import dispatch
     from docweave.rag.contracts import HostedError
-    owner, _ = databases
+    owner, runtime = databases
     identity = await profile(owner)
     async with owner.begin() as connection:
         await connection.execute(text('UPDATE app.projects SET owner_user_id=:actor WHERE id=:project'), {'actor': A, 'project': PA})
         for processor in ('test:budget:google', 'test:budget:groq'):
             await connection.execute(text('INSERT INTO app.project_processor_approvals(project_id,processor_id,approved_by) VALUES(:p,:processor,:a)'), {'p': PA, 'processor': processor, 'a': A})
+        chat = await connection.scalar(text("INSERT INTO app.conversations(project_id,status) VALUES(:p,'ready') RETURNING id"), {'p': PA})
+        job = await connection.scalar(text("INSERT INTO app.personal_jobs(conversation_id,actor_id,kind,status,lease_token,lease_expires_at) VALUES(:c,:a,'answer','running',gen_random_uuid(),now()+interval '10 minutes') RETURNING id"), {'c': chat, 'a': A})
     requests = []
     async def transport(*args, **kwargs):
         requests.append(args)
@@ -110,13 +135,24 @@ async def test_provider_response_recovery_reuses_charge_and_rechecks_consent(dat
         pass
     monkeypatch.setattr('docweave.services.personal_providers.provider_post', transport)
     worker = make_engine(database_url('TEST_WORKER_DATABASE_URL'))
-    options = dict(embedding=False, profile_id=identity, operation_key='durable-job:resolution', actor_id=A,
+    options = dict(embedding=False, profile_id=identity, operation_key=str(job)+':query_resolution', actor_id=A,
         project_id=PA, engine=worker, api_key='fixture', authorize=authorize)
     payload = {'model': 'fake-model', 'max_completion_tokens': 10}
     try:
         first = await dispatch(payload, **options)
         assert await dispatch(payload, **options) == first
         assert len(requests) == 1
+        async with domain_session(runtime, A) as session:
+            await personal.delete_conversation(session, chat)
+        async with owner.connect() as connection:
+            assert await connection.scalar(text('SELECT response FROM app.personal_provider_calls')) is None
+            assert await connection.scalar(text('SELECT count(*) FROM app.cost_reservations')) == 1
+            reservation = await connection.scalar(text('SELECT id FROM app.cost_reservations'))
+        from docweave.repositories.personal_providers import checkpoint
+        from sqlalchemy.exc import DBAPIError
+        with pytest.raises(DBAPIError):
+            async with worker.begin() as connection:
+                await checkpoint(connection, reservation, first)
         async with owner.begin() as connection:
             assert await connection.scalar(text('SELECT count(*) FROM app.cost_reservations')) == 1
             await connection.execute(text('DELETE FROM app.project_processor_approvals WHERE project_id=:p'), {'p': PA})

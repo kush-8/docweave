@@ -85,12 +85,15 @@ def documentation_coverage(project, entries, generation):
     for item in project['stack']:
         dependency = Dependency(item.get('ecosystem', ''), item['technology'], documentation_target=item.get('docs_target'))
         selection = selections.get(item['id'])
+        private = next((entry for entry in entries if entry.get('private_selection') and entry.get('dependency_id') == item['id']), None)
+        if private:
+            selection = {'revision_id': private['revision_id'], 'fallback_accepted': True, 'accepted_docs_target': private['accepted_docs_target']}
         accepted = [selection['revision_id']] if selection and selection.get('fallback_accepted') and selection.get('accepted_docs_target') == item.get('docs_target') else []
         candidates = [match_documentation(dependency, [entry], generation, accepted_fallback_revision_ids=accepted) for entry in entries]
         candidates = [candidate for candidate in candidates if candidate['entry']]
         chosen = next((candidate for candidate in candidates if selection and candidate['entry']['revision_id'] == selection['revision_id']), None)
         match = chosen or match_documentation(dependency, entries, generation, accepted_fallback_revision_ids=accepted)
-        if item['id'] in project.get('excluded_documentation', []):
+        if not private and item['id'] in project.get('excluded_documentation', []):
             match = {'status': 'missing', 'entry': None, 'reason': 'documentation selection removed'}
         result.append({'dependency_id': item['id'], 'technology': item['technology'], 'docs_target': item.get('docs_target'),
             **match, 'selected_revision_id': selection['revision_id'] if chosen else None, 'candidates': candidates})

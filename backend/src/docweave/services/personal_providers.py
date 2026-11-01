@@ -50,6 +50,7 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
         actual=(Decimal(in_count)*Decimal(reservation['input_rate'])+Decimal(out_count)*Decimal(reservation['output_rate']))/1000000+Decimal(reservation['fixed_usd'])
         async with engine.begin() as c:
             await repository.settle(c,UUID(reservation['id']),actual)
+    await authorize()
     async with engine.begin() as c:
         await repository.checkpoint(c,UUID(reservation['id']),result)
     await authorize()

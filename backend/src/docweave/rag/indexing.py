@@ -23,7 +23,7 @@ async def index_input(actor, document_id, generation_id, engine):
             raise RetrievalError(code) from None
         raise
 
-async def index_document(actor, document_id, generation_id, *, worker_engine, store, embedder=None):
+async def index_document(actor, document_id, generation_id, *, worker_engine, store, embedder=None, authorize=None):
     # Hosted adapters/admission are added in 3C; there is no automatic local transport.
     snapshot = await index_input(actor, document_id, generation_id, worker_engine)
     parsed = json.loads(store.read(snapshot["version_id"]))
@@ -41,6 +41,8 @@ async def index_document(actor, document_id, generation_id, *, worker_engine, st
         if embedder is None:
             raise RetrievalError("waiting_capacity")
         rows = await embed_spans(parsed, snapshot, embedder, lambda: index_input(actor, document_id, generation_id, worker_engine))
+    if authorize is not None:
+        await authorize()
     publication_started = time.perf_counter()
     try:
         async with tenant_session(worker_engine, actor_id=actor.user_id, workspace_id=actor.workspace_id) as session:
@@ -51,3 +53,4 @@ async def index_document(actor, document_id, generation_id, *, worker_engine, st
             raise RetrievalError(code) from None
         raise
     return {"chunks": len(spans), "created": bool(rows), "publish_ms": (time.perf_counter()-publication_started)*1000}
+

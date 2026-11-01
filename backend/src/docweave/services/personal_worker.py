@@ -111,6 +111,7 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
                     answerer=pipeline.answer
                     resolver=pipeline.resolve
                 output=await prepare_answer(job['turn'],project,states,answerer=answerer,resolver=resolver)
+            output.setdefault('expected_revision',project['context_revision'])
             await client.repository(access,repo['repository_id'])
         except asyncio.CancelledError:
             interrupted = True

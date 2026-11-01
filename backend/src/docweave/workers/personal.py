@@ -3,7 +3,6 @@ import argparse
 import asyncio
 import os
 import sys
-from datetime import datetime, timezone
 from dotenv import dotenv_values
 from uuid import UUID
 import procrastinate
@@ -24,7 +23,8 @@ async def recover_jobs(queue, engine):
     stalled = await queue.job_manager.get_stalled_jobs(queue='personal')
     for job in stalled:
         if job.task_name in ('docweave.personal', 'docweave.catalog'):
-            await queue.job_manager.retry_job_by_id_async(job.id, retry_at=datetime.now(timezone.utc))
+            async with engine.begin() as connection:
+                await repository.retry_stalled(connection, job.id)
     async with engine.begin() as connection:
         await repository.recover_jobs(connection)
 

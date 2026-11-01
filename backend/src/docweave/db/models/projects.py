@@ -14,6 +14,7 @@ class Project(Record, Base):
         CheckConstraint("context_revision >= 1", name="positive_context_revision"),
         CheckConstraint("processing_revision >= 1", name="positive_processing_revision"),
         CheckConstraint("jsonb_typeof(stack) = 'array'", name="stack_array"),
+        CheckConstraint("jsonb_typeof(documentation_exclusions)='array'", name="documentation_exclusions_array"),
         CheckConstraint("repository_id > 0", name="positive_repository_id"),
     )
     workspace_id: Mapped[UUID | None] = mapped_column(ForeignKey("app.workspaces.id", ondelete="RESTRICT"), index=True)
@@ -27,6 +28,7 @@ class Project(Record, Base):
     name: Mapped[str] = mapped_column(Text)
     goal: Mapped[str] = mapped_column(Text)
     stack: Mapped[list] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
+    documentation_exclusions: Mapped[list] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
     context_revision: Mapped[int] = mapped_column(Integer, server_default=text("1"))
     processing_revision: Mapped[int] = mapped_column(Integer, server_default=text("1"))
     architecture_notes: Mapped[str | None] = mapped_column(Text)

@@ -37,7 +37,7 @@ def create_app(*,github_settings=None,auth_engine=None,github_client=None):
     generate_openapi=app.openapi
     def openapi():
         schema=generate_openapi()
-        public={'/api/v1/auth/login','/api/v1/auth/callback','/api/v1/providers','/api/v1/catalog','/api/v1/health/live','/api/v1/health/ready'}
+        public={'/api/v1/auth/login','/api/v1/auth/callback','/api/v1/providers','/api/v1/catalog','/api/v1/catalog/references','/api/v1/health/live','/api/v1/health/ready'}
         for path,methods in schema['paths'].items():
             for method,operation in methods.items():
                 if method not in ('get','post','put','patch','delete'):

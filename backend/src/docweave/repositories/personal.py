@@ -23,6 +23,16 @@ async def choose_documentation(connection, project, dependency, expected, revisi
         {'project': project, 'dependency': dependency, 'expected': expected, 'revision': revision, 'fallback': fallback, 'generation': generation})
 
 
+async def review_source(connection, project, dependency, expected, values):
+    return await connection.scalar(text('SELECT app.personal_review_source(:project,:dependency,:expected,CAST(:values AS jsonb))'),
+        {'project': project, 'dependency': dependency, 'expected': expected, 'values': json.dumps(values)})
+
+
+async def private_source_entries(connection, project, generation):
+    return list((await connection.execute(text('SELECT app.personal_private_source_entries(:project,:generation)'),
+        {'project': project, 'generation': generation})).scalars())
+
+
 async def conversation(connection, identity):
     return await connection.scalar(text('SELECT app.personal_conversation(:id)'), {'id':identity})
 
@@ -58,6 +68,17 @@ async def pending_jobs(connection):
 
 async def recover_jobs(connection):
     return await connection.scalar(text('SELECT app.personal_recover_jobs()'))
+
+async def retry_stalled(connection, identity):
+    await connection.execute(text('SET LOCAL search_path=queue,pg_catalog'))
+    job = await connection.scalar(text("""SELECT j.id FROM queue.procrastinate_jobs j WHERE j.id=:id
+        AND j.queue_name='personal' AND j.task_name IN ('docweave.personal','docweave.catalog') AND j.status='doing'
+        AND (j.worker_id IS NULL OR EXISTS(SELECT 1 FROM queue.procrastinate_workers w
+            WHERE w.id=j.worker_id AND w.last_heartbeat<now()-interval '30 seconds')) FOR UPDATE OF j"""), {'id':identity})
+    if job is None:
+        return False
+    await connection.execute(text('SELECT queue.procrastinate_retry_job_v2(:id,now(),NULL,NULL,NULL)'), {'id':identity})
+    return True
 
 async def lock_project(connection, identity):
     await connection.execute(text('SELECT pg_advisory_lock(hashtextextended(:id,730004))'), {'id':str(identity)})

@@ -32,7 +32,8 @@ class CatalogEntry(StrictInput):
         if (source.scheme != 'https' or source.port not in (None, 443) or not source.hostname
             or source.username is not None or source.password is not None or source.query or source.fragment
             or self.origin != f'https://{source.hostname}' or not self.path_prefix.startswith('/')
-            or not self.path_prefix.endswith('/') or not source.path.startswith(self.path_prefix)
+            or not ((self.path_prefix.endswith('/') and (source.path or '/').startswith(self.path_prefix))
+                or self.path_prefix == (source.path or '/'))
             or any(c in self.source_url + self.path_prefix for c in ('%', '\\'))
             or any(ord(c) < 32 for c in self.source_url + self.path_prefix)
             or any(part in ('.', '..') for part in (source.path + '/' + self.path_prefix).split('/'))

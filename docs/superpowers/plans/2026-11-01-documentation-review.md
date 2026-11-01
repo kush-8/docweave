@@ -26,4 +26,4 @@
 
 Implement inline under the existing user-approved direction and TDD preference. Preserve concurrent sync edits and leave commits/development operations outside this implementation.
 
-The grouped task remains in progress: publisher-linked discovery, private unknown-source review and full verified bounded coverage for the 29 required entries are not completed by this workflow checkpoint. Review found retained-citation gaps for deselection, changed accepted targets and disabled generations; focused failing regressions now pass using the shared selection/release checks.
+The grouped task remains in progress: publisher-linked discovery, private unknown-source review and full verified bounded coverage for the 29 required entries are not completed by this workflow checkpoint. Shared selection/release checks cover deselection, changed accepted targets and disabled generations.

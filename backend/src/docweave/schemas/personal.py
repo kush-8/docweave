@@ -1,5 +1,6 @@
 from uuid import UUID
 from pydantic import Field, field_validator
+from typing import Literal
 from docweave.schemas.common import StrictInput, Nonblank, ContextText
 
 class RepositorySetup(StrictInput):
@@ -48,4 +49,28 @@ class DocumentReviewInput(StrictInput):
 class DocumentationChoiceInput(StrictInput):
     expected_revision: int = Field(ge=1, strict=True)
     revision_id: UUID | None = None
+    accept_fallback: bool = Field(default=False, strict=True)
+
+
+class PublisherLookupInput(StrictInput):
+    expected_revision: int = Field(ge=1, strict=True)
+    allow_public_lookup: bool = Field(strict=True)
+
+    @field_validator('allow_public_lookup')
+    @classmethod
+    def explicit_lookup_consent(cls, value):
+        if value is not True:
+            raise ValueError('Explicit lookup consent is required')
+        return value
+
+
+class PrivateCoverageInput(StrictInput):
+    granularity: Literal['exact', 'major', 'minor']
+    version: Nonblank = Field(max_length=100)
+
+
+class PrivateSourceReviewInput(StrictInput):
+    expected_revision: int = Field(ge=1, strict=True)
+    candidate_token: Nonblank = Field(max_length=16384)
+    coverage: PrivateCoverageInput
     accept_fallback: bool = Field(default=False, strict=True)

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api, errorMessage } from "@/data/api";
+import { DiscoverSource } from "@/components/DiscoverSource";
+import { ReferenceCatalog } from "@/components/ReferenceCatalog";
 
 type Entry = { revision_id: string; source_url: string; attribution: string; source_approved?: boolean; progress?: string | null; coverage: { granularity: string; version: string } };
 type Match = { status: string; reason: string; entry?: Entry | null };
@@ -55,6 +57,7 @@ export function DocumentationReview({ project, contextRevision, csrf }: { projec
     {open && <div className="space-y-4 pt-3">
       <p className="text-muted-foreground">Review the available sources and their version coverage. Shared sources need operator approval; accepting a broader version applies only to this project version.</p>
       <Button variant="outline" disabled={busy} onClick={() => setReload((value) => value + 1)}>Reload documentation</Button>
+      <ReferenceCatalog />
       {error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}
       {!coverage && !error && <p role="status">Loading documentation coverage…</p>}
@@ -68,6 +71,7 @@ export function DocumentationReview({ project, contextRevision, csrf }: { projec
         {item.status === "failed" && <p className="text-muted-foreground">Processing stopped. The operator must inspect the failed source; your question will not be replayed automatically.</p>}
         {item.candidates.map((candidate) => candidate.entry && <SourceChoice key={`${candidate.entry.revision_id}:${coverage.context_revision}`} dependency={item} candidate={candidate} busy={busy} onChoose={choose} />)}
         {item.selected_revision_id && <Button variant="outline" disabled={busy} onClick={() => void choose(item.dependency_id)}>Remove selection</Button>}
+        <DiscoverSource key={`${item.dependency_id}:${coverage.context_revision}`} project={project} dependency={item.dependency_id} technology={item.technology} target={item.docs_target} revision={coverage.context_revision} csrf={csrf} onSaved={() => { setNotice("Private source approved and queued for preparation."); setReload((value) => value + 1); }} />
       </section>)}
     </div>}
   </details>;

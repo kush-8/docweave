@@ -33,7 +33,11 @@ async def run_ingestion(job_id, *, engine, store, parser=container_parse, fetche
                         raise ValueError("Ingestion authority changed")
                 if selection:
                     from docweave.integrations.public_sources import fetch_document
-                    content, _ = await fetcher(selection) if fetcher else await fetch_document(selection, authorize=authorize)
+                    content, media = await fetcher(selection) if fetcher else await fetch_document(selection, authorize=authorize)
+                    async with connection.begin():
+                        if not await repository.source_media(connection,job_id,token,media):
+                            raise ValueError('Source authority changed')
+                    job['media_type']=media
                 else:
                     content = store.read(job_id)
                 await authorize()

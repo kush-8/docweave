@@ -19,14 +19,15 @@ def validated_address(url, selection, *, resolver=None, robots=False):
             raise ValueError
         if origin != selection["origin"] or parsed.query or parsed.fragment or not parsed.hostname:
             raise ValueError
-        path = unquote(parsed.path)
+        path = unquote(parsed.path or '/')
         if "%" in path or "\\" in path or any(ord(c) < 32 for c in url) or "//" in path or any(p in (".", "..") for p in path.split("/")):
             raise ValueError
-        if path != parsed.path:
+        if path != (parsed.path or '/'):
             raise ValueError
         if robots and path != "/robots.txt":
             raise ValueError
-        if not robots and not path.startswith(selection["path_prefix"]):
+        prefix = selection["path_prefix"]
+        if not robots and not (path.startswith(prefix) if prefix.endswith('/') else path == prefix):
             raise ValueError
         addresses = resolver(parsed.hostname, port, type=socket.SOCK_STREAM)
         if not addresses:
@@ -56,7 +57,7 @@ def _request(url, address):
         if ipaddress.ip_address(connection.sock.getpeername()[0]) != ipaddress.ip_address(ip):
             raise ValueError("Unexpected peer")
         connection.sock.settimeout(max(0.01, deadline - time.monotonic()))
-        connection.request("GET", urlsplit(url).path, headers={"User-Agent": AGENT, "Accept-Encoding": "identity", "Accept": "text/plain, text/markdown"})
+        connection.request("GET", urlsplit(url).path, headers={"User-Agent": AGENT, "Accept-Encoding": "identity", "Accept": "text/plain, text/markdown, text/html"})
         response = connection.getresponse()
         if response.getheader("Content-Encoding", "identity").lower() != "identity":
             raise ValueError("Compressed source is unsupported")
@@ -120,9 +121,9 @@ async def fetch_document(selection, *, authorize=None):
         if status != 200:
             raise ValueError("Source unavailable")
         media = headers.get("content-type", "").split(";", 1)[0].strip().lower()
-        if media not in ("text/plain", "text/markdown"):
-            raise ValueError("Only public TXT/Markdown pages are supported")
+        if media not in ("text/plain", "text/markdown", "text/html"):
+            raise ValueError("Only public TXT/Markdown/HTML pages are supported")
         if not selection["attribution"].strip():
             raise ValueError("Source attribution is required")
-        return body, "text/markdown" if urlsplit(url).path.endswith((".md", ".markdown")) else media
+        return body, "text/markdown" if media != 'text/html' and urlsplit(url).path.endswith((".md", ".markdown")) else media
     raise ValueError("Redirect limit exceeded")
