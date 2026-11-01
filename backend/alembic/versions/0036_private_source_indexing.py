@@ -46,7 +46,7 @@ BEGIN
  SELECT docs.* INTO d FROM app.documents docs WHERE docs.id=j.document_id AND docs.deleted_at IS NULL AND docs.active_version_id=j.document_version_id;
  SELECT project.* INTO p FROM app.projects project JOIN app.collections c ON c.project_id=project.id WHERE c.id=d.collection_id AND project.owner_user_id=j.actor_id AND project.workspace_id IS NULL FOR SHARE OF project;
  SELECT * INTO session FROM app.auth_sessions WHERE user_id=j.actor_id AND expires_at>now() ORDER BY expires_at DESC LIMIT 1;
- SELECT u.subject INTO subject FROM app.users u WHERE u.id=j.actor_id AND u.issuer='github' AND u.subject ~ '^[0-9]+$';
+ SELECT u.subject INTO subject FROM app.users u WHERE u.id=j.actor_id AND u.issuer='https://github.com' AND u.subject ~ '^[0-9]+$';
  IF p.id IS NULL OR session.token_hash IS NULL OR subject IS NULL OR NOT app.personal_embedding_matches(j.generation_id,p_profile)
  OR NOT app.personal_assessment_eligible(j.document_version_id) THEN RETURN NULL; END IF;
  PERFORM set_config('docweave.actor_id',j.actor_id::text,true),set_config('docweave.personal_project_id',p.id::text,true);
@@ -72,7 +72,16 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,app,queue AS $$
 DECLARE d record; j record; n integer:=0; queued bigint;
 BEGIN
  FOR d IN SELECT docs.id,p.owner_user_id FROM app.documents docs JOIN app.collections c ON c.id=docs.collection_id JOIN app.projects p ON p.id=c.project_id
- WHERE p.workspace_id IS NULL AND docs.deleted_at IS NULL AND docs.active_version_id IS NOT NULL AND docs.status IN ('parsed','ready')
+ WHERE p.workspace_id IS NULL AND docs.deleted_at IS NULL AND docs.active_version_id IS NOT NULL AND app.personal_assessment_eligible(docs.active_version_id)
+ AND (docs.source_id IS NULL OR EXISTS(SELECT 1 FROM app.sources source JOIN app.documentation_selections ds ON ds.id=source.source_selection_id
+  WHERE source.id=docs.source_id AND source.deleted_at IS NULL AND ds.active AND ds.project_id=p.id
+  AND EXISTS(SELECT 1 FROM jsonb_array_elements(p.stack) dep WHERE dep=ds.approved_stack)))
+ AND EXISTS(SELECT 1 FROM app.index_generations g WHERE g.id=p_generation AND g.enabled AND NOT EXISTS(
+  SELECT 1 FROM jsonb_array_elements_text(g.processor_ids) wanted(id) LEFT JOIN app.processors processor ON processor.id=wanted.id
+  WHERE processor.id IS NULL OR NOT processor.enabled
+  OR NOT EXISTS(SELECT 1 FROM app.project_processor_approvals a WHERE a.project_id=p.id AND a.processor_id=wanted.id)
+  OR NOT EXISTS(SELECT 1 FROM app.collection_processor_approvals a WHERE a.collection_id=c.id AND a.processor_id=wanted.id)))
+ AND NOT EXISTS(SELECT 1 FROM app.document_indexes i WHERE i.document_id=docs.id AND i.document_version_id=docs.active_version_id AND i.generation_id=p_generation)
  AND NOT EXISTS(SELECT 1 FROM app.private_index_jobs jobs WHERE jobs.document_id=docs.id AND jobs.document_version_id=docs.active_version_id AND jobs.generation_id=p_generation)
  ORDER BY docs.created_at,docs.id LIMIT 100 LOOP
   PERFORM app.private_index_enqueue(d.owner_user_id,d.id,p_generation);
@@ -120,6 +129,7 @@ def upgrade():
     replace(CHECKPOINT_OLD,CHECKPOINT_NEW)
 
 def downgrade():
+    op.execute("DO $$ BEGIN IF EXISTS(SELECT 1 FROM app.private_index_jobs) THEN RAISE EXCEPTION 'Preserve private indexing intents before downgrade'; END IF; END $$")
     replace(CHECKPOINT_NEW,CHECKPOINT_OLD)
     for signature in reversed(FUNCTIONS):
         op.execute(f'DROP FUNCTION {signature}')

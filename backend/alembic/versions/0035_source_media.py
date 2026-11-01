@@ -17,7 +17,7 @@ BEGIN
  SELECT jobs.* INTO j FROM app.ingestion_jobs jobs JOIN app.documents d ON d.id=jobs.document_id
  WHERE jobs.id=p_job AND jobs.status='running' AND jobs.lease_token=p_token AND d.source_id IS NOT NULL FOR UPDATE OF jobs;
  IF j.id IS NULL THEN RETURN false; END IF;
- UPDATE app.ingestion_jobs SET media_type=p_media,configuration=regexp_replace(configuration,':text/(plain|markdown|html)$',':'||p_media) WHERE id=j.id;
+ UPDATE app.ingestion_jobs SET media_type=p_media,configuration=regexp_replace(configuration,'[:]text/(plain|markdown|html)$',':'||p_media) WHERE id=j.id;
  UPDATE app.documents SET media_type=p_media WHERE id=j.document_id;
  RETURN true;
 END $$

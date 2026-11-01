@@ -4,18 +4,20 @@
 
 **Spec:** Personal-project plan, synchronization and waiting turns; docs/tasks.md worker-recovery acceptance. User requested implementation and an in-progress status.
 
-**Approach:** Extend existing personal jobs, queue maintenance and provider journal. Reuse project serialization, worker leases and current authorization callbacks. No new queue, paid evaluation or development migration. Preserve concurrent catalog/sync work.
+**Approach:** Extend existing personal jobs, queue maintenance and provider journal. Reuse project serialization, worker leases and current authorization callbacks. The user separately authorized final review, process-kill acceptance and the backed-up development migration through 0033. No new queue or paid evaluation. Preserve concurrent catalog/sync work.
 
 - [x] Add failing interruption/restart/duplicate-delivery tests. Preserve interrupted leases and run bounded periodic reconciliation using existing stalled-queue recovery APIs.
 - [x] Add failing provider-checkpoint tests. Persist successful responses privately, reuse only exact scoped requests after current authorization/consent/profile checks, and never retry a claim without a durable response.
 - [x] Exercise deletion/cancellation and changed-context waits, including paid resolution reuse and current release checks. Add only necessary additive migration(s), repository functions and caller updates.
-- [ ] Run focused tests and serial backend verification; record failures and concurrent integration limits. Keep the grouped task in progress pending complete operational acceptance.
+- [x] Run focused tests and serial backend verification, independent review, real process-kill/restart acceptance and the separately authorized development restore rehearsal/cutover. Record concurrent integration failures separately.
 
-Boundaries: no provider calls, credentials/settings edits, development migration/reset, deployment or unrelated catalog changes. Old assistant answers remain outside evidence. Durable provider responses are private recovery checkpoints, not a semantic answer cache.
+Boundaries: no provider calls, credentials/settings edits, data reset, deployment or unrelated catalog changes. Development migration stops at the separately authorized, rehearsed 0033 target; later source migrations are excluded. Old assistant answers remain outside evidence. Durable provider responses are private recovery checkpoints, not a semantic answer cache.
 
 ## Verification
 
-Focused recovery/release/admitted-answer checks: 8 passed; the broader focused recovery/sync/catalog set passed 16 before adding final release fences. Full coordinated serial backend suite: 469 passed in 141.70 seconds with warnings as errors. Guarded disposable Alembic model/schema check reports no new upgrade operations. Independent reviewer stopped at a usage limit; manual review covered lease/cancellation, duplicate delivery, profile/consent, unknown claims, checkpoint privacy, deletion lock order and context-release checks. Fresh independent review remains pending. No live process-kill/restart, provider/GitHub calls or development migration was performed. The grouped task remains in progress for remaining operational acceptance. Twenty local documentation links and whitespace checks pass.
+Independent review is clean after fixing concurrent stalled retry and healthy re-fetch races. The repository locks the delivery and rechecks current worker heartbeat/status before retry. A real child process is killed while leased, then a real queue worker restarts: actual queue heartbeat expiry, a controlled shortened application lease and the periodic sweep complete the original job once. No provider requests/charges occur. The concurrency and process acceptance checks pass (2 tests in 46.12 seconds); the full combined backend run passes recovery checks, with 539 passed and 3 failures in concurrent catalog/0034 work (pending downgrade predicate and catalog receipt URL/digest alignment). These are not a clean release-suite claim.
+
+Development is migrated through 0033 after API drain, a private full dump/artifact copy, actual isolated restore and rehearsed upgrade. Original rows/artifacts match exactly except the expected Alembic revision; canonical columns/functions/grants/sequences match the rehearsal and all three restricted logins pass. Raw ACL comparison initially differed only because pg_restore represented explicit owner-full rights as implicit default owner rights; canonical effective permissions are equal. The temporary rehearsal database is removed and private backup/evidence retained. API and Vite proxy liveness return 200; readiness remains 503 and unauthenticated identity reads return 401. No workers, paid profiles or later source migrations were enabled by this task. Worker recovery acceptance is complete; broader release acceptance remains separate.
 
 ## Decisions
 

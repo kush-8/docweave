@@ -72,7 +72,7 @@ async def recover_jobs(connection):
 async def retry_stalled(connection, identity):
     await connection.execute(text('SET LOCAL search_path=queue,pg_catalog'))
     job = await connection.scalar(text("""SELECT j.id FROM queue.procrastinate_jobs j WHERE j.id=:id
-        AND j.queue_name='personal' AND j.task_name IN ('docweave.personal','docweave.catalog') AND j.status='doing'
+        AND j.queue_name='personal' AND j.task_name IN ('docweave.personal','docweave.catalog','docweave.private_index') AND j.status='doing'
         AND (j.worker_id IS NULL OR EXISTS(SELECT 1 FROM queue.procrastinate_workers w
             WHERE w.id=j.worker_id AND w.last_heartbeat<now()-interval '30 seconds')) FOR UPDATE OF j"""), {'id':identity})
     if job is None:
@@ -99,6 +99,11 @@ async def select_catalog(connection, identity, token, choices):
 
 async def history(connection,job,token):
     return list((await connection.execute(text('SELECT app.personal_worker_history(:id,:token)'),{'id':job,'token':token})).scalars())
+
+async def summary(connection,job,token,revision,value=None):
+    return await connection.scalar(text('SELECT app.personal_worker_summary(:id,:token,:revision,CAST(:value AS jsonb))'),
+        {'id':job,'token':token,'revision':revision,'value':json.dumps(value) if value is not None else None})
+
 async def scopes(connection,job,token,generation):
     return list((await connection.execute(text('SELECT app.personal_worker_scopes(:id,:token,:generation)'),{'id':job,'token':token,'generation':generation})).scalars())
 async def citation(connection,turn,identity):

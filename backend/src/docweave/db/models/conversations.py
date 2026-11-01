@@ -11,6 +11,7 @@ class Conversation(Record,Base):
     answer_profile_id:Mapped[UUID|None]=mapped_column(ForeignKey('app.provider_profiles.id',ondelete='RESTRICT'))
     status:Mapped[str]=mapped_column(Text,server_default='initializing')
     progress:Mapped[str|None]=mapped_column(Text)
+    summary:Mapped[dict|None]=mapped_column(JSONB)
     deleted_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True))
 
 class Turn(Record,Base):

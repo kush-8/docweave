@@ -42,7 +42,7 @@ async def test_private_source_discovery_review_is_bound_and_never_publishes_cata
         selection=(await connection.execute(text('SELECT project_id,approved_stack,coverage FROM app.documentation_selections WHERE id=:id'),{'id':UUID(accepted.json()['selection_id'])})).one()
         assert str(selection.project_id)==c['project'] and selection.approved_stack['id']=='dep'
     coverage=(await c['admin'].get(path.rsplit('/dep',1)[0])).json()
-    assert coverage['items'][0]['status']=='waiting_for_sources'
+    assert coverage['items'][0]['status']=='capacity'
     assert coverage['items'][0]['entry']['private_selection'] is True
     from docweave.core.settings import database_url
     from docweave.db.engine import make_engine

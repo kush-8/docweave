@@ -2,6 +2,8 @@
 
 from docweave.rag.contracts import HostedError, RetrievalError, validate_vector
 
+API_KEY = 'GEMINI_API_KEY'
+
 
 def embedding_request(content, kind):
     if kind not in ("query", "document") or not isinstance(content, str) or not content.strip() or "\x00" in content:

@@ -52,6 +52,10 @@ Browser mutations require exact Origin and session-bound CSRF. Cookie credential
 | GET | `/health/live` | getLiveness |
 | GET | `/health/ready` | getReadiness |
 
+| GET | `/catalog/references` | catalog_references_api_v1_catalog_references_get |
+| POST | `/projects/{project_id}/documentation/{dependency_id}/discover` | discover_documentation_api_v1_projects__project_id__documentation__dependency_id__discover_post |
+| POST | `/projects/{project_id}/documentation/{dependency_id}/review-source` | review_private_source_api_v1_projects__project_id__documentation__dependency_id__review_source_post |
+
 ## Runtime semantics
 
 Project creation requires a repository and short goal; branch/root default from repository metadata. Existing bindings cannot be changed; preserved unbound projects link once. New conversations initialize through a durable commit check. Turns use request idempotency and one-active-turn constraints; identified source waits retain the original durable intent. Evidence and retained history are reauthorized on read. Processing-policy mutation records explicit project consent and applies it to its private collections; it does not authorize shared catalog publication.

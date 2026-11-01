@@ -10,7 +10,7 @@ from docweave.db.base import Base, Record
 class ProviderProfile(Record, Base):
     __tablename__ = "provider_profiles"
     __table_args__ = (
-        CheckConstraint("provider IN ('gemini','groq','huggingface')", name="valid_provider"),
+        CheckConstraint("provider IN ('gemini','groq','huggingface','openai')", name="valid_provider"),
         CheckConstraint("model ~ '[^[:space:]]' AND backend ~ '[^[:space:]]'", name="nonblank_identity"),
         CheckConstraint("role IN ('embedding','reranking','query_resolution','summarization','generation')", name="valid_role"),
         CheckConstraint("jsonb_typeof(processor_ids)='array'", name="processor_array"),

@@ -9,8 +9,9 @@ import hashlib
 import json
 import re
 import unicodedata
+from langchain_core.runnables import RunnableLambda
+from langsmith import tracing_context
 
-RULE_REVISION = 'deterministic-v1'
 MAX_SCAN_CHARS = 2_000_000
 _PLACEHOLDER = re.compile(r'^(?:YOUR[_-]?[A-Z_]+|EXAMPLE[_-]?[A-Z_]*|REPLACE[_-]?ME|<[^>]+>|\$\{[^}]+\}|password|changeme|x{3,}|\*+)$', re.I)
 _CREDENTIAL_RULES = (
@@ -45,20 +46,41 @@ def _config_hash(config: dict) -> str:
     return hashlib.sha256(json.dumps(config, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 
-def assess_text(text: str, *, document_version: str = '', parser_config: dict | None = None) -> Assessment:
-    """Return rule IDs only; never retain a matching credential in findings."""
-    content_hash = hashlib.sha256(text.encode()).hexdigest()
-    config_hash = _config_hash(parser_config or {})
-    complete = len(text) <= MAX_SCAN_CHARS
+def _normalize(text):
     normalized = unicodedata.normalize('NFKC', text[:MAX_SCAN_CHARS])
     normalized = ''.join(character for character in normalized if unicodedata.category(character) != 'Cf')
+    return normalized, len(text) <= MAX_SCAN_CHARS
+
+
+def _detect(value):
+    normalized, complete = value
     credentials = tuple(rule for rule, pattern in _CREDENTIAL_RULES if any(
         'value' not in match.groupdict() or not _PLACEHOLDER.fullmatch(match['value'])
         for match in pattern.finditer(normalized)
     ))
     injections = tuple(rule for rule, pattern in _INJECTION_RULES if pattern.search(normalized))
     findings = credentials + injections + (() if complete else ('scan-bound-exceeded',))
-    return Assessment(document_version, content_hash, config_hash, RULE_REVISION, findings, bool(credentials), bool(injections), complete)
+    return findings, bool(credentials), bool(injections), complete
+
+
+# Bind rules, bounds, placeholders and scan implementation so edits cannot reuse approval.
+import inspect
+RULE_REVISION = 'deterministic-' + _config_hash({
+    'rules': [(name, pattern.pattern, pattern.flags) for name, pattern in (*_CREDENTIAL_RULES, *_INJECTION_RULES)],
+    'placeholder': (_PLACEHOLDER.pattern, _PLACEHOLDER.flags), 'bound': MAX_SCAN_CHARS,
+    'normalization': inspect.getsource(_normalize).replace('\r\n', '\n'),
+    'detection': inspect.getsource(_detect).replace('\r\n', '\n'),
+    'unicode': unicodedata.unidata_version,
+})
+GUARDRAIL_CHAIN = RunnableLambda(_normalize) | RunnableLambda(_detect)
+
+
+def assess_text(text: str, *, document_version: str = '', parser_config: dict | None = None) -> Assessment:
+    """Run local LangChain checks without exporting sensitive text to tracing."""
+    with tracing_context(enabled=False):
+        findings, credentials, injections, complete = GUARDRAIL_CHAIN.invoke(text, config={'callbacks': []})
+    return Assessment(document_version, hashlib.sha256(text.encode()).hexdigest(), _config_hash(parser_config or {}),
+        RULE_REVISION, findings, credentials, injections, complete)
 
 
 def assessment_is_current(assessment: Assessment, text: str, *, document_version: str, parser_config: dict) -> bool:

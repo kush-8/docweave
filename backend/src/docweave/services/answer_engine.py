@@ -1,10 +1,13 @@
 """Admitted hybrid RAG using the existing search, fusion and reranking stages."""
 import json
+from hashlib import sha256
 from uuid import UUID,uuid5
 from docweave.core.identity import Actor
 from docweave.db.sessions import tenant_session
 from docweave.integrations.answers import answer_request,answer_result,resolution_request,resolution_result
-from docweave.integrations.gemini import embedding_request,embedding_result
+from docweave.integrations.answers import SUMMARY_PROMPT_VERSION,summary_request,summary_result
+from docweave.core.guardrails import assess_text
+from docweave.integrations.embeddings import embedding_backend
 from docweave.integrations.groq import ranking_result
 from docweave.rag.contracts import HostedError
 from docweave.rag.fusion import fuse_channels
@@ -27,9 +30,15 @@ class AnswerEngine:
         self.project_id=UUID(job['project']['id'])
         self.hits=[]
         self.history=None
+        self.history_hash=None
 
     async def authorize(self):
         await self.authorize_upstream()
+        if self.history_hash is not None:
+            async with self.engine.begin() as c:
+                items=await repository.history(c,UUID(self.job['id']),UUID(self.job['lease_token']))
+            if self.history_hash!=self.history_digest(items):
+                raise HostedError('context_blocked')
         if self.hits:
             async with tenant_session(self.read_engine,actor_id=self.actor.user_id) as session:
                 collections=list({hit['collection_id'] for hit in self.hits})
@@ -47,7 +56,7 @@ class AnswerEngine:
 
     async def dispatch(self,payload,profile,stage,embedding=False):
         return await dispatch(payload,embedding=embedding,profile_id=UUID(profile['id']),operation_key=str(self.job['id'])+':'+stage,actor_id=self.actor.user_id,project_id=self.project_id,
-            engine=self.engine,api_key=self.config.get('GEMINI_API_KEY' if embedding else 'GROQ_API_KEY'),authorize=self.authorize)
+            engine=self.engine,api_key=self.config.get(embedding_backend(self.config).API_KEY if embedding else 'GROQ_API_KEY'),authorize=self.authorize)
 
     async def context_history(self):
         if self.history is None:
@@ -55,18 +64,47 @@ class AnswerEngine:
                 items=await repository.history(c,UUID(self.job['id']),UUID(self.job['lease_token']))
             if any(item['status']=='blocked_policy' for item in items):
                 raise HostedError('context_blocked')
-            self.history=[]
+            self.history_hash=self.history_digest(items)
+            completed=[item for item in items if item['status']=='completed']
+            recent=[]
             used=0
-            for item in reversed(items):
-                if item['status']!='completed':
-                    continue
+            for item in reversed(completed):
                 pair={'message':item['message'],'answer':item['answer'],'context_revision':item['context_revision']}
                 size=count_evidence_tokens(json.dumps(pair,ensure_ascii=False))
                 if used+size>6000:
                     break
-                self.history.insert(0,pair)
+                recent.insert(0,pair)
                 used+=size
+            older=completed[:len(completed)-len(recent)]
+            if older:
+                revision=self.job['project']['context_revision']
+                async with self.engine.begin() as c:
+                    saved=await repository.summary(c,UUID(self.job['id']),UUID(self.job['lease_token']),revision)
+                expected={'context_revision':revision,'through_sequence':older[-1]['sequence'],
+                          'history_hash':self.history_digest(older),'prompt_version':SUMMARY_PROMPT_VERSION}
+                valid=isinstance(saved,dict) and all(saved.get(key)==value for key,value in expected.items())
+                assessment=assess_text(saved.get('text','')) if valid else None
+                valid=valid and bool(saved.get('text')) and assessment.complete and not assessment.credential_blocked and not assessment.injection_flagged
+                if not valid:
+                    profile=await self.profile(self.config.get('SUMMARY_PROFILE_ID'),'summarization')
+                    summary=''
+                    # Bound every request, including a single unusually large historical turn.
+                    serialized=json.dumps(older,ensure_ascii=False)
+                    for offset in range(0,len(serialized),24000):
+                        payload=summary_request(self.job['project'],summary,serialized[offset:offset+24000],profile['model'])
+                        summary=summary_result(await self.dispatch(payload,profile,'summarization'),profile['model'])
+                    saved={**expected,'text':summary}
+                    await self.authorize()
+                    async with self.engine.begin() as c:
+                        if not await repository.summary(c,UUID(self.job['id']),UUID(self.job['lease_token']),revision,saved):
+                            raise HostedError('context_blocked')
+                recent.insert(0,{'summary':saved['text'],'context_revision':revision,'through_sequence':expected['through_sequence']})
+            self.history=recent
         return self.history
+
+    @staticmethod
+    def history_digest(items):
+        return sha256(json.dumps(items,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
     async def resolve(self,turn,project):
         if not project['stack']:
@@ -89,8 +127,9 @@ class AnswerEngine:
         async with self.engine.begin() as c:
             if not await repository.embedding_matches(c,self.generation_id,UUID(profile['id'])):
                 raise HostedError('provider_unavailable')
-        query=embedding_request(turn['message'],'query')
-        vector=embedding_result(await self.dispatch(query,profile,'query_embedding',embedding=True))
+        backend=embedding_backend(self.config)
+        query=backend.embedding_request(turn['message'],'query')
+        vector=backend.embedding_result(await self.dispatch(query,profile,'query_embedding',embedding=True))
         channels=await retrieve_channels(self.actor,self.project_id,turn['message'],collection_ids=collections,generation_id=self.generation_id,query_vector=vector,engine=self.read_engine,
             lexical=self.config.get('RAG_LEXICAL_STRATEGY','bm25'),vector=self.config.get('RAG_VECTOR_STRATEGY','exact'))
         candidates=fuse_channels(channels)

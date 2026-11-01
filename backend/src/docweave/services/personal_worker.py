@@ -32,6 +32,8 @@ async def prepare_answer(turn,project,dependency_states,*,answerer=None,resolver
     if status=='waiting_for_sources':
         return {'status':status,'required_dependencies':decision['dependency_ids'],'progress':'Building the documentation index needed for this question. It will continue automatically.'}
     if status=='failed':
+        if any((dependency_states[identity].get('entry') or {}).get('status')=='completion_unknown' for identity in decision['dependency_ids']):
+            return {'status':'failed','progress':'Required documentation has an uncertain provider result. Operator reconciliation is required; it will not be replayed automatically.'}
         return {'status':'failed','progress':'Required documentation processing failed. Retry its ingestion before retrying the question.'}
     if status not in ('ready',):
         explanation = {

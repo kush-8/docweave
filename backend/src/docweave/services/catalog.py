@@ -61,6 +61,8 @@ def match_documentation(
             status, reason = 'pending_review', 'version fallback approval required'
         elif entry.get('status') == 'blocked_policy':
             status, reason = 'pending_review', 'source or processing approval required'
+        elif entry.get('status') == 'completion_unknown':
+            status, reason = 'failed', 'provider result uncertain; operator reconciliation required'
         elif entry.get('status') in ('failed', 'consent_required', 'capacity', 'pending_review'):
             status, reason = entry['status'], 'documentation requires action'
         elif (

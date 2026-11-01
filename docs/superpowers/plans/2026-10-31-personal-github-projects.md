@@ -1,6 +1,6 @@
 # Personal GitHub project plan
 
-Current implementation exists; fresh-start database migration is complete at `0028_sync_retries` with a verified private backup of old data. Separate accounting reconciliation, retained-schema cleanup and remaining acceptance are tracked in [tasks](../../tasks.md). The user's later explicit reset instruction supersedes preservation-based development cutover; the preservation requirements below still apply to deliberate restoration of older data. Full release is incomplete.
+Current implementation exists; authorized development migration is verified through `0033_recovery_release` with private restore-tested backups. Separate accounting reconciliation, retained-schema cleanup and remaining acceptance are tracked in [tasks](../../tasks.md). The user's later explicit reset instruction supersedes preservation-based development cutover; the preservation requirements below still apply to deliberate restoration of older data. Full release is incomplete.
 
 ## Goal and authority
 

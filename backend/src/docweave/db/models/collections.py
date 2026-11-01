@@ -44,7 +44,7 @@ class Processor(Base):
     __tablename__ = "processors"
     __table_args__ = (
         CheckConstraint("id ~ '[^[:space:]]' AND backend ~ '[^[:space:]]'", name="nonblank_identity"),
-        CheckConstraint("provider IN ('gemini','groq','huggingface')", name="valid_provider"),
+        CheckConstraint("provider IN ('gemini','groq','huggingface','openai')", name="valid_provider"),
         CheckConstraint("jsonb_typeof(roles)='array' AND jsonb_array_length(roles)>0 AND roles <@ '[\"embedding\",\"reranking\",\"query_resolution\",\"summarization\",\"generation\"]'::jsonb", name="valid_roles"),
     )
     id: Mapped[str] = mapped_column(Text, primary_key=True)

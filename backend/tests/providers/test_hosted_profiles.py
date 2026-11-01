@@ -62,3 +62,20 @@ async def test_reconciliation_preserves_original_profile_and_charge_identity(dat
     assert replay.id == original.id and not replay.created
     confirmed = await settle(runtime, original, Decimal("0.2"))
     assert confirmed.profile_id == identity and confirmed.charged_usd == Decimal("0.2")
+
+
+async def test_openai_is_embedding_only_and_can_supply_generation_dependency(databases):
+    owner,_=databases
+    async with owner.begin() as connection:
+        await connection.execute(text("""INSERT INTO app.processors(id,provider,backend,roles,enabled)
+            VALUES('test:openai:embedding','openai','fake-openai','["embedding"]',true)
+            ON CONFLICT(id) DO UPDATE SET enabled=true"""))
+    embedding=await profile(owner,role='embedding',provider='openai',backend='fake-openai',processors=['test:openai:embedding'])
+    llm=await profile(owner,role='generation',provider='openai',backend='fake-openai',processors=['test:openai:embedding'])
+    generation=await profile(owner,processors=['test:openai:embedding','test:budget:groq'])
+    async with owner.connect() as connection:
+        assert await connection.scalar(text('SELECT app.profile_disabled_reason(:id)'),{'id':embedding}) is None
+        assert await connection.scalar(text('SELECT app.profile_disabled_reason(:id)'),{'id':llm})=='provider_unavailable'
+        assert await connection.scalar(text('SELECT app.profile_disabled_reason(:id)'),{'id':generation}) is None
+    async with owner.begin() as connection:
+        await connection.execute(text('TRUNCATE app.project_processor_approvals,app.collection_processor_approvals,app.processors'))

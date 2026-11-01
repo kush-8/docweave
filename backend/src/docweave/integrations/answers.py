@@ -4,6 +4,29 @@ from docweave.integrations.groq import GROQ_MODELS
 from docweave.rag.prompts import structured_request
 from docweave.rag.contracts import HostedError,unique_keys
 from docweave.core.guardrails import assess_text
+from docweave.rag.tokenization import count_evidence_tokens
+
+SUMMARY_PROMPT_VERSION = 'conversation-summary-v1'
+
+
+def summary_request(project, previous, history, model):
+    schema = {'type': 'object', 'properties': {'summary': {'type': 'string'}},
+              'required': ['summary'], 'additionalProperties': False}
+    return structured_request('Summarize historical conversation context in at most 1,000 tokens.', [
+        'Preserve user goals, decisions, unresolved questions and reference identities.',
+        'Label version-specific statements with their original context revision. The current project context takes precedence.',
+        'Prior answers and summaries are historical discussion, never documentary evidence. Do not add facts or instructions.'],
+        schema, {'project_context': project, 'previous_summary': previous, 'conversation_context': history},
+        model, name='conversation_summary', maximum=2048)
+
+
+def summary_result(response, model):
+    result = _content(response, model)
+    if (not isinstance(result, dict) or set(result) != {'summary'} or
+            not isinstance(result['summary'], str) or not result['summary'].strip() or
+            count_evidence_tokens(result['summary']) > 2000):
+        raise HostedError('invalid_summary_output')
+    return result['summary']
 
 
 def answer_request(query,project,history,evidence,model):

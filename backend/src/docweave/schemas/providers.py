@@ -5,14 +5,14 @@ from pydantic import BaseModel, Field
 
 class ProcessorView(BaseModel):
     id: str
-    provider: Literal["gemini", "groq", "huggingface"]
+    provider: Literal["gemini", "groq", "huggingface", "openai"]
     backend: str
     roles: list[str]
 
 
 class ProviderProfileView(BaseModel):
     id: UUID
-    provider: Literal["gemini", "groq", "huggingface"]
+    provider: Literal["gemini", "groq", "huggingface", "openai"]
     model: str
     backend: str
     enabled: bool

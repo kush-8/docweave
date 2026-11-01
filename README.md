@@ -6,7 +6,7 @@ Sign in with GitHub, connect a repository/branch/application folder, provide a s
 
 Current checkpoint: the personal API, workers, shared catalog/index scope, guardrail boundaries and frontend are implemented and exercised with disposable PostgreSQL and mocked provider HTTP. The full refactor is **not yet release-complete**. Real account verification, post-reset accounting/schema review and the remaining product/reliability work are listed in the [checkpoint report](docs/reports/2026-11-01-personal-projects-checkpoint.md).
 
-Retrieval remains hybrid: keyword search (native full text/BM25) plus vector search (exact/HNSW), RRF fusion and Groq reranking. The personal worker currently defaults to BM25 plus exact vector search; these are provisional operational choices, not a claim of a benchmark winner. Gemini embeddings, Groq LLM roles, processor consent, source/version eligibility, credential blocking and citation validation remain. Semantic answer caching is not enabled.
+Retrieval remains hybrid: keyword search (native full text/BM25) plus vector search (exact/HNSW), RRF fusion and Groq reranking. The personal worker currently defaults to BM25 plus exact vector search; these are provisional operational choices, not a claim of a benchmark winner. OpenAI embeddings through LangChain, Groq LLM roles, processor consent, source/version eligibility, credential blocking and citation validation remain. Existing Gemini generations remain explicitly selectable. Semantic answer caching is not enabled.
 
 ## Repository
 
@@ -27,7 +27,7 @@ docweave/
   backups/             # Ignored private backups
 ```
 
-The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Fresh-start development migration is complete at `0028_sync_retries`; old data is retained in a privately verified backup. Retained models/migration functions still need reference checks before removal; they do not constitute a collaboration product. Archived incurred/unknown charges need reconciliation before paid processing.
+The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Authorized development migration is verified through `0038_openai_embeddings`; private restore-tested backups retain old data and the current pre-upgrade state. Retained models/migration functions still need reference checks before removal; they do not constitute a collaboration product. Archived incurred/unknown charges need reconciliation before paid processing.
 
 ## Run and verify
 
@@ -42,7 +42,7 @@ Run `npm ci`, then `npm run dev` from `frontend/` (Node.js 22.12+). Vite proxies
 
 The ingestion worker is `python -m docweave.worker`; the personal conversation/shared-catalog worker is `python -m docweave.workers.personal`, using the backend source environment. Normal hosted processing requires explicitly configured immutable generation/profile IDs, verified account/capability/pricing and current processing approvals. API keys alone do not enable processing. Do not run paid work merely to test configuration.
 
-The [catalog runbook](docs/runbooks/catalog.md) covers project documentation choices, explicit broader-version acceptance and operator-only public source review. The shipped publisher-page manifest is for review; it is not automatically published or indexed. Full catalog/discovery acceptance remains in progress.
+The [catalog runbook](docs/runbooks/catalog.md) covers project documentation choices, explicit broader-version acceptance and operator-only public source review. The shipped publisher-page manifest is for review; it is not automatically published or indexed. Publisher discovery/private review and the bounded 29-entry reference catalog are verified; rolling references do not imply exact version compatibility.
 
 Start only the disposable database for tests:
 

@@ -6,10 +6,11 @@ import time
 from uuid import UUID
 from cryptography.fernet import Fernet
 from docweave.core.identity import Actor
-from docweave.integrations.gemini import embedding_request, embedding_result
+from docweave.core.errors import DomainError
+from docweave.integrations.embeddings import embedding_backend
 from docweave.rag.contracts import HostedError, RetrievalError
 from docweave.rag.indexing import index_document
-from docweave.repositories import private_indexing as repository
+from docweave.repositories import private_indexing as repository, catalog
 from docweave.services.personal_providers import dispatch
 
 async def enqueue_document_index(actor,document_id,generation_id,engine):
@@ -31,9 +32,11 @@ async def run_private_index_job(job_id,*,engine,store,settings,client,config,emb
         return
     token=UUID(job['lease_token'])
     status='capacity'
+    interrupted=False
     try:
         profile=UUID(config['EMBEDDING_PROFILE_ID'])
-        if not config.get('GEMINI_API_KEY') or str(config.get('RAG_GENERATION_ID'))!=job['generation_id']:
+        backend=embedding_backend(config)
+        if not config.get(backend.API_KEY) or str(config.get('RAG_GENERATION_ID'))!=job['generation_id']:
             return
         ordinal=0
         key=None
@@ -61,27 +64,29 @@ async def run_private_index_job(job_id,*,engine,store,settings,client,config,emb
                 operation='private-index:'+str(job_id)+':'+str(ordinal)
                 ordinal+=1
                 key=hashlib.sha256(operation.encode()).hexdigest()
-                result=await dispatch(embedding_request(body,'document'),embedding=True,profile_id=profile,
+                result=await dispatch(backend.embedding_request(body,'document'),embedding=True,profile_id=profile,
                     operation_key=operation,actor_id=UUID(job['actor_id']),project_id=UUID(job['project_id']),
-                    engine=engine,api_key=config['GEMINI_API_KEY'],authorize=authorize)
-                vectors.append(embedding_result(result))
+                    engine=engine,api_key=config[backend.API_KEY],authorize=authorize)
+                vectors.append(backend.embedding_result(result))
             return vectors
         await authorize()
         await index_document(Actor(UUID(job['actor_id'])),UUID(job['document_id']),UUID(job['generation_id']),
             worker_engine=engine,store=store,embedder=embedder or hosted_embed,authorize=authorize)
         status='completed'
     except asyncio.CancelledError:
+        interrupted=True
         # Keep the durable lease; reconciliation resumes the original paid operation keys.
         raise
     except HostedError as error:
         status='completion_unknown' if str(error)=='completion_unknown' else 'capacity'
     except RetrievalError:
         status='capacity'
-    except (ValueError,KeyError):
+    except (DomainError,ValueError,KeyError):
         status='capacity'
     except Exception:
         status='failed'
     finally:
-        if not asyncio.current_task().cancelling():
+        if not interrupted:
             async with engine.begin() as c:
-                await repository.finish(c,job_id,token,status)
+                if await repository.finish(c,job_id,token,status):
+                    await catalog.wake_waits(c)
