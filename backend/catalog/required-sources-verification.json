@@ -2,13 +2,13 @@
   "schema_version": 1,
   "manifest_sha256": "21e980bfbe03ceaa8bf559732a5fd5416cf801db658abdae9d97ef0a98d1aa69",
   "manifest_hash_encoding": "UTF-8 with CRLF normalized to LF; publisher body hashes have no normalization",
-  "checked_at": "2026-11-01T15:42:18.4273394Z",
+  "checked_at": "2026-11-02T20:46:01.5726392Z",
   "method": "DocWeave/0.1 HTTPS GET; redirects refused; 10 second whole-response deadline; >=1 second between requests per host (honoring supported robots crawl delays); 2 MiB/page and 256 KiB/robots cap; SHA256 of raw response bodies",
   "robots": [
     {
       "origin": "https://developer.hashicorp.com",
       "url": "https://developer.hashicorp.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:53.0086235Z",
+      "checked_at": "2026-11-02T20:44:18.7246599Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 198,
@@ -19,7 +19,7 @@
     {
       "origin": "https://docs.aws.amazon.com",
       "url": "https://docs.aws.amazon.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:53.5723813Z",
+      "checked_at": "2026-11-02T20:44:19.1114862Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 3588,
@@ -30,7 +30,7 @@
     {
       "origin": "https://docs.docker.com",
       "url": "https://docs.docker.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:53.9522704Z",
+      "checked_at": "2026-11-02T20:44:19.2288545Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 116,
@@ -41,7 +41,7 @@
     {
       "origin": "https://docs.github.com",
       "url": "https://docs.github.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:54.0874235Z",
+      "checked_at": "2026-11-02T20:44:20.0646319Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 13,
@@ -52,7 +52,7 @@
     {
       "origin": "https://docs.langchain.com",
       "url": "https://docs.langchain.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:54.3061868Z",
+      "checked_at": "2026-11-02T20:44:20.2518439Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 174,
@@ -63,7 +63,7 @@
     {
       "origin": "https://docs.pytest.org",
       "url": "https://docs.pytest.org/robots.txt",
-      "checked_at": "2026-11-01T15:40:54.3956795Z",
+      "checked_at": "2026-11-02T20:44:20.6788105Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 665,
@@ -74,7 +74,7 @@
     {
       "origin": "https://docs.python.org",
       "url": "https://docs.python.org/robots.txt",
-      "checked_at": "2026-11-01T15:40:54.4769906Z",
+      "checked_at": "2026-11-02T20:44:20.8340592Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 517,
@@ -85,7 +85,7 @@
     {
       "origin": "https://docs.vllm.ai",
       "url": "https://docs.vllm.ai/robots.txt",
-      "checked_at": "2026-11-01T15:40:54.8857026Z",
+      "checked_at": "2026-11-02T20:44:21.2391182Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 662,
@@ -96,7 +96,7 @@
     {
       "origin": "https://fastapi.tiangolo.com",
       "url": "https://fastapi.tiangolo.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:54.9644782Z",
+      "checked_at": "2026-11-02T20:44:21.3547905Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 1248,
@@ -107,7 +107,7 @@
     {
       "origin": "https://github.com",
       "url": "https://github.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:55.0609512Z",
+      "checked_at": "2026-11-02T20:44:21.4549802Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 14540,
@@ -118,7 +118,7 @@
     {
       "origin": "https://grafana.com",
       "url": "https://grafana.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:55.3319409Z",
+      "checked_at": "2026-11-02T20:44:21.6446295Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 84,
@@ -129,7 +129,7 @@
     {
       "origin": "https://huggingface.co",
       "url": "https://huggingface.co/robots.txt",
-      "checked_at": "2026-11-01T15:40:55.6607861Z",
+      "checked_at": "2026-11-02T20:44:22.0063925Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 68,
@@ -140,7 +140,7 @@
     {
       "origin": "https://langfuse.com",
       "url": "https://langfuse.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:56.0010671Z",
+      "checked_at": "2026-11-02T20:44:22.3436550Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 116,
@@ -151,17 +151,17 @@
     {
       "origin": "https://nextjs.org",
       "url": "https://nextjs.org/robots.txt",
-      "checked_at": "2026-11-01T15:40:56.1246015Z",
+      "checked_at": "2026-11-02T20:44:22.5267660Z",
       "status": 404,
       "mime": "text/html",
-      "bytes": 109734,
-      "sha256": "05452f393393d702259ee20ac3a1f8fc352f4d802e8ee5c3ee0b3db7d68c881f",
+      "bytes": 110908,
+      "sha256": "fd726d2ee8aff2f456427e471f1eed8c76239137cb9406a7c70f1e2a0d84e730",
       "location": ""
     },
     {
       "origin": "https://opentelemetry.io",
       "url": "https://opentelemetry.io/robots.txt",
-      "checked_at": "2026-11-01T15:40:56.2939111Z",
+      "checked_at": "2026-11-02T20:44:22.7055794Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 14,
@@ -172,7 +172,7 @@
     {
       "origin": "https://prometheus.io",
       "url": "https://prometheus.io/robots.txt",
-      "checked_at": "2026-11-01T15:40:56.4267920Z",
+      "checked_at": "2026-11-02T20:44:23.0627665Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 1248,
@@ -183,7 +183,7 @@
     {
       "origin": "https://pydantic.dev",
       "url": "https://pydantic.dev/robots.txt",
-      "checked_at": "2026-11-01T15:40:57.0529954Z",
+      "checked_at": "2026-11-02T20:44:23.9201373Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 800,
@@ -194,7 +194,7 @@
     {
       "origin": "https://qdrant.tech",
       "url": "https://qdrant.tech/robots.txt",
-      "checked_at": "2026-11-01T15:40:57.1938552Z",
+      "checked_at": "2026-11-02T20:44:24.0242654Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 79,
@@ -205,7 +205,7 @@
     {
       "origin": "https://raw.githubusercontent.com",
       "url": "https://raw.githubusercontent.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:57.4745626Z",
+      "checked_at": "2026-11-02T20:44:24.5391559Z",
       "status": 404,
       "mime": "text/plain",
       "bytes": 14,
@@ -215,7 +215,7 @@
     {
       "origin": "https://react.dev",
       "url": "https://react.dev/robots.txt",
-      "checked_at": "2026-11-01T15:40:57.8864717Z",
+      "checked_at": "2026-11-02T20:44:24.9427985Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 24,
@@ -226,7 +226,7 @@
     {
       "origin": "https://redis.io",
       "url": "https://redis.io/robots.txt",
-      "checked_at": "2026-11-01T15:40:58.0306482Z",
+      "checked_at": "2026-11-02T20:44:25.0864706Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 578,
@@ -237,7 +237,7 @@
     {
       "origin": "https://tailwindcss.com",
       "url": "https://tailwindcss.com/robots.txt",
-      "checked_at": "2026-11-01T15:40:58.4138651Z",
+      "checked_at": "2026-11-02T20:44:25.4574507Z",
       "status": 404,
       "mime": "text/html",
       "bytes": 133683,
@@ -247,7 +247,7 @@
     {
       "origin": "https://www.postgresql.org",
       "url": "https://www.postgresql.org/robots.txt",
-      "checked_at": "2026-11-01T15:40:59.3675041Z",
+      "checked_at": "2026-11-02T20:44:26.2023094Z",
       "status": 200,
       "mime": "text/plain",
       "bytes": 273,
@@ -258,7 +258,7 @@
     {
       "origin": "https://www.typescriptlang.org",
       "url": "https://www.typescriptlang.org/robots.txt",
-      "checked_at": "2026-11-01T15:41:00.0947493Z",
+      "checked_at": "2026-11-02T20:44:27.0588940Z",
       "status": 404,
       "mime": "text/html",
       "bytes": 9379,
@@ -272,7 +272,7 @@
     {
       "entry_id": "docker",
       "url": "https://docs.docker.com/build/concepts/dockerfile/",
-      "checked_at": "2026-11-01T15:41:45.9386096Z",
+      "checked_at": "2026-11-02T20:45:23.7991525Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -286,7 +286,7 @@
       "title": "Dockerfile overview | Docker Docs",
       "first_heading": "Dockerfile overview",
       "etag": "\"722a706362275ec96c3233de6391a24b\"",
-      "last_modified": "10/30/2026 14:47:53 +00:00",
+      "last_modified": "11/02/2026 16:54:47 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -296,7 +296,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -304,7 +304,7 @@
     {
       "entry_id": "docker",
       "url": "https://docs.docker.com/compose/gettingstarted/",
-      "checked_at": "2026-11-01T15:41:47.1451734Z",
+      "checked_at": "2026-11-02T20:45:26.4974207Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -318,7 +318,7 @@
       "title": "Docker Compose Quickstart | Docker Docs",
       "first_heading": "Docker Compose Quickstart",
       "etag": "\"a55a4b71e1a7284903a5ed45c84a2143\"",
-      "last_modified": "10/30/2026 14:47:55 +00:00",
+      "last_modified": "11/02/2026 16:54:48 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -328,7 +328,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -336,7 +336,7 @@
     {
       "entry_id": "docker",
       "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/",
-      "checked_at": "2026-11-01T15:41:45.6533287Z",
+      "checked_at": "2026-11-02T20:45:23.4101990Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -350,7 +350,7 @@
       "title": "What is a container? | Docker Docs",
       "first_heading": "What is a container?",
       "etag": "\"6927caf574fe1e78fd8478a7f20617cc\"",
-      "last_modified": "10/30/2026 14:48:10 +00:00",
+      "last_modified": "11/02/2026 16:54:54 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -360,7 +360,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -368,7 +368,7 @@
     {
       "entry_id": "ecs",
       "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_service-options.html",
-      "checked_at": "2026-11-01T15:41:59.6581840Z",
+      "checked_at": "2026-11-02T20:45:41.5555029Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -382,7 +382,7 @@
       "title": "Amazon ECS service deployment controllers and strategies - Amazon Elastic Container Service",
       "first_heading": "Amazon ECS service deployment controllers and strategies",
       "etag": "\"9l2krg4dOusdCa4OUrYEtQpkoAg=\"",
-      "last_modified": "10/31/2026 03:34:15 +00:00",
+      "last_modified": "11/02/2026 19:24:22 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -392,7 +392,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -400,7 +400,7 @@
     {
       "entry_id": "ecs",
       "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html",
-      "checked_at": "2026-11-01T15:41:58.6463724Z",
+      "checked_at": "2026-11-02T20:45:40.6070426Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -414,7 +414,7 @@
       "title": "Amazon ECS services - Amazon Elastic Container Service",
       "first_heading": "Amazon ECS services",
       "etag": "\"Q66sTQB+GOQyOCMpJPouPwEnDBs=\"",
-      "last_modified": "10/31/2026 03:35:05 +00:00",
+      "last_modified": "11/02/2026 19:24:22 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -424,7 +424,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -432,7 +432,7 @@
     {
       "entry_id": "ecs",
       "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html",
-      "checked_at": "2026-11-01T15:41:57.6528300Z",
+      "checked_at": "2026-11-02T20:45:39.6131842Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -446,7 +446,7 @@
       "title": "Amazon ECS task definitions - Amazon Elastic Container Service",
       "first_heading": "Amazon ECS task definitions",
       "etag": "\"LPCgPDzbQG2Tfl+ZdLjEOhQ14U8=\"",
-      "last_modified": "10/31/2026 03:34:33 +00:00",
+      "last_modified": "11/02/2026 19:24:18 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -456,7 +456,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -464,7 +464,7 @@
     {
       "entry_id": "fastapi",
       "url": "https://fastapi.tiangolo.com/deployment/concepts/",
-      "checked_at": "2026-11-01T15:41:16.0356215Z",
+      "checked_at": "2026-11-02T20:44:44.4632037Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -488,7 +488,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -496,7 +496,7 @@
     {
       "entry_id": "fastapi",
       "url": "https://fastapi.tiangolo.com/tutorial/dependencies/",
-      "checked_at": "2026-11-01T15:41:14.9989588Z",
+      "checked_at": "2026-11-02T20:44:43.4195319Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -520,7 +520,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -528,7 +528,7 @@
     {
       "entry_id": "fastapi",
       "url": "https://fastapi.tiangolo.com/tutorial/first-steps/",
-      "checked_at": "2026-11-01T15:41:13.7382893Z",
+      "checked_at": "2026-11-02T20:44:42.1685256Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -552,7 +552,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -560,7 +560,7 @@
     {
       "entry_id": "fastapi",
       "url": "https://fastapi.tiangolo.com/tutorial/security/",
-      "checked_at": "2026-11-01T15:41:13.9997477Z",
+      "checked_at": "2026-11-02T20:44:42.4368008Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -584,7 +584,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -592,7 +592,7 @@
     {
       "entry_id": "github-actions",
       "url": "https://docs.github.com/en/actions/get-started/quickstart",
-      "checked_at": "2026-11-01T15:41:48.1830585Z",
+      "checked_at": "2026-11-02T20:45:28.8124450Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -602,7 +602,7 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 358322,
-      "sha256": "15a150634723118c316f49aba7de7b613d19708cae408412a19150b38393d289",
+      "sha256": "77ebcd59df6ce4617fdaf97b8704ddcb7ad29ce0f8293858a8ecc0e95a05d616",
       "title": "Quickstart for GitHub Actions - GitHub Docs",
       "first_heading": "Quickstart for GitHub Actions",
       "etag": "",
@@ -616,7 +616,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -624,7 +624,7 @@
     {
       "entry_id": "github-actions",
       "url": "https://docs.github.com/en/actions/tutorials/authenticate-with-github_token",
-      "checked_at": "2026-11-01T15:41:48.7386288Z",
+      "checked_at": "2026-11-02T20:45:30.1594226Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -634,7 +634,7 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 314966,
-      "sha256": "a0685a9b4b390d91b5362140d7f9cb5331453be29885f50b7c92a8ca484a4512",
+      "sha256": "0780e351a58a1c7a4737a28f4a3760c1471ba00cafca8713e6a1fcf141f8f975",
       "title": "Use GITHUB_TOKEN for authentication in workflows - GitHub Docs",
       "first_heading": "Use GITHUB_TOKEN for authentication in workflows",
       "etag": "",
@@ -648,7 +648,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -656,7 +656,7 @@
     {
       "entry_id": "grafana",
       "url": "https://grafana.com/docs/grafana/latest/datasources/",
-      "checked_at": "2026-11-01T15:42:08.5452114Z",
+      "checked_at": "2026-11-02T20:45:50.8646184Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -665,12 +665,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 344067,
-      "sha256": "880cb126825fe8127caf253ac2741c3490efddcb107f821cbcad24d8831da086",
+      "bytes": 344628,
+      "sha256": "84aac2d93a05d1d96680736497102a61af7dfabee20fe6a4c767ca04f558a8f3",
       "title": "Data sources | Grafana documentation",
       "first_heading": "Data sources",
-      "etag": "W/\"6ae75000-da39\"",
-      "last_modified": "11/01/2026 14:43:12 +00:00",
+      "etag": "W/\"6ae8e831-da39\"",
+      "last_modified": "11/02/2026 19:44:49 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -680,7 +680,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -688,7 +688,7 @@
     {
       "entry_id": "grafana",
       "url": "https://grafana.com/docs/grafana/latest/visualizations/dashboards/",
-      "checked_at": "2026-11-01T15:42:09.7091294Z",
+      "checked_at": "2026-11-02T20:45:51.8660558Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -697,12 +697,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 329877,
-      "sha256": "b116bf246a11a23ab3a726845e2b7f258a2d492315330e71f43ead2bcd845746",
+      "bytes": 330438,
+      "sha256": "dfa1349eedef1d189e8e6d152b7dc06b9eccf848f6e387ebe4f7ec42bb772996",
       "title": "Dashboards | Grafana documentation",
       "first_heading": "Dashboards",
-      "etag": "W/\"6ae75000-a2cb\"",
-      "last_modified": "11/01/2026 14:43:12 +00:00",
+      "etag": "W/\"6ae8e831-a2cb\"",
+      "last_modified": "11/02/2026 19:44:49 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -712,7 +712,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -720,7 +720,7 @@
     {
       "entry_id": "huggingface",
       "url": "https://huggingface.co/docs/inference-providers/index",
-      "checked_at": "2026-11-01T15:41:29.8014869Z",
+      "checked_at": "2026-11-02T20:44:58.5013463Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -730,10 +730,10 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 213738,
-      "sha256": "d9d311aa04a5d0496903fc50556b1b2b21793c02df8b5b0f0f14f4e8e68b07aa",
+      "sha256": "418e8a9abc69a27a276bad56107960edfa0f621a86ffb66ee6f22cc5f4cfb973",
       "title": "Inference Providers · Hugging Face",
       "first_heading": "Inference Providers",
-      "etag": "W/\"342ea-dYKn/jmrs8278bQ3zWn6ijaBq5A\"",
+      "etag": "W/\"342ea-5RdY8P1bYZr3Y3i9sYoMxB+JjQU\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -744,7 +744,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -752,7 +752,7 @@
     {
       "entry_id": "huggingface",
       "url": "https://huggingface.co/docs/transformers/main/en/fast_tokenizers",
-      "checked_at": "2026-11-01T15:41:28.5177527Z",
+      "checked_at": "2026-11-02T20:44:57.4187366Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -761,11 +761,11 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 291835,
-      "sha256": "3b49356f5f353573404f9a7b38f2e7d8482b2a70c6a05e0685abe4e58866fe96",
+      "bytes": 294108,
+      "sha256": "8efd9f6b51b1c0a9bceeb54eddcbab95a0d8176785aa8124bb469d2b023ebfab",
       "title": "Tokenizers · Hugging Face",
       "first_heading": "Transformers",
-      "etag": "W/\"473fb-U+mfmlhllJCGTr7SyxMxu9zxS/s\"",
+      "etag": "W/\"47cdc-aAZ8uHU4uKarMTnbr8aYj4prk6Y\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -776,7 +776,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -784,7 +784,7 @@
     {
       "entry_id": "huggingface",
       "url": "https://huggingface.co/docs/transformers/main/en/pipeline_tutorial",
-      "checked_at": "2026-11-01T15:41:27.7624525Z",
+      "checked_at": "2026-11-02T20:44:56.6151347Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -793,11 +793,11 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 293699,
-      "sha256": "9b4ef5bae7db028e081cc08035da587388be88b6d9d5734bdb7e4747845b1ac6",
+      "bytes": 302967,
+      "sha256": "d9f7c0392eaec3887225679dac5b524bbf6ebbd863ce337c0aee082adb84db9b",
       "title": "Pipeline · Hugging Face",
       "first_heading": "Transformers",
-      "etag": "W/\"47b43-nrmr8nw8r6u4Xy5kiqUyjaeHfC0\"",
+      "etag": "W/\"49f77-baHyYOvIkYyePwNCm4KGZr77GOQ\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -808,7 +808,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -816,7 +816,7 @@
     {
       "entry_id": "iam",
       "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html",
-      "checked_at": "2026-11-01T15:41:55.6540896Z",
+      "checked_at": "2026-11-02T20:45:37.3250527Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -830,7 +830,7 @@
       "title": "Policies and permissions in AWS Identity and Access Management - AWS Identity and Access Management",
       "first_heading": "Policies and permissions in AWS Identity and Access Management",
       "etag": "\"TBiRp1AFg8RD9eLc/rt+Ee2kc/I=\"",
-      "last_modified": "10/31/2026 03:34:05 +00:00",
+      "last_modified": "11/02/2026 10:00:26 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -840,7 +840,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -848,7 +848,7 @@
     {
       "entry_id": "iam",
       "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
-      "checked_at": "2026-11-01T15:41:56.6416356Z",
+      "checked_at": "2026-11-02T20:45:38.5870250Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -862,7 +862,7 @@
       "title": "Security best practices in IAM - AWS Identity and Access Management",
       "first_heading": "Security best practices in IAM",
       "etag": "\"xDzg3bP89JMbC1Dr+kDkL2AlFGQ=\"",
-      "last_modified": "10/31/2026 03:34:31 +00:00",
+      "last_modified": "11/02/2026 09:59:59 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -872,7 +872,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -880,7 +880,7 @@
     {
       "entry_id": "iam",
       "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html",
-      "checked_at": "2026-11-01T15:41:54.5408946Z",
+      "checked_at": "2026-11-02T20:45:36.4746043Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -894,7 +894,7 @@
       "title": "What is IAM? - AWS Identity and Access Management",
       "first_heading": "What is IAM?",
       "etag": "\"MarOSbkHlgryfoJ3gT/thRSFxcQ=\"",
-      "last_modified": "10/31/2026 03:33:56 +00:00",
+      "last_modified": "11/02/2026 10:00:03 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -904,7 +904,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -912,7 +912,7 @@
     {
       "entry_id": "langchain",
       "url": "https://docs.langchain.com/oss/python/langchain/knowledge-base",
-      "checked_at": "2026-11-01T15:41:22.7612532Z",
+      "checked_at": "2026-11-02T20:44:51.5263458Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -921,12 +921,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 1137324,
-      "sha256": "c2364962276f790bb4cae03826d03c46f90e24e3d4c949e95503ab60b2c1513d",
+      "bytes": 1140624,
+      "sha256": "404aaabf034b7c255d2872bb818b1bdbb00826f338e11d5607284561b13da3f3",
       "title": "Build a semantic search engine with LangChain - Docs by LangChain",
       "first_heading": "Build a semantic search engine with LangChain",
       "etag": "",
-      "last_modified": "11/01/2026 04:56:15 +00:00",
+      "last_modified": "11/02/2026 20:44:53 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -936,7 +936,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -944,7 +944,7 @@
     {
       "entry_id": "langchain",
       "url": "https://docs.langchain.com/oss/python/langchain/models",
-      "checked_at": "2026-11-01T15:41:21.9784652Z",
+      "checked_at": "2026-11-02T20:44:50.5045564Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -953,12 +953,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 1637976,
-      "sha256": "63aa4fee4801276b49bf42cc6c5a0235bc487968efc35b0a84481e034efc1161",
+      "bytes": 1641276,
+      "sha256": "a10dc8fcfcfb27290dbdccbd7761c15ba397a6bb10a07af7dd49ba0654c5e097",
       "title": "Models - Docs by LangChain",
       "first_heading": "Models",
       "etag": "",
-      "last_modified": "11/01/2026 03:22:44 +00:00",
+      "last_modified": "11/02/2026 20:44:52 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -968,7 +968,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -976,7 +976,7 @@
     {
       "entry_id": "langchain",
       "url": "https://docs.langchain.com/oss/python/langchain/structured-output",
-      "checked_at": "2026-11-01T15:41:23.5664848Z",
+      "checked_at": "2026-11-02T20:44:52.4650774Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -985,12 +985,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 1013585,
-      "sha256": "462e690e73d5aab4504f23dd2accc51c60c99c7027707b7c2bcbfb683ade74ac",
+      "bytes": 1016885,
+      "sha256": "1f0278fb709482fda191a9cfbab05d7c1fad4bc6ac6b7b1457408f8cb4d76db3",
       "title": "Structured output - Docs by LangChain",
       "first_heading": "Structured output",
       "etag": "",
-      "last_modified": "11/01/2026 02:48:36 +00:00",
+      "last_modified": "11/02/2026 20:40:57 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -1000,7 +1000,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1008,7 +1008,7 @@
     {
       "entry_id": "langfuse",
       "url": "https://langfuse.com/docs/evaluation/overview",
-      "checked_at": "2026-11-01T15:42:11.1184355Z",
+      "checked_at": "2026-11-02T20:45:53.7665576Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1018,10 +1018,10 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 393242,
-      "sha256": "8393a1114081f515afeabc85ee956df638a9d4845d7e97ad239fabc231b38539",
+      "sha256": "295a2ca1e03ce073fb06895168cefe1ecbbf5263bba299e054d1591367626e2c",
       "title": "Evaluation of LLM Applications - Langfuse",
       "first_heading": "Evaluation Overview",
-      "etag": "\"14kjvq38bzl8fc1\"",
+      "etag": "\"139pghej4my8fc1\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -1032,7 +1032,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1040,7 +1040,7 @@
     {
       "entry_id": "langfuse",
       "url": "https://langfuse.com/docs/observability/features/masking",
-      "checked_at": "2026-11-01T15:42:12.1238463Z",
+      "checked_at": "2026-11-02T20:45:55.0756681Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1050,10 +1050,10 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 554471,
-      "sha256": "1fd255a97a9cda44b7e045adbcf949fc2992e6991de518abec7610b420867fb8",
+      "sha256": "42fa03f7f560b136573bd8781a47d7539776c51a6d4c012da17c93eeaee0f465",
       "title": "Masking - Langfuse",
       "first_heading": "Masking sensitive LLM data",
-      "etag": "\"pvof3r4foybvqy\"",
+      "etag": "\"gunzmaeyg9bvqy\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -1064,7 +1064,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1072,7 +1072,7 @@
     {
       "entry_id": "langfuse",
       "url": "https://langfuse.com/docs/observability/overview",
-      "checked_at": "2026-11-01T15:42:10.7283248Z",
+      "checked_at": "2026-11-02T20:45:53.1338178Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1082,10 +1082,10 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 377352,
-      "sha256": "0a9228dde79f7dbfb1dfa5556f5194a2eeca01008ff5dd9f785425b84ab8f7bb",
+      "sha256": "1a5deed6402f4cc6832765ea63960253afa48eb1d4d160907a003cb31737b89a",
       "title": "LLM Observability & Application Tracing (Open Source) - Langfuse",
       "first_heading": "Observability & Application Tracing",
-      "etag": "\"17tik9e45nk832j\"",
+      "etag": "\"jq0lvuik4p832j\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -1096,7 +1096,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1104,7 +1104,7 @@
     {
       "entry_id": "langgraph",
       "url": "https://docs.langchain.com/oss/python/langgraph/graph-api",
-      "checked_at": "2026-11-01T15:41:24.5378311Z",
+      "checked_at": "2026-11-02T20:44:53.0813709Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1113,12 +1113,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 1374755,
-      "sha256": "92cdd2afebcd01721d4f3be976d5381808877c1d20a7a9b2dfb5c1c8f379321c",
+      "bytes": 1378055,
+      "sha256": "5a97abc87f5abc695664e310751d54bae1340d3eea1ad24e3e8be6c399d333f3",
       "title": "Graph API overview - Docs by LangChain",
       "first_heading": "Graph API overview",
       "etag": "",
-      "last_modified": "11/01/2026 03:40:30 +00:00",
+      "last_modified": "11/02/2026 20:44:55 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -1128,7 +1128,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1136,7 +1136,7 @@
     {
       "entry_id": "langgraph",
       "url": "https://docs.langchain.com/oss/python/langgraph/persistence",
-      "checked_at": "2026-11-01T15:41:25.6779225Z",
+      "checked_at": "2026-11-02T20:44:54.3525288Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1145,12 +1145,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 529806,
-      "sha256": "b0ece8e687eafd228b48fe8035c986c091c7ccb831c349a22a558227d836ebec",
+      "bytes": 533106,
+      "sha256": "80812a6933167037ee3ddb2f17fd04f5b1ba6db517fbbe56f414383a3a67ed38",
       "title": "Persistence - Docs by LangChain",
       "first_heading": "Persistence",
       "etag": "",
-      "last_modified": "11/01/2026 04:42:00 +00:00",
+      "last_modified": "11/02/2026 20:44:56 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -1160,7 +1160,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1168,7 +1168,7 @@
     {
       "entry_id": "langgraph",
       "url": "https://docs.langchain.com/oss/python/langgraph/workflows-agents",
-      "checked_at": "2026-11-01T15:41:26.3963326Z",
+      "checked_at": "2026-11-02T20:44:55.0470387Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1177,12 +1177,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 1404389,
-      "sha256": "f49b96c8a580048270a4a60b4d7facf3f2c9536abe841fa6818b4361eb97e755",
+      "bytes": 1407691,
+      "sha256": "886cff1c5505edd3744160c3bc667f738b8c15be2b767941c339c428fc59ea5f",
       "title": "Workflows and agents - Docs by LangChain",
       "first_heading": "Workflows and agents",
       "etag": "",
-      "last_modified": "11/01/2026 04:38:55 +00:00",
+      "last_modified": "11/02/2026 20:44:57 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -1192,7 +1192,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1200,7 +1200,7 @@
     {
       "entry_id": "nextjs",
       "url": "https://nextjs.org/docs/app/getting-started/installation",
-      "checked_at": "2026-11-01T15:41:08.5836925Z",
+      "checked_at": "2026-11-02T20:44:37.0243821Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1209,8 +1209,8 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 838746,
-      "sha256": "d0496065e9a2f21f31ce239e58f536a76a339a09e603fa9051001c36a512db30",
+      "bytes": 844699,
+      "sha256": "66822fec73867d71b9abd3cd01a20915c7f0b02757514d2dd583034fda0579b2",
       "title": "Installation",
       "first_heading": "Installation",
       "etag": "",
@@ -1224,7 +1224,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1232,7 +1232,7 @@
     {
       "entry_id": "nextjs",
       "url": "https://nextjs.org/docs/app/getting-started/server-and-client-components",
-      "checked_at": "2026-11-01T15:41:09.1527270Z",
+      "checked_at": "2026-11-02T20:44:37.7206175Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1241,8 +1241,8 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 1012357,
-      "sha256": "576bcb0bb03af8bff6679619985426977dfd1bf1d225c416d13fd27b558d072c",
+      "bytes": 1018642,
+      "sha256": "2b5d212983322f8be5ab8817c925d1d262bb0609344199f63a3c5c613d6c2b9e",
       "title": "Server and Client Components",
       "first_heading": "Server and Client Components",
       "etag": "",
@@ -1256,7 +1256,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1264,7 +1264,7 @@
     {
       "entry_id": "opentelemetry",
       "url": "https://opentelemetry.io/docs/concepts/",
-      "checked_at": "2026-11-01T15:42:03.7709031Z",
+      "checked_at": "2026-11-02T20:45:45.4646983Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1274,10 +1274,10 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 404917,
-      "sha256": "cecbbf097e83312c9c8d9782a4db1fa787227533da1e940044e312b898008a7b",
+      "sha256": "f4c0b2204c2d38c97667bb8ca46d7127be4de68cd5d32138eb27f6f81c960671",
       "title": "OpenTelemetry Concepts | OpenTelemetry",
       "first_heading": "OpenTelemetry Concepts",
-      "etag": "\"4ab46df489727e351a64c8a52f51ac9f-ssl\"",
+      "etag": "\"745a80b0584999bad2af5d1c624af9a8-ssl\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -1288,7 +1288,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1296,7 +1296,7 @@
     {
       "entry_id": "opentelemetry",
       "url": "https://opentelemetry.io/docs/languages/python/instrumentation/",
-      "checked_at": "2026-11-01T15:42:04.1930277Z",
+      "checked_at": "2026-11-02T20:45:47.0534404Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1306,10 +1306,10 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 449165,
-      "sha256": "c2545d5dae885820f54a871557541dc8a0d0b624067b090bb924992524bde915",
+      "sha256": "f6f3a9e027827e781be7f2181cfbd52b1bd060000202d271bf8432dcde66f91c",
       "title": "Instrumentation | OpenTelemetry",
       "first_heading": "Instrumentation",
-      "etag": "\"2081a0f6c6dc7b1c46166ee95b21b7bf-ssl\"",
+      "etag": "\"448c693042744b6ac6e841bd9d9c4147-ssl\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -1320,7 +1320,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1328,7 +1328,7 @@
     {
       "entry_id": "pgvector",
       "url": "https://github.com/pgvector/pgvector",
-      "checked_at": "2026-11-01T15:41:38.0379418Z",
+      "checked_at": "2026-11-02T20:45:09.2575190Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1337,11 +1337,11 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 675181,
-      "sha256": "e6aa5b84eb347a735554a8e21608089ee422f8d08c284382c9fb458e3728832e",
+      "bytes": 674854,
+      "sha256": "818f1d1063c8da4f36fb1413f54eea87d9117063f869de474604a8328298c8ed",
       "title": "GitHub - pgvector/pgvector: Open-source vector similarity search for Postgres · GitHub",
       "first_heading": "pgvector",
-      "etag": "W/\"72f5a93eb1d5bf597edc09f21c58c61b\"",
+      "etag": "W/\"8f2ee792e032e49caa95c3c31507184c\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -1352,7 +1352,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1360,7 +1360,7 @@
     {
       "entry_id": "playwright",
       "url": "https://raw.githubusercontent.com/microsoft/playwright/deb7e86201e26cb4a8e25191fce5ef2f7a28aa87/docs/src/auth.md",
-      "checked_at": "2026-11-01T15:42:17.3739307Z",
+      "checked_at": "2026-11-02T20:46:00.2551846Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1384,7 +1384,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/markdown",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1392,7 +1392,7 @@
     {
       "entry_id": "playwright",
       "url": "https://raw.githubusercontent.com/microsoft/playwright/deb7e86201e26cb4a8e25191fce5ef2f7a28aa87/docs/src/test-assertions-js.md",
-      "checked_at": "2026-11-01T15:42:16.4030004Z",
+      "checked_at": "2026-11-02T20:45:59.5331332Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1416,7 +1416,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/markdown",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1424,7 +1424,7 @@
     {
       "entry_id": "playwright",
       "url": "https://raw.githubusercontent.com/microsoft/playwright/deb7e86201e26cb4a8e25191fce5ef2f7a28aa87/docs/src/writing-tests-js.md",
-      "checked_at": "2026-11-01T15:42:15.8417575Z",
+      "checked_at": "2026-11-02T20:45:58.9363825Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1448,7 +1448,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/markdown",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1456,7 +1456,7 @@
     {
       "entry_id": "postgresql",
       "url": "https://www.postgresql.org/docs/current/ddl-rowsecurity.html",
-      "checked_at": "2026-11-01T15:41:37.0541097Z",
+      "checked_at": "2026-11-02T20:45:08.0274500Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1480,7 +1480,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1488,7 +1488,7 @@
     {
       "entry_id": "postgresql",
       "url": "https://www.postgresql.org/docs/current/indexes.html",
-      "checked_at": "2026-11-01T15:41:33.9714362Z",
+      "checked_at": "2026-11-02T20:45:03.7073570Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1512,7 +1512,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1520,7 +1520,7 @@
     {
       "entry_id": "postgresql",
       "url": "https://www.postgresql.org/docs/current/sql.html",
-      "checked_at": "2026-11-01T15:41:32.9245365Z",
+      "checked_at": "2026-11-02T20:45:02.2647484Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1544,7 +1544,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1552,7 +1552,7 @@
     {
       "entry_id": "postgresql",
       "url": "https://www.postgresql.org/docs/current/textsearch.html",
-      "checked_at": "2026-11-01T15:41:35.9945837Z",
+      "checked_at": "2026-11-02T20:45:06.6605054Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1576,7 +1576,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1584,7 +1584,7 @@
     {
       "entry_id": "postgresql",
       "url": "https://www.postgresql.org/docs/current/tutorial-transactions.html",
-      "checked_at": "2026-11-01T15:41:35.0069400Z",
+      "checked_at": "2026-11-02T20:45:05.1950519Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1608,7 +1608,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1616,7 +1616,7 @@
     {
       "entry_id": "prometheus",
       "url": "https://prometheus.io/docs/practices/instrumentation/",
-      "checked_at": "2026-11-01T15:42:05.2785763Z",
+      "checked_at": "2026-11-02T20:45:48.2799237Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1626,7 +1626,7 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 199162,
-      "sha256": "473947dbce4f7abe4cd1359e02467abdd6b1f6174e037aa4d0723ecc433ceca2",
+      "sha256": "f4a1c15e5e155092e79a80c5f3e4b08eb5110422d8b97c8c219fda55cd83aee2",
       "title": "Instrumentation | Prometheus",
       "first_heading": "Instrumentation",
       "etag": "",
@@ -1640,7 +1640,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1648,7 +1648,7 @@
     {
       "entry_id": "prometheus",
       "url": "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
-      "checked_at": "2026-11-01T15:42:07.8439145Z",
+      "checked_at": "2026-11-02T20:45:49.8644992Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1658,7 +1658,7 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 172611,
-      "sha256": "300522aa26da101b0e7220a21cadb5375bc2760e8c48ea175399db861243a584",
+      "sha256": "cb4e6f1a32a0687b7dc58fd02c497f3624df669626dafe2ce9314adf45bf33ec",
       "title": "Alerting rules | Prometheus",
       "first_heading": "Alerting rules",
       "etag": "",
@@ -1672,7 +1672,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1680,7 +1680,7 @@
     {
       "entry_id": "prometheus",
       "url": "https://prometheus.io/docs/prometheus/latest/querying/basics/",
-      "checked_at": "2026-11-01T15:42:05.8714964Z",
+      "checked_at": "2026-11-02T20:45:48.9324731Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1690,7 +1690,7 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 262686,
-      "sha256": "f4f196a5828770a9697ad42f7e0548055412f34fdb00f197eb957cf500984b0a",
+      "sha256": "7491d387836a5d70c54c3802ec98e39a939db99ed025f58d42c638d435aa3def",
       "title": "Querying basics | Prometheus",
       "first_heading": "Querying basics",
       "etag": "",
@@ -1704,7 +1704,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1712,7 +1712,7 @@
     {
       "entry_id": "pydantic",
       "url": "https://pydantic.dev/docs/validation/latest/concepts/models/",
-      "checked_at": "2026-11-01T15:41:17.0333542Z",
+      "checked_at": "2026-11-02T20:44:45.4705789Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1721,8 +1721,8 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 216095,
-      "sha256": "2658894276b36ca8980830b68ce7fb741357837aabfb5662a8955f17967d1ee4",
+      "bytes": 216044,
+      "sha256": "be8a5eb8408fb2ae18ac12ea10a37704538c9673ad59da794ee3535a992eadb2",
       "title": "Models | Pydantic Docs",
       "first_heading": "Models",
       "etag": "",
@@ -1736,7 +1736,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1744,7 +1744,7 @@
     {
       "entry_id": "pydantic",
       "url": "https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/",
-      "checked_at": "2026-11-01T15:41:18.3360307Z",
+      "checked_at": "2026-11-02T20:44:46.8370460Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1753,8 +1753,8 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 348206,
-      "sha256": "69212f58b965734fb224401cadae42f3b76ad4ee6977069e1d542b540428ef81",
+      "bytes": 348177,
+      "sha256": "c2671267cac67c436b592e6aa0d3ccf87cb50a093f208b836bd6291ac708009a",
       "title": "Settings Management | Pydantic Docs",
       "first_heading": "Settings Management",
       "etag": "",
@@ -1768,7 +1768,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1776,7 +1776,7 @@
     {
       "entry_id": "pydantic",
       "url": "https://pydantic.dev/docs/validation/latest/concepts/validators/",
-      "checked_at": "2026-11-01T15:41:17.3485374Z",
+      "checked_at": "2026-11-02T20:44:45.7693841Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1785,8 +1785,8 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 140967,
-      "sha256": "de7015a0b4089da41db392b7c9ac10eb843245ce0f530a8688307614a219a606",
+      "bytes": 140890,
+      "sha256": "e62eb8fb4a49abf8d2dc64fb740cfaa3705cf7cf2a130adaf027b140c2219ce5",
       "title": "Validators | Pydantic Docs",
       "first_heading": "Validators",
       "etag": "",
@@ -1800,7 +1800,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1808,7 +1808,7 @@
     {
       "entry_id": "pytest",
       "url": "https://docs.pytest.org/en/stable/getting-started.html",
-      "checked_at": "2026-11-01T15:42:13.2466929Z",
+      "checked_at": "2026-11-02T20:45:56.3642014Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1832,7 +1832,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1840,7 +1840,7 @@
     {
       "entry_id": "pytest",
       "url": "https://docs.pytest.org/en/stable/how-to/fixtures.html",
-      "checked_at": "2026-11-01T15:42:14.2751343Z",
+      "checked_at": "2026-11-02T20:45:56.9092527Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1864,7 +1864,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1872,7 +1872,7 @@
     {
       "entry_id": "pytest",
       "url": "https://docs.pytest.org/en/stable/how-to/parametrize.html",
-      "checked_at": "2026-11-01T15:42:14.5778123Z",
+      "checked_at": "2026-11-02T20:45:57.9764248Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1896,7 +1896,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1904,7 +1904,7 @@
     {
       "entry_id": "python",
       "url": "https://docs.python.org/3/library/asyncio.html",
-      "checked_at": "2026-11-01T15:41:00.9846914Z",
+      "checked_at": "2026-11-02T20:44:27.9989779Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1914,21 +1914,21 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 25411,
-      "sha256": "de0a61443f78b63cb2e6ca43f626430fea6e67ce8faf6a835759a4a197c8dc14",
+      "sha256": "138dab8bb6d7f1f42ac63c8f99f6a1e284038dcdb1aa7c9d01ce10a4ad5a1049",
       "title": "asyncio — Asynchronous I/O — Python 3.15.2 documentation",
       "first_heading": "asyncio — Asynchronous I/O¶",
-      "etag": "\"6ae7024c-6343\"",
-      "last_modified": "11/01/2026 09:11:40 +00:00",
+      "etag": "\"6ae8c73e-6343\"",
+      "last_modified": "11/02/2026 17:24:14 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
-        "normalized_sha256": "c3788e1b0f6cf56073a5fa63e6e0216c838f1b91261e44a90f6056007b0416c1",
+        "normalized_sha256": "4f3750bdbace6beb6d3acf02256d50a1499f5fb270c24dd4a4bf248bb7bafe90",
         "characters": 3002,
         "chunks": 2,
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1936,7 +1936,7 @@
     {
       "entry_id": "python",
       "url": "https://docs.python.org/3/library/concurrent.futures.html",
-      "checked_at": "2026-11-01T15:41:03.5108147Z",
+      "checked_at": "2026-11-02T20:44:30.3744182Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1946,21 +1946,21 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 110588,
-      "sha256": "2536423e63f0d3ea4680571de28ee4b4d2fdcec704f9632b1a7ce9e10cc2bbf6",
+      "sha256": "34936804f9f1e31e4ceab90334eef21010f77a3d5652ab7f9e67fe6461e4abf8",
       "title": "concurrent.futures — Launching parallel tasks — Python 3.15.2 documentation",
       "first_heading": "concurrent.futures — Launching parallel tasks¶",
-      "etag": "\"6ae7024c-1affc\"",
-      "last_modified": "11/01/2026 09:11:40 +00:00",
+      "etag": "\"6ae8c73e-1affc\"",
+      "last_modified": "11/02/2026 17:24:14 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
-        "normalized_sha256": "5b23350b82788902006e69d6044ded2bacbab2a7184e43a6eb1fa8098d661b6e",
+        "normalized_sha256": "aef73891e62999af0dd29022bbc644d29c1cccfc0e2cf79c88ca81b182d24b2f",
         "characters": 26033,
         "chunks": 13,
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -1968,7 +1968,7 @@
     {
       "entry_id": "python",
       "url": "https://docs.python.org/3/library/urllib.request.html",
-      "checked_at": "2026-11-01T15:41:01.9103864Z",
+      "checked_at": "2026-11-02T20:44:29.1014246Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -1978,21 +1978,21 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 218392,
-      "sha256": "7b1a8c7982f0394d1b04cd6b3a58d0feb8ed64475bc6adc7a652171ccbeb5e27",
+      "sha256": "413f1afb3de94ad0e7f6a2f8eba24244746316507b68d3e82918984d00c41158",
       "title": "urllib.request — Extensible library for opening URLs — Python 3.15.2 documentation",
       "first_heading": "urllib.request — Extensible library for opening URLs¶",
-      "etag": "\"6ae7024c-35518\"",
-      "last_modified": "11/01/2026 09:11:40 +00:00",
+      "etag": "\"6ae8c73e-35518\"",
+      "last_modified": "11/02/2026 17:24:14 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
-        "normalized_sha256": "d5c896eb476748d37a20449a6201784672d4a7bf5322d7bed06509f34dec8e51",
+        "normalized_sha256": "f1402d26d2ed878353862b9ccb313b9d0e61f5f45af8394a2cbcf9592fe416f7",
         "characters": 51170,
         "chunks": 24,
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2000,7 +2000,7 @@
     {
       "entry_id": "python",
       "url": "https://docs.python.org/3/tutorial/introduction.html",
-      "checked_at": "2026-11-01T15:41:00.5106125Z",
+      "checked_at": "2026-11-02T20:44:27.5369711Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2010,21 +2010,21 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 71957,
-      "sha256": "88abb1fd624d872d5d58a539252b0c90e3380db00b741ec01d4c24a900c32f84",
+      "sha256": "28aa81c420aec2ad6e20384b5c2fae4fd60c408e86753dd6e650ed24de1dd98c",
       "title": "3. An Informal Introduction to Python — Python 3.15.2 documentation",
       "first_heading": "3. An Informal Introduction to Python¶",
-      "etag": "\"6ae7024c-11915\"",
-      "last_modified": "11/01/2026 09:11:40 +00:00",
+      "etag": "\"6ae8c73d-11915\"",
+      "last_modified": "11/02/2026 17:24:13 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
-        "normalized_sha256": "025bf6e130a052afe437c1dffddca09aeef16739ddef5788ba7d394ed2a7e5fd",
+        "normalized_sha256": "f62741e804859604747d668af6f054ac6c6550b7e59ced3221d077cd4a8fd26e",
         "characters": 16946,
         "chunks": 10,
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2032,7 +2032,7 @@
     {
       "entry_id": "qdrant",
       "url": "https://qdrant.tech/documentation/manage-data/collections/",
-      "checked_at": "2026-11-01T15:41:39.3042502Z",
+      "checked_at": "2026-11-02T20:45:10.6057702Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2041,11 +2041,11 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 382374,
-      "sha256": "6684faf71a49f2c39db01f863e484c31ba4b7d1065df72bb788bdb24a3df8a6a",
+      "bytes": 382366,
+      "sha256": "6ac2cb6c0bf50597468b8fa7ec6771ed072469862c34bde5e8a56793b9dd2ce7",
       "title": "Collections - Qdrant",
       "first_heading": "Collections",
-      "etag": "\"cb97264589cf965dc7f2d99a24678519-ssl\"",
+      "etag": "\"0f8b685f766c065a72d9e3c390613cb8-ssl\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -2056,7 +2056,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2064,7 +2064,7 @@
     {
       "entry_id": "qdrant",
       "url": "https://qdrant.tech/documentation/search/filtering/",
-      "checked_at": "2026-11-01T15:41:42.0367502Z",
+      "checked_at": "2026-11-02T20:45:14.2585355Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2073,11 +2073,11 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 537408,
-      "sha256": "735cb3380756294e64443bcb9a73711aaa86aae490ca806b4134ad0dc850a469",
+      "bytes": 537400,
+      "sha256": "e231433fe74633c18513a8a678ce1fab577614eaa3583236b96d0ff3f1f9b2af",
       "title": "Filtering - Qdrant",
       "first_heading": "Filtering",
-      "etag": "\"daec5ce0d93a7a0c7924674ef1ee8c64-ssl\"",
+      "etag": "\"7d01b08ed032a4c2bef3e63b7e81139e-ssl\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -2088,7 +2088,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2096,7 +2096,7 @@
     {
       "entry_id": "qdrant",
       "url": "https://qdrant.tech/documentation/search/search/",
-      "checked_at": "2026-11-01T15:41:40.2913716Z",
+      "checked_at": "2026-11-02T20:45:12.0146460Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2105,11 +2105,11 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 564813,
-      "sha256": "5da4676d6d222960ed1fe1031fac2774111ea34ce69cc52dc06bc844b37c09f9",
+      "bytes": 564805,
+      "sha256": "07a643408e051855bc6be01f884608ae33212b3db5a754d04f2e8633b642df12",
       "title": "Search - Qdrant",
       "first_heading": "Similarity Search",
-      "etag": "\"de00eea05f7eee1361c1ab83bf0a0a6d-ssl\"",
+      "etag": "\"f765b312efc64fb9120e9fc8aad96dfd-ssl\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -2120,7 +2120,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2128,7 +2128,7 @@
     {
       "entry_id": "rds",
       "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_CommonTasks.BackupRestore.html",
-      "checked_at": "2026-11-01T15:42:02.6967877Z",
+      "checked_at": "2026-11-02T20:45:44.6840200Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2142,7 +2142,7 @@
       "title": "Backing up, restoring, and exporting data - Amazon Relational Database Service",
       "first_heading": "Backing up, restoring, and exporting data",
       "etag": "\"0k8rAZa+9jKCrEEE2EHQwSSzTFo=\"",
-      "last_modified": "10/31/2026 16:56:27 +00:00",
+      "last_modified": "11/02/2026 19:24:25 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2152,7 +2152,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2160,7 +2160,7 @@
     {
       "entry_id": "rds",
       "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_CommonTasks.Connect.html",
-      "checked_at": "2026-11-01T15:42:01.6980078Z",
+      "checked_at": "2026-11-02T20:45:43.5610306Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2174,7 +2174,7 @@
       "title": "Connecting to an Amazon RDS DB instance - Amazon Relational Database Service",
       "first_heading": "Connecting to an Amazon RDS DB instance",
       "etag": "\"Xke0vM7ywUl4wDUl4HrHJSbHKEg=\"",
-      "last_modified": "10/31/2026 16:56:07 +00:00",
+      "last_modified": "11/02/2026 19:24:31 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2184,7 +2184,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2192,7 +2192,7 @@
     {
       "entry_id": "rds",
       "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html",
-      "checked_at": "2026-11-01T15:42:00.7163375Z",
+      "checked_at": "2026-11-02T20:45:42.6680949Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2206,7 +2206,7 @@
       "title": "Amazon RDS for PostgreSQL - Amazon Relational Database Service",
       "first_heading": "Amazon RDS for PostgreSQL",
       "etag": "\"7cp+DXHHcoenunTjF/RGe1M74TQ=\"",
-      "last_modified": "10/31/2026 16:56:18 +00:00",
+      "last_modified": "11/02/2026 19:24:24 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2216,7 +2216,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2224,7 +2224,7 @@
     {
       "entry_id": "react",
       "url": "https://react.dev/learn",
-      "checked_at": "2026-11-01T15:41:05.9933473Z",
+      "checked_at": "2026-11-02T20:44:34.3961084Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2248,7 +2248,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2256,7 +2256,7 @@
     {
       "entry_id": "react",
       "url": "https://react.dev/reference/react/useEffect",
-      "checked_at": "2026-11-01T15:41:07.4092128Z",
+      "checked_at": "2026-11-02T20:44:35.8753512Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2280,7 +2280,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2288,7 +2288,7 @@
     {
       "entry_id": "react",
       "url": "https://react.dev/reference/react/useState",
-      "checked_at": "2026-11-01T15:41:06.3598009Z",
+      "checked_at": "2026-11-02T20:44:34.8511756Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2312,7 +2312,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2320,7 +2320,7 @@
     {
       "entry_id": "redis",
       "url": "https://redis.io/docs/latest/develop/data-types/",
-      "checked_at": "2026-11-01T15:41:43.4086192Z",
+      "checked_at": "2026-11-02T20:45:16.2748490Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2329,12 +2329,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 138488,
-      "sha256": "6be677fd360697e61386db6073490afa7920c9be981539547f8e3b394e3ec97b",
+      "bytes": 138662,
+      "sha256": "fd924692a03c8c2230c3ae67b6d1a9c4a7c5ab38a760fbf64d9e57746ab22048",
       "title": "Redis data types | Docs",
       "first_heading": "Redis data types",
       "etag": "",
-      "last_modified": "10/30/2026 10:29:52 +00:00",
+      "last_modified": "11/02/2026 11:09:15 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2344,7 +2344,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2352,7 +2352,7 @@
     {
       "entry_id": "redis",
       "url": "https://redis.io/docs/latest/develop/reference/client-side-caching/",
-      "checked_at": "2026-11-01T15:41:43.6404324Z",
+      "checked_at": "2026-11-02T20:45:19.0497771Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2361,12 +2361,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 143921,
-      "sha256": "1e79c11bfc9e5017abd822a163eb64b776a3fefb4d0f6e146bafc783db3fa72f",
+      "bytes": 144331,
+      "sha256": "b0ddd0b9e7a6abd909e1c92a091dd3ffa02d5480eaa9e0adeefb0b2f248da398",
       "title": "Client-side caching reference | Docs",
       "first_heading": "Client-side caching reference",
       "etag": "",
-      "last_modified": "10/30/2026 10:29:53 +00:00",
+      "last_modified": "11/02/2026 14:17:00 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2376,7 +2376,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2384,7 +2384,7 @@
     {
       "entry_id": "redis",
       "url": "https://redis.io/docs/latest/develop/use-cases/streaming/",
-      "checked_at": "2026-11-01T15:41:44.6587809Z",
+      "checked_at": "2026-11-02T20:45:20.5612049Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2393,12 +2393,12 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 126878,
-      "sha256": "747b35c70c853ac61af876df70dc2f33874df19397e8a6f877d7505532f76b10",
+      "bytes": 127052,
+      "sha256": "f5887a16fd560c7b178fa5e1d79c053416e3f0d4403dc4072696a926c33d75f1",
       "title": "Redis streaming | Docs",
       "first_heading": "Redis streaming",
       "etag": "",
-      "last_modified": "10/30/2026 10:29:55 +00:00",
+      "last_modified": "11/02/2026 11:09:18 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2408,7 +2408,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2416,7 +2416,7 @@
     {
       "entry_id": "s3",
       "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-      "checked_at": "2026-11-01T15:41:52.3548629Z",
+      "checked_at": "2026-11-02T20:45:34.3986657Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2430,7 +2430,7 @@
       "title": "Blocking public access to your Amazon S3 storage - Amazon Simple Storage Service",
       "first_heading": "Blocking public access to your Amazon S3 storage",
       "etag": "\"TX1QNiyxbvoH8O6tdRxucnSoajE=\"",
-      "last_modified": "10/31/2026 03:32:39 +00:00",
+      "last_modified": "11/02/2026 10:01:04 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2440,7 +2440,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2448,7 +2448,7 @@
     {
       "entry_id": "s3",
       "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html",
-      "checked_at": "2026-11-01T15:41:53.6272421Z",
+      "checked_at": "2026-11-02T20:45:35.6293858Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2462,7 +2462,7 @@
       "title": "Retaining multiple versions of objects with S3 Versioning - Amazon Simple Storage Service",
       "first_heading": "Retaining multiple versions of objects with S3 Versioning",
       "etag": "\"m9h8OglRQiokWA8LmKjgQgAmHr4=\"",
-      "last_modified": "10/31/2026 03:32:39 +00:00",
+      "last_modified": "11/02/2026 10:01:02 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2472,7 +2472,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2480,7 +2480,7 @@
     {
       "entry_id": "s3",
       "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html",
-      "checked_at": "2026-11-01T15:41:52.0893983Z",
+      "checked_at": "2026-11-02T20:45:33.8734599Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2494,7 +2494,7 @@
       "title": "What is Amazon S3? - Amazon Simple Storage Service",
       "first_heading": "What is Amazon S3?",
       "etag": "\"qZeTzvcG7QGzR+PFmRpM63wx/zc=\"",
-      "last_modified": "10/31/2026 03:32:30 +00:00",
+      "last_modified": "11/02/2026 10:01:50 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2504,7 +2504,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2512,7 +2512,7 @@
     {
       "entry_id": "sqlalchemy",
       "url": "https://raw.githubusercontent.com/sqlalchemy/sqlalchemy/5d7a131a2505fce02a7c2e9a82cef4b7e4a384c2/doc/build/orm/quickstart.rst",
-      "checked_at": "2026-11-01T15:41:19.4062725Z",
+      "checked_at": "2026-11-02T20:44:47.9135176Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2536,7 +2536,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/plain",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2544,7 +2544,7 @@
     {
       "entry_id": "sqlalchemy",
       "url": "https://raw.githubusercontent.com/sqlalchemy/sqlalchemy/5d7a131a2505fce02a7c2e9a82cef4b7e4a384c2/doc/build/orm/session_basics.rst",
-      "checked_at": "2026-11-01T15:41:19.9620557Z",
+      "checked_at": "2026-11-02T20:44:48.5457115Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2568,7 +2568,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/plain",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2576,7 +2576,7 @@
     {
       "entry_id": "sqlalchemy",
       "url": "https://raw.githubusercontent.com/sqlalchemy/sqlalchemy/5d7a131a2505fce02a7c2e9a82cef4b7e4a384c2/doc/build/orm/session_transaction.rst",
-      "checked_at": "2026-11-01T15:41:21.0379982Z",
+      "checked_at": "2026-11-02T20:44:49.2640281Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2600,7 +2600,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/plain",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2608,7 +2608,7 @@
     {
       "entry_id": "tailwindcss",
       "url": "https://tailwindcss.com/docs/display",
-      "checked_at": "2026-11-01T15:41:11.7116343Z",
+      "checked_at": "2026-11-02T20:44:40.3719098Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2632,7 +2632,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2640,7 +2640,7 @@
     {
       "entry_id": "tailwindcss",
       "url": "https://tailwindcss.com/docs/installation/using-vite",
-      "checked_at": "2026-11-01T15:41:10.2167119Z",
+      "checked_at": "2026-11-02T20:44:38.7513435Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2664,7 +2664,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2672,7 +2672,7 @@
     {
       "entry_id": "tailwindcss",
       "url": "https://tailwindcss.com/docs/responsive-design",
-      "checked_at": "2026-11-01T15:41:12.6846083Z",
+      "checked_at": "2026-11-02T20:44:41.1964646Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2696,7 +2696,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2704,7 +2704,7 @@
     {
       "entry_id": "tailwindcss",
       "url": "https://tailwindcss.com/docs/styling-with-utility-classes",
-      "checked_at": "2026-11-01T15:41:10.5934511Z",
+      "checked_at": "2026-11-02T20:44:39.1483883Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2728,7 +2728,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2736,7 +2736,7 @@
     {
       "entry_id": "terraform",
       "url": "https://developer.hashicorp.com/terraform/language",
-      "checked_at": "2026-11-01T15:41:49.7264601Z",
+      "checked_at": "2026-11-02T20:45:31.3160205Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2745,11 +2745,11 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 221513,
-      "sha256": "675349c09a8dc4460ae13cbf6953cc9791c66e70b7134e308072f74fd7e8de3b",
+      "bytes": 221478,
+      "sha256": "2fed03626ce1fd4aea151591398578c57246fef9e872997420e21929c679335e",
       "title": "Overview - Configuration Language | Terraform | HashiCorp Developer",
       "first_heading": "Terraform Language Documentation",
-      "etag": "\"492diobgx54qx1\"",
+      "etag": "\"ee5dd54e206d50e7fc3fcd2a09ecddc1\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -2760,7 +2760,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2768,7 +2768,7 @@
     {
       "entry_id": "terraform",
       "url": "https://developer.hashicorp.com/terraform/language/modules",
-      "checked_at": "2026-11-01T15:41:51.1239416Z",
+      "checked_at": "2026-11-02T20:45:32.7055066Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2777,11 +2777,11 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 192230,
-      "sha256": "b728908b8101d2117e762fb9852a65e607eb0ad5fa573c51aca86b52c8f27114",
+      "bytes": 192195,
+      "sha256": "040d91b65d07c03fe17d61a522e6d82a4bdd79e2767669caa588854d62c78711",
       "title": "Modules overview | Terraform | HashiCorp Developer",
       "first_heading": "Modules overview",
-      "etag": "\"ghwxz4ep5n44bm\"",
+      "etag": "\"f9a8ea561872e03b392ed3c8b917d333\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -2792,7 +2792,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2800,7 +2800,7 @@
     {
       "entry_id": "terraform",
       "url": "https://developer.hashicorp.com/terraform/language/state",
-      "checked_at": "2026-11-01T15:41:50.0779400Z",
+      "checked_at": "2026-11-02T20:45:31.7871410Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2810,10 +2810,10 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 196856,
-      "sha256": "42aa4900c43a7a76a131b5ef1f34bf45af1411d6e0e87b1f5258011fe2fd7d90",
+      "sha256": "dc12dcaba0e146fa2c15ea87e2faaeda836761da765cd1395772f71376b7bd43",
       "title": "State | Terraform | HashiCorp Developer",
       "first_heading": "State",
-      "etag": "\"cjn43euhfj47w4\"",
+      "etag": "\"4bfc5zmlv647w4\"",
       "last_modified": "",
       "parser_media_type": "text/html",
       "parse": {
@@ -2824,7 +2824,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2832,7 +2832,7 @@
     {
       "entry_id": "typescript",
       "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html",
-      "checked_at": "2026-11-01T15:41:04.0574546Z",
+      "checked_at": "2026-11-02T20:44:31.2534538Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2842,21 +2842,21 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 324573,
-      "sha256": "f7845d14df3617c0cbbbbf169d4ab8906d1d093b6ebeb3a0c91d6da6ebfb1c8c",
+      "sha256": "4669c89b2ad5d7e19d03df2e6576426b8e546972dcfd5195c43bcc483a325c71",
       "title": "TypeScript: Documentation - Everyday Types",
       "first_heading": "Everyday Types",
-      "etag": "\"6ae284a7-4f3dd\"",
-      "last_modified": "10/28/2026 23:26:31 +00:00",
+      "etag": "\"6ae882b4-4f3dd\"",
+      "last_modified": "11/02/2026 12:31:48 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
-        "normalized_sha256": "e3de6ade0e9fd0b90173b3e3b32f410ead7f648e0ffe60151f65025b4adce68e",
+        "normalized_sha256": "762e1d210c4e2d5ca059436bd5f3f3d4c7a3ae20e53cbe2a1be8a6d85a87068b",
         "characters": 26259,
         "chunks": 15,
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2864,7 +2864,7 @@
     {
       "entry_id": "typescript",
       "url": "https://www.typescriptlang.org/tsconfig/",
-      "checked_at": "2026-11-01T15:41:04.6429982Z",
+      "checked_at": "2026-11-02T20:44:31.8711294Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2874,11 +2874,11 @@
       "status": 200,
       "mime": "text/html",
       "bytes": 812109,
-      "sha256": "83a6b6e624e9b045cebcfd5029b1b2af941399b993a7a0a92c9320d524c8ce64",
+      "sha256": "eb40e98163232e2e5a28831c71fc45a6ee950e6f2f7912c10da129be02b90841",
       "title": "TypeScript: TSConfig Reference - Docs on every TSConfig option",
       "first_heading": "TSConfig Reference",
-      "etag": "\"6ae284a7-c644d\"",
-      "last_modified": "10/28/2026 23:26:31 +00:00",
+      "etag": "\"6ae882b4-c644d\"",
+      "last_modified": "11/02/2026 12:31:48 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
@@ -2888,7 +2888,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2896,7 +2896,7 @@
     {
       "entry_id": "vllm",
       "url": "https://docs.vllm.ai/en/latest/deployment/docker/",
-      "checked_at": "2026-11-01T15:41:31.9639983Z",
+      "checked_at": "2026-11-02T20:45:00.8935651Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2905,22 +2905,22 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 266570,
-      "sha256": "1cb9178ecbbcb50460d7d3d58a5548ab3ef7843c41a6957639d2c6b6fca8c745",
+      "bytes": 266232,
+      "sha256": "b7a7e7ad43077035552ee185944a34ce2664eac5c6dc0eba688bc2bd2d7d72e5",
       "title": "Using Docker - vLLM",
       "first_heading": "Using Docker¶",
       "etag": "",
-      "last_modified": "10/30/2026 18:03:58 +00:00",
+      "last_modified": "11/02/2026 13:35:30 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
-        "normalized_sha256": "c9126cd9a41a3c9f0d68a38eb042383783dc7c0deadc33ede1392f3e308c68a9",
-        "characters": 20105,
+        "normalized_sha256": "576aae8259e82a91479c8f0da84271d56c58188b14d08f5fdb2fbf50181c459c",
+        "characters": 19800,
         "chunks": 9,
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2928,7 +2928,7 @@
     {
       "entry_id": "vllm",
       "url": "https://docs.vllm.ai/en/latest/models/supported_models/",
-      "checked_at": "2026-11-01T15:41:31.0005443Z",
+      "checked_at": "2026-11-02T20:44:59.7563831Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2937,22 +2937,22 @@
       },
       "status": 200,
       "mime": "text/html",
-      "bytes": 336280,
-      "sha256": "4712226d3989f63cfb9f95976f0202a0451af7fb39a4fc2291cbc96a4602fecf",
+      "bytes": 337076,
+      "sha256": "2e3707eac7075ed640ef182154278f6d7406054819c1f1100e81f750f86f9b88",
       "title": "Supported Models - vLLM",
       "first_heading": "Supported Models¶",
       "etag": "",
-      "last_modified": "10/31/2026 06:58:09 +00:00",
+      "last_modified": "11/02/2026 14:01:39 +00:00",
       "parser_media_type": "text/html",
       "parse": {
         "outcome": "verified",
-        "normalized_sha256": "b82544eddad133e029a64bc20c7a401179753951caec2bd858894461611d6744",
-        "characters": 52227,
+        "normalized_sha256": "d4d2b453238a5cb5050691d63f25c7f394937910aa174f9b7d0a8725d0454268",
+        "characters": 52862,
         "chunks": 20,
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }
@@ -2960,7 +2960,7 @@
     {
       "entry_id": "vllm",
       "url": "https://docs.vllm.ai/en/latest/serving/online_serving/",
-      "checked_at": "2026-11-01T15:41:30.6062934Z",
+      "checked_at": "2026-11-02T20:44:59.1611679Z",
       "outcome": "verified",
       "robots": {
         "can_fetch": true,
@@ -2984,7 +2984,7 @@
         "configuration": "utf8-lf:headings:whitespace350-overlap50:v1:text/html",
         "parser_sources_sha256": {
           "parsing.py": "7da4fd92c59313d870fe3e531cdf367f3ef682f4b2b05ef9d09ae3af65f0cda5",
-          "chunking.py": "552017c537f1b149b52f518bd038e51d6251754a95c37075fbe84f76e8acd383",
+          "chunking.py": "5d29963b763601907f9a31e638a3e9192580bc27431245bad76b351cb38ae462",
           "contracts.py": "1b15dbd7d4ffc63c5b1aedd92758c39a3c1ab36f26b7290d6c94257b311b7de0"
         }
       }

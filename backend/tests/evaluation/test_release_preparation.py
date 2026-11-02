@@ -26,10 +26,11 @@ def test_release_draft_preserves_100_50_split_and_pending_review(tmp_path):
     assert sum(case.split == 'held_out' for case in dataset.cases) == 50
 
 
-def test_proposed_benchmark_loads_as_a_draft_with_both_splits():
+@pytest.mark.parametrize('revision', ['v1', 'v2'])
+def test_proposed_benchmark_loads_as_a_draft_with_both_splits(revision):
     from tests.paths import BACKEND_ROOT
     from docweave.evaluation.release import load_release_dataset
-    dataset = load_release_dataset(BACKEND_ROOT / 'eval/fixtures/release-draft-v1.json')
+    dataset = load_release_dataset(BACKEND_ROOT / f'eval/fixtures/release-draft-{revision}.json')
     assert len(dataset.cases) == 150
     assert {case.split for case in dataset.cases} == {'development', 'held_out'}
 

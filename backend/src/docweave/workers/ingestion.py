@@ -1,7 +1,6 @@
 """Separate ingestion process: python -m docweave.worker [--once]."""
 
 import argparse, asyncio, sys, procrastinate
-from datetime import datetime, timezone
 from uuid import UUID
 from docweave.repositories import ingestion as repository
 from docweave.db.engine import make_engine
@@ -15,9 +14,9 @@ async def recover_jobs(queue, engine):
     stalled = await queue.job_manager.get_stalled_jobs(queue="ingestion", task_name="docweave.ingest")
     for job in stalled:
         async with engine.connect() as connection:
-            recoverable = await repository.job_recoverable(connection, {"id": UUID(job.task_kwargs["job_id"])})
-        if recoverable:
-            await queue.job_manager.retry_job_by_id_async(job.id, retry_at=datetime.now(timezone.utc))
+            retry_at = await repository.job_retry_at(connection, {"id": UUID(job.task_kwargs["job_id"])})
+        if retry_at is not None:
+            await queue.job_manager.retry_job_by_id_async(job.id, retry_at=retry_at)
 
 
 async def run_worker(url, store, *, wait=True, parser=container_parse):

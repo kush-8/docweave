@@ -3,8 +3,8 @@
 from sqlalchemy import text
 
 
-async def job_recoverable(connection, values):
-    return await connection.scalar(text("SELECT app.ingestion_recoverable(:id)"), values)
+async def job_retry_at(connection, values):
+    return await connection.scalar(text("SELECT CASE WHEN app.ingestion_recoverable(:id) THEN clock_timestamp() END"), values)
 
 
 async def acquire_worker_lock(connection):

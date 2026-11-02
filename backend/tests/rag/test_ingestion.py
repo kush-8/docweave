@@ -447,6 +447,15 @@ async def test_markdown_chunks_preserve_headings_and_small_fenced_blocks():
     assert any(code in parsed["text"][chunk["start"]:chunk["end"]] for chunk in parsed["chunks"])
 
 
+async def test_markdown_leading_blank_lines_do_not_repeat_the_first_heading_boundary():
+    from docweave.rag.parsing import parse_text
+    parsed = parse_text(b'\n\n# First\n\nAlpha.\n\n# Second\n\nBeta.\n', 'text/markdown')
+    assert [chunk['heading'] for chunk in parsed['chunks']] == ['First', 'Second']
+    assert all(parsed['text'][chunk['start']:chunk['end']].strip() for chunk in parsed['chunks'])
+    assert parsed['chunks'][0]['start'] == 0
+    assert parsed['chunks'][-1]['end'] == len(parsed['text'])
+
+
 async def test_parser_rejects_excessive_structure_without_unbounded_chunk_output():
     from docweave.rag.parsing import parse_text
     with pytest.raises(ValueError):
@@ -475,11 +484,15 @@ async def test_uncertain_publication_preserves_a_committed_snapshot_artifact(ing
 
 
 @pytest.mark.parametrize("anyio_backend", [("asyncio", {"loop_factory": asyncio.SelectorEventLoop})])
-async def test_crashed_queue_delivery_recovers_after_its_application_lease_expires(ingestion):
+async def test_crashed_queue_delivery_recovers_after_its_application_lease_expires(ingestion, monkeypatch):
     c = ingestion
     from docweave.workers.ingestion import run_worker
     from docweave.core.settings import database_url
     from docweave.rag.parsing import parse_text
+    from docweave.workers import ingestion as ingestion_worker
+    from datetime import datetime, timedelta
+    from types import SimpleNamespace
+    monkeypatch.setattr(ingestion_worker, 'datetime', SimpleNamespace(now=lambda zone: datetime.now(zone)+timedelta(hours=1)), raising=False)
     accepted = (await upload(c)).json()
     async with c["worker"].begin() as connection:
         assert await connection.scalar(text("SELECT app.claim_ingestion(:id)"), {"id": UUID(accepted["job_id"])})

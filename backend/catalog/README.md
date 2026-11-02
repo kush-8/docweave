@@ -4,7 +4,7 @@
 
 `required-sources.json` records the 29 agreed technologies and 85 explicitly bounded official publisher pages. `required-sources-verification.json` contains the successful HTTP status, actual MIME, byte count, raw-response SHA256, title, first heading, timestamp and available HTTP validators for every page. The report binds the reviewed manifest with SHA256 of its UTF-8 text after CRLF-to-LF normalization. Publisher body hashes are never normalized.
 
-The recorded final run verifies all 85 pages against robots policies across 24 origins and successfully parses all 85 with the application parser: 1,707,106 normalized characters and 798 chunks. Five offline tests check completeness, byte-level evidence, current parser-source hashes, manifest binding and reproducible robots decisions. These counts describe preparation proof; no embedding or index is created.
+The refreshed run on 2026-11-03 verifies all 85 pages against robots policies across 24 origins and successfully parses all 85 with the corrected application parser: 1,707,436 normalized characters and 798 chunks. Five offline tests check completeness, byte-level evidence, current parser-source hashes, manifest binding and reproducible robots decisions. These counts describe preparation proof; no embedding or index is created.
 
 
 

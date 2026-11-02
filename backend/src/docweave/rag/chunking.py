@@ -36,13 +36,14 @@ def chunk_text(normalized, media_type):
         start = 0 if not start_token else tokens[start_token].start()
         end = len(normalized) if stop_token == len(tokens) else tokens[stop_token].start()
         boundaries = []
-        next_heading = bisect_right(heading_starts, start)
+        content_start = tokens[start_token].start()
+        next_heading = bisect_right(heading_starts, content_start)
         if next_heading < len(headings) and headings[next_heading].start() < end:
             boundaries.append(headings[next_heading].start())
         code_index = bisect_right(code_starts, end) - 1
         if code_index >= 0:
             left, right = code_blocks[code_index]
-            if start < left < end < right and bisect_left(positions, right) - bisect_left(positions, left) <= 350:
+            if content_start < left < end < right and bisect_left(positions, right) - bisect_left(positions, left) <= 350:
                 boundaries.append(left)
         structured = bool(boundaries)
         if structured:

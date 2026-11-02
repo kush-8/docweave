@@ -1,0 +1,326 @@
+{
+  "purpose": "Exact public references reviewed for private offline benchmark freezing only; no application catalog publication or private processing approval.",
+  "reviewed_by": "Codex: official publisher/repository identity and bounded paths; human factual labels remain pending",
+  "dataset_sha256": "cbc71c66de9a767ee8c5e5b6ac0398498f8556caeb7744477a296d327047c3d2",
+  "entries": [
+    {
+      "id": "python",
+      "publisher_root": "https://docs.python.org/3/",
+      "attribution": "Python Software Foundation; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://docs.python.org/3/copyright.html",
+      "pages": [
+        {
+          "url": "https://docs.python.org/3/tutorial/introduction.html"
+        }
+      ]
+    },
+    {
+      "id": "typescript",
+      "publisher_root": "https://www.typescriptlang.org/",
+      "attribution": "Microsoft / TypeScript contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/microsoft/TypeScript-Website/blob/v2/LICENSE",
+      "pages": [
+        {
+          "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html"
+        }
+      ]
+    },
+    {
+      "id": "react",
+      "publisher_root": "https://react.dev/",
+      "attribution": "Meta / React contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/reactjs/react.dev/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://react.dev/reference/react/useState"
+        }
+      ]
+    },
+    {
+      "id": "nextjs",
+      "publisher_root": "https://nextjs.org/",
+      "attribution": "Vercel / Next.js contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/vercel/next.js/blob/canary/license.md",
+      "pages": [
+        {
+          "url": "https://nextjs.org/docs/app/getting-started/server-and-client-components"
+        }
+      ]
+    },
+    {
+      "id": "tailwindcss",
+      "publisher_root": "https://tailwindcss.com/",
+      "attribution": "Tailwind Labs / contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/tailwindlabs/tailwindcss.com/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://tailwindcss.com/docs/responsive-design"
+        }
+      ]
+    },
+    {
+      "id": "fastapi",
+      "publisher_root": "https://fastapi.tiangolo.com/",
+      "attribution": "FastAPI contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/fastapi/fastapi/blob/master/LICENSE",
+      "pages": [
+        {
+          "url": "https://fastapi.tiangolo.com/tutorial/dependencies/"
+        }
+      ]
+    },
+    {
+      "id": "pydantic",
+      "publisher_root": "https://pydantic.dev/",
+      "attribution": "Pydantic contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/pydantic/pydantic/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://pydantic.dev/docs/validation/latest/concepts/models/"
+        }
+      ]
+    },
+    {
+      "id": "sqlalchemy",
+      "publisher_root": "https://raw.githubusercontent.com/sqlalchemy/sqlalchemy/5d7a131a2505fce02a7c2e9a82cef4b7e4a384c2/",
+      "attribution": "SQLAlchemy authors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://raw.githubusercontent.com/sqlalchemy/sqlalchemy/5d7a131a2505fce02a7c2e9a82cef4b7e4a384c2/LICENSE",
+      "pages": [
+        {
+          "url": "https://raw.githubusercontent.com/sqlalchemy/sqlalchemy/5d7a131a2505fce02a7c2e9a82cef4b7e4a384c2/doc/build/orm/session_basics.rst"
+        }
+      ]
+    },
+    {
+      "id": "langchain",
+      "publisher_root": "https://docs.langchain.com/",
+      "attribution": "LangChain contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/langchain-ai/docs/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://docs.langchain.com/oss/python/langchain/structured-output"
+        }
+      ]
+    },
+    {
+      "id": "langgraph",
+      "publisher_root": "https://docs.langchain.com/",
+      "attribution": "LangChain contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/langchain-ai/docs/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://docs.langchain.com/oss/python/langgraph/persistence"
+        }
+      ]
+    },
+    {
+      "id": "huggingface",
+      "publisher_root": "https://huggingface.co/",
+      "attribution": "Hugging Face / contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://huggingface.co/terms-of-service",
+      "pages": [
+        {
+          "url": "https://huggingface.co/docs/transformers/main/en/pipeline_tutorial"
+        }
+      ]
+    },
+    {
+      "id": "vllm",
+      "publisher_root": "https://docs.vllm.ai/",
+      "attribution": "vLLM contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/vllm-project/vllm/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://docs.vllm.ai/en/latest/serving/online_serving/"
+        }
+      ]
+    },
+    {
+      "id": "postgresql",
+      "publisher_root": "https://www.postgresql.org/",
+      "attribution": "PostgreSQL Global Development Group; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://www.postgresql.org/about/licence/",
+      "pages": [
+        {
+          "url": "https://www.postgresql.org/docs/current/tutorial-transactions.html"
+        }
+      ]
+    },
+    {
+      "id": "pgvector",
+      "publisher_root": "https://raw.githubusercontent.com/pgvector/pgvector/1d5ef0a160cadec08f754528669ce17e20eab38c/",
+      "attribution": "pgvector contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/pgvector/pgvector/blob/master/LICENSE",
+      "pages": [
+        {
+          "url": "https://raw.githubusercontent.com/pgvector/pgvector/1d5ef0a160cadec08f754528669ce17e20eab38c/README.md"
+        }
+      ]
+    },
+    {
+      "id": "qdrant",
+      "publisher_root": "https://qdrant.tech/",
+      "attribution": "Qdrant contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://qdrant.tech/terms/",
+      "pages": [
+        {
+          "url": "https://qdrant.tech/documentation/manage-data/collections/"
+        }
+      ]
+    },
+    {
+      "id": "redis",
+      "publisher_root": "https://redis.io/",
+      "attribution": "Redis / documentation contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://redis.io/legal/website-terms/",
+      "pages": [
+        {
+          "url": "https://redis.io/docs/latest/develop/data-types/"
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "publisher_root": "https://docs.docker.com/",
+      "attribution": "Docker Inc. / documentation contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/docker/docs/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://docs.docker.com/build/concepts/dockerfile/"
+        }
+      ]
+    },
+    {
+      "id": "github-actions",
+      "publisher_root": "https://docs.github.com/",
+      "attribution": "GitHub / documentation contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/github/docs/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://docs.github.com/en/actions/tutorials/authenticate-with-github_token"
+        }
+      ]
+    },
+    {
+      "id": "terraform",
+      "publisher_root": "https://developer.hashicorp.com/",
+      "attribution": "HashiCorp / documentation contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://www.hashicorp.com/terms-of-service",
+      "pages": [
+        {
+          "url": "https://developer.hashicorp.com/terraform/language/state"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "publisher_root": "https://docs.aws.amazon.com/",
+      "attribution": "Amazon Web Services; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://aws.amazon.com/documentation-overview/terms/",
+      "pages": [
+        {
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html"
+        }
+      ]
+    },
+    {
+      "id": "iam",
+      "publisher_root": "https://docs.aws.amazon.com/",
+      "attribution": "Amazon Web Services; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://aws.amazon.com/documentation-overview/terms/",
+      "pages": [
+        {
+          "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"
+        }
+      ]
+    },
+    {
+      "id": "ecs",
+      "publisher_root": "https://docs.aws.amazon.com/",
+      "attribution": "Amazon Web Services; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://aws.amazon.com/documentation-overview/terms/",
+      "pages": [
+        {
+          "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html"
+        }
+      ]
+    },
+    {
+      "id": "rds",
+      "publisher_root": "https://docs.aws.amazon.com/",
+      "attribution": "Amazon Web Services; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://aws.amazon.com/documentation-overview/terms/",
+      "pages": [
+        {
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html"
+        }
+      ]
+    },
+    {
+      "id": "opentelemetry",
+      "publisher_root": "https://opentelemetry.io/",
+      "attribution": "OpenTelemetry authors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/open-telemetry/opentelemetry.io/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://opentelemetry.io/docs/languages/python/instrumentation/"
+        }
+      ]
+    },
+    {
+      "id": "prometheus",
+      "publisher_root": "https://prometheus.io/",
+      "attribution": "Prometheus authors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/prometheus/docs/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://prometheus.io/docs/prometheus/latest/querying/basics/"
+        }
+      ]
+    },
+    {
+      "id": "grafana",
+      "publisher_root": "https://grafana.com/",
+      "attribution": "Grafana Labs / documentation contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://grafana.com/legal/terms/",
+      "pages": [
+        {
+          "url": "https://grafana.com/docs/grafana/latest/datasources/"
+        }
+      ]
+    },
+    {
+      "id": "langfuse",
+      "publisher_root": "https://langfuse.com/",
+      "attribution": "Langfuse / documentation contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://langfuse.com/terms",
+      "pages": [
+        {
+          "url": "https://langfuse.com/docs/observability/features/masking"
+        }
+      ]
+    },
+    {
+      "id": "pytest",
+      "publisher_root": "https://docs.pytest.org/",
+      "attribution": "pytest contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://github.com/pytest-dev/pytest/blob/main/LICENSE",
+      "pages": [
+        {
+          "url": "https://docs.pytest.org/en/stable/how-to/fixtures.html"
+        }
+      ]
+    },
+    {
+      "id": "playwright",
+      "publisher_root": "https://raw.githubusercontent.com/microsoft/playwright/deb7e86201e26cb4a8e25191fce5ef2f7a28aa87/",
+      "attribution": "Microsoft / Playwright contributors; refer to the linked publisher terms/license before redistribution.",
+      "license_or_terms_url": "https://raw.githubusercontent.com/microsoft/playwright/deb7e86201e26cb4a8e25191fce5ef2f7a28aa87/LICENSE",
+      "pages": [
+        {
+          "url": "https://raw.githubusercontent.com/microsoft/playwright/deb7e86201e26cb4a8e25191fce5ef2f7a28aa87/docs/src/test-assertions-js.md"
+        }
+      ]
+    }
+  ]
+}

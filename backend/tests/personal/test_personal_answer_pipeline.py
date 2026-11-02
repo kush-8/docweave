@@ -1,5 +1,7 @@
 """Actual SQL/search/accounting with mocked provider HTTP; no paid calls."""
 import json
+from types import SimpleNamespace
+import httpx
 from uuid import UUID,uuid4
 import pytest
 from sqlalchemy import text
@@ -15,6 +17,7 @@ pytestmark=pytest.mark.anyio
 
 async def test_personal_question_runs_hybrid_rerank_and_validated_answer(github_login,monkeypatch):
     from docweave.evaluation.personal import EvaluationAnswerEngine, capture_personal_job
+    from docweave.evaluation.costs import capture_job_costs
     settings,runtime,owner,github,state,cookie,_,_=github_login
     user,_=await session_context(settings,runtime,github,cookie)
     actor=UUID(user['id'])
@@ -35,11 +38,6 @@ async def test_personal_question_runs_hybrid_rerank_and_validated_answer(github_
         chat=await c.scalar(text('SELECT app.personal_create_conversation(:p,:profile)'),{'p':PA,'profile':profiles['generation']})
     async with owner.begin() as c:
         await c.execute(text("UPDATE app.conversations SET status='ready' WHERE id=CAST(:id AS uuid)"),{'id':chat['id']})
-    async with runtime.begin() as c:
-        await c.execute(text("SELECT set_config('docweave.actor_id',:actor,true)"),{'actor':str(actor)})
-        turn=await c.scalar(text('SELECT app.personal_append_turn(CAST(:id AS uuid),:key,:message)'),{'id':chat['id'],'key':uuid4(),'message':'How does React state work?'})
-    async with owner.connect() as c:
-        job=await c.scalar(text('SELECT id FROM app.personal_jobs WHERE turn_id=CAST(:id AS uuid)'),{'id':turn['id']})
     stages=[]
     async def transport(embedding,encoded,key,**kwargs):
         payload=json.loads(encoded)
@@ -57,13 +55,44 @@ async def test_personal_question_runs_hybrid_rerank_and_validated_answer(github_
     config={'EMBEDDING_PROFILE_ID':str(profiles['embedding']),'QUERY_PROFILE_ID':str(profiles['query_resolution']),'RERANK_PROFILE_ID':str(profiles['reranking']),'GEMINI_API_KEY':'placeholder','GROQ_API_KEY':'placeholder'}
     worker=make_engine(database_url('TEST_WORKER_DATABASE_URL'))
     captures=[]
+    job=None
     try:
         def factory(context,authorize):
             capture={}
             captures.append(capture)
             return EvaluationAnswerEngine(context,capture=capture,engine=worker,read_engine=runtime,config=config,generation_id=generation,authorize=authorize)
-        captures.append(await capture_personal_job(job,engine=worker,read_engine=runtime,settings=settings,
-            client=github,config=config,generation_id=generation))
+        from docweave.main import create_app
+        from docweave.evaluation.execution import execute_http_turn
+        app=create_app(github_settings=settings,auth_engine=runtime,github_client=github)
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app,raise_app_exceptions=False),base_url=settings.origin) as client:
+            client.cookies.set('docweave_session',cookie)
+            me=(await client.get('/api/v1/me')).json()
+            async def execute(turn_id):
+                nonlocal job
+                async with owner.connect() as c:
+                    job=await c.scalar(text('SELECT id FROM app.personal_jobs WHERE turn_id=CAST(:id AS uuid)'),{'id':turn_id})
+                capture=await capture_personal_job(job,engine=worker,read_engine=runtime,settings=settings,
+                    client=github,config=config,generation_id=generation)
+                capture['ledger']=await capture_job_costs(job,engine=owner)
+                return capture
+            wire=await execute_http_turn(SimpleNamespace(id='react-state',query='How does React state work?'),client=client,
+                headers={'Origin':settings.origin,'X-CSRF-Token':me['csrf_token']},conversation_id=chat['id'],execute_job=execute)
+            assert wire['http_status']==200 and wire['released_turn']['status']=='completed'
+            turn=wire['released_turn']
+            captures.append(wire['pipeline'])
+        costs=await capture_job_costs(job,engine=owner)
+        assert len(costs['reservations'])==4
+        assert {row['stage'] for row in costs['reservations']}=={'query_resolution','query_embedding','reranking','generation'}
+        assert await capture_job_costs(job,engine=owner)==costs
+        assert captures[0]['ledger']==costs
+        with pytest.raises(ValueError,match='migration role'):
+            await capture_job_costs(job,engine=runtime)
+        async with owner.begin() as c:
+            await c.execute(text("UPDATE app.cost_reservations SET status='uncertain',maximum_usd=0.03,actual_usd=NULL WHERE id=:id"),{'id':costs['reservations'][0]['id']})
+        retained=await capture_job_costs(job,engine=owner)
+        from decimal import Decimal
+        assert retained['retained_usd']==retained['unsettled_usd']==Decimal('0.03')
+        assert len(retained['reservations'])==4
         async with owner.connect() as c:
             result=(await c.execute(text('SELECT status,answer,citations FROM app.turns WHERE id=CAST(:id AS uuid)'),{'id':turn['id']})).one()
             assert result.status=='completed',result

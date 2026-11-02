@@ -1,0 +1,19 @@
+# Evaluation HTTP execution and ledger capture
+
+The [HTTP turn runner](../../backend/src/docweave/evaluation/execution.py) now submits the case query through the normal authenticated/CSRF/owner route using a deterministic conversation/case idempotency key. It executes an accepted queued/waiting turn through the supplied admitted job executor, then reads the result through the normal authorized HTTP endpoint. A completed repeated intent is read without re-executing the job. Expected labels are never submitted as provider context.
+
+Actual HTTP401/403/404 denial is recorded as `http_denied`, rather than inventing a generated answer outcome. Revoked access and policy-blocked releases exclude pipeline answers, blocks and retrieval quotes while retaining timing, implementation/configuration and ledger metadata. Callback failures record only exception type, continue to the authorized read, and remain explicit execution errors. Cancellation is not swallowed. Provider usage diagnostics retain nonnegative integer token counts only; arbitrary provider text cannot survive in the metadata allowance.
+
+Tests exercise real HTTP/sessions/SQL/RLS and durable worker functions for another owner, revocation after execution, blocked release, follow-up history and repeated completed intent. The existing full hybrid/rerank/cited-answer test now uses this HTTP runner around the ordinary `capture_personal_job`; its provider transport is mocked. These are infrastructure tests, not semantic-quality scores for the150-case draft.
+
+The [accounting reader](../../backend/src/docweave/evaluation/costs.py) requires the migration role and a read-only repeatable-read transaction. It maps the existing durable job/stage hashes to reservation IDs and reports precise retained/unsettled amounts, including rejected or uncertain work. Its scope is the job's lifetime, not new spending inferred from token usage. Re-reading the same job returns the same reservation identities; aggregators must deduplicate them across repeated captures. No final provider invoice is inferred. The current five admitted stage names are explicit and must be extended if the engine adds a stage.
+
+## Recovery correction found during verification
+
+The first complete run had712passes and one ingestion-recovery failure. The same test passed alone. Recovery used host UTC for `retry_at` while PostgreSQL evaluates queue due times. Advancing the worker clock by one hour deterministically reproduced an undrained job with the same observed state. Recovery now obtains both eligibility and immediate retry time from PostgreSQL, without changing queue future-scheduling semantics. The skewed-clock test and seven HTTP/RAG checks pass. Final combined verification is recorded in `logs/http-execution-final-20261103.xml` when complete.
+
+## Separately authorized live summary check
+
+User explicitly approved one fixed fictional Groq GPT-OSS20B summary request within US$0.001. It succeeded and retained its reference identity. The conservative reservation is US$0.000767325; observed token usage estimates US$0.00004095 at the verified rates, not final billing. The selected summary profile now records verified capability/account flags and remains disabled. Total live reservations are six, conservatively retaining US$0.005558110000. Private consent/profiles/processors/generation remain disabled. This authority is consumed and does not cover a full benchmark or private activation. Evidence is private in `backups/summary-acceptance-20261103.json`.
+
+Remaining: concrete per-case corpus/access/version/history provisioning, reviewed labels/spans, a separately approved complete workload, actual metrics and30+30human output reviews. Five verified recovery backup sets have been inventoried separately from the protected accounting archive; automatic expiry and post-restore deletion replay still require implementation. No commit was made; the overall goal remains active.

@@ -38,7 +38,14 @@ class EvaluationAnswerEngine(AnswerEngine):
         try:
             response = await super().dispatch(payload, profile, stage, embedding)
             timing['completed'] = True
-            timing['reported_usage'] = copy.deepcopy(response.get('usage', response.get('usageMetadata', {})))
+            usage = response.get('usage', response.get('usageMetadata', {}))
+            usage = usage if isinstance(usage, dict) else {}
+            timing['reported_usage'] = {key: usage[key] for key in
+                ('prompt_tokens', 'completion_tokens', 'total_tokens', 'promptTokenCount', 'totalTokenCount')
+                if type(usage.get(key)) is int and usage[key] >= 0}
+            details = usage.get('completion_tokens_details', {})
+            if isinstance(details, dict) and type(details.get('reasoning_tokens')) is int and details['reasoning_tokens'] >= 0:
+                timing['reported_usage']['reasoning_tokens'] = details['reasoning_tokens']
             if stage == 'generation':
                 evidence = json.loads(payload['messages'][1]['content'])['evidence']
                 result = answer_result(response, evidence, profile['model'])
