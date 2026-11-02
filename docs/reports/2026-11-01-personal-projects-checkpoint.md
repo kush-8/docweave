@@ -1,5 +1,7 @@
 # Current implementation and cleanup report
 
+Operational update: use the [2026-11-03 release checkpoint](2026-11-03-release-checkpoint.md) for current migration 0041, live fixed-probe results, cleanup and evaluation preparation. The measurements below describe the earlier implementation checkpoint.
+
 DocWeave is a personal GitHub-linked documentation assistant. Core implementation, repository cleanup and the authorized development recovery migration are complete. Accounting reconciliation, retained-schema cleanup and full release acceptance remain unfinished. Development is verified through `0038_openai_embeddings` with private restore-tested backups. Historical progress and measurements are kept only in [memory](../memory.md).
 
 ## What changed

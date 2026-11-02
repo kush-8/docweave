@@ -400,6 +400,44 @@ async def test_artifact_reconciliation_preserves_referenced_snapshots_and_remove
     assert c["store"].path((await metadata(c, accepted))["active_version_id"]).exists()
 
 
+async def test_personal_worker_maintenance_removes_old_orphans_and_keeps_live_and_recent_bytes(ingestion):
+    from types import SimpleNamespace
+    from docweave.workers.personal import recover_jobs
+    c = ingestion
+    accepted = (await upload(c)).json()
+    await work(c, accepted['job_id'])
+    orphan, recent = uuid4(), uuid4()
+    c['store'].put(orphan, b'Old unreferenced bytes')
+    c['store'].put(recent, b'Current unpublished bytes')
+    os.utime(c['store'].path(orphan), (0, 0))
+    async def stalled(**kwargs):
+        return []
+    queue = SimpleNamespace(job_manager=SimpleNamespace(get_stalled_jobs=stalled))
+    await recover_jobs(queue, c['worker'], store=c['store'])
+    assert not c['store'].path(orphan).exists()
+    assert c['store'].path(recent).exists()
+    assert c['store'].path((await metadata(c, accepted))['active_version_id']).exists()
+
+
+async def test_artifact_cleanup_tolerates_another_cleaner_removing_the_same_file(ingestion, monkeypatch):
+    from docweave.services.ingestion import reconcile_artifacts
+    c = ingestion
+    orphan = c['store'].path(uuid4())
+    orphan.write_bytes(b'Orphan')
+    original_stat = Path.stat
+    inspections = 0
+    def disappearing_stat(path, *args, **kwargs):
+        nonlocal inspections
+        if path == orphan:
+            inspections += 1
+            if inspections == 2:
+                path.unlink()
+        return original_stat(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'stat', disappearing_stat)
+    await reconcile_artifacts(c['worker'], c['store'], grace_seconds=0)
+    assert not orphan.exists()
+
+
 async def test_markdown_chunks_preserve_headings_and_small_fenced_blocks():
     from docweave.rag.parsing import parse_text
     parsed = parse_text(b"# First\n\nAlpha.\n\n# Second\n\nBeta.\n", "text/markdown")

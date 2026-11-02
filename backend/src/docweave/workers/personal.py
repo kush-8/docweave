@@ -19,9 +19,10 @@ from docweave.services.answer_engine import AnswerEngine
 from docweave.services.catalog_embeddings import make_embedder
 from docweave.services.private_indexing import run_private_index_job, reconcile_private_indexes
 from docweave.services.guardrails import run_rescan,reconcile_rescans
+from docweave.services.ingestion import reconcile_artifacts
 
 
-async def recover_jobs(queue, engine, generation_id=None):
+async def recover_jobs(queue, engine, generation_id=None, *, store=None):
     stalled = await queue.job_manager.get_stalled_jobs(queue='personal')
     for job in stalled:
         if job.task_name in ('docweave.personal', 'docweave.catalog', 'docweave.private_index', 'docweave.guardrail_rescan'):
@@ -32,6 +33,8 @@ async def recover_jobs(queue, engine, generation_id=None):
     await reconcile_rescans(engine)
     if generation_id is not None:
         await reconcile_private_indexes(engine,generation_id)
+    if store is not None:
+        await reconcile_artifacts(engine,store)
 
 async def run_worker(*,once=False):
     settings=GitHubSettings.load()
@@ -62,11 +65,11 @@ async def run_worker(*,once=False):
         await run_rescan(UUID(job_id),engine=engine,store=store)
     try:
         async with queue.open_async():
-            await recover_jobs(queue, engine, generation_id)
+            await recover_jobs(queue, engine, generation_id, store=store)
             async def maintain():
                 while True:
                     await asyncio.sleep(10)
-                    await recover_jobs(queue, engine, generation_id)
+                    await recover_jobs(queue, engine, generation_id, store=store)
             async with asyncio.TaskGroup() as tasks:
                 maintenance = tasks.create_task(maintain())
                 await queue.run_worker_async(queues=['personal'],wait=not once,concurrency=1,

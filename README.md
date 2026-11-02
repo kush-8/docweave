@@ -27,7 +27,7 @@ docweave/
   backups/             # Ignored private backups
 ```
 
-The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Authorized development migration is verified through `0038_openai_embeddings`; private restore-tested backups retain old data and the current pre-upgrade state. Retained models/migration functions still need reference checks before removal; they do not constitute a collaboration product. Archived incurred/unknown charges need reconciliation before paid processing.
+The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Authorized development migration is verified through `0041_chat_cleanup`; private restore-tested backups retain old data and the current pre-upgrade state. A reference audit retains active financial/operator/restoration structures and identifies obsolete SQL retirement candidates; these are not a collaboration product. Five bounded synthetic OpenAI/Groq checks passed under explicit approval; private processing remains disabled. See the [latest release checkpoint](docs/reports/2026-11-03-release-checkpoint.md) for remaining evaluation and retention gates.
 
 ## Run and verify
 

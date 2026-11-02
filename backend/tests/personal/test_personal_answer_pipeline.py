@@ -10,11 +10,11 @@ from docweave.core.settings import database_url
 from docweave.db.engine import make_engine
 from docweave.services.github_auth import session_context
 from docweave.services.personal_worker import run_personal_job
-from docweave.services.answer_engine import AnswerEngine
 
 pytestmark=pytest.mark.anyio
 
 async def test_personal_question_runs_hybrid_rerank_and_validated_answer(github_login,monkeypatch):
+    from docweave.evaluation.personal import EvaluationAnswerEngine, capture_personal_job
     settings,runtime,owner,github,state,cookie,_,_=github_login
     user,_=await session_context(settings,runtime,github,cookie)
     actor=UUID(user['id'])
@@ -56,9 +56,14 @@ async def test_personal_question_runs_hybrid_rerank_and_validated_answer(github_
     github.repository=repository
     config={'EMBEDDING_PROFILE_ID':str(profiles['embedding']),'QUERY_PROFILE_ID':str(profiles['query_resolution']),'RERANK_PROFILE_ID':str(profiles['reranking']),'GEMINI_API_KEY':'placeholder','GROQ_API_KEY':'placeholder'}
     worker=make_engine(database_url('TEST_WORKER_DATABASE_URL'))
+    captures=[]
     try:
-        def factory(context,authorize):return AnswerEngine(context,engine=worker,read_engine=runtime,config=config,generation_id=generation,authorize=authorize)
-        await run_personal_job(job,engine=worker,settings=settings,client=github,generation_id=generation,answerer_factory=factory)
+        def factory(context,authorize):
+            capture={}
+            captures.append(capture)
+            return EvaluationAnswerEngine(context,capture=capture,engine=worker,read_engine=runtime,config=config,generation_id=generation,authorize=authorize)
+        captures.append(await capture_personal_job(job,engine=worker,read_engine=runtime,settings=settings,
+            client=github,config=config,generation_id=generation))
         async with owner.connect() as c:
             result=(await c.execute(text('SELECT status,answer,citations FROM app.turns WHERE id=CAST(:id AS uuid)'),{'id':turn['id']})).one()
             assert result.status=='completed',result
@@ -66,6 +71,19 @@ async def test_personal_question_runs_hybrid_rerank_and_validated_answer(github_
             assert result.citations[0]['chunk_id']==str(chunk)
             assert await c.scalar(text('SELECT count(*) FROM app.personal_provider_calls'))==4
         assert stages==['dependency_resolution','embedding','ranking','answer']
+        assert captures[0]['answer_kind']=='answered'
+        assert captures[0]['retrieved_top_10'][0]['chunk_id']==chunk
+        assert captures[0]['answer']['citations'][0]['chunk_id']==str(chunk)
+        assert captures[0]['semantic_quality_evidence'] is False
+        assert captures[0]['released_turn']['status']=='completed'
+        assert captures[0]['end_to_end_ms']>=0
+        assert len(captures[0]['implementation']['sha256'])==64
+        assert captures[0]['retrieval_configuration']=={'lexical':'bm25','vector':'exact'}
+        assert [item['stage'] for item in captures[0]['stages']]==['query_resolution','query_embedding','reranking','generation']
+        assert all(item['latency_ms']>=0 and len(item['request_sha256'])==64 for item in captures[0]['stages'])
+        duplicate=await capture_personal_job(job,engine=worker,read_engine=runtime,settings=settings,
+            client=github,config=config,generation_id=generation)
+        assert 'answer' not in duplicate and len(stages)==4
         # The same durable turn waits, then resumes without a second query-resolution call.
         async with owner.begin() as c:
             await c.execute(text('DELETE FROM app.document_indexes WHERE generation_id=:g'),{'g':generation})

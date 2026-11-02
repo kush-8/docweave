@@ -78,12 +78,15 @@ async def reconcile_artifacts(engine, store, *, grace_seconds=300):
     async with engine.connect() as connection:
         retained = set(str(identity) for identity in (await repository.retained_artifacts(connection)).scalars())
     for path in store.root.iterdir():
-        if path.is_file() and path.name not in retained and time.time() - path.stat().st_mtime >= grace_seconds:
-            try:
-                UUID(path.name)
-            except ValueError:
-                continue
-            path.unlink(missing_ok=True)
+        try:
+            if path.is_file() and path.name not in retained and time.time() - path.stat().st_mtime >= grace_seconds:
+                try:
+                    UUID(path.name)
+                except ValueError:
+                    continue
+                path.unlink(missing_ok=True)
+        except FileNotFoundError:
+            continue
 
 
 async def document_row(engine, actor, document_id, *, write=False):
