@@ -17,6 +17,7 @@ from docweave.rag.tokenization import count_evidence_tokens
 from docweave.repositories import personal as repository
 from docweave.repositories.rag import scope
 from docweave.services.personal_providers import dispatch
+from docweave.services.guardrails import current_policy,release_turn
 
 class AnswerEngine:
     def __init__(self,job,*,engine,read_engine,config,generation_id,authorize):
@@ -31,9 +32,13 @@ class AnswerEngine:
         self.hits=[]
         self.history=None
         self.history_hash=None
+        self.guardrail_epoch=None
 
     async def authorize(self):
         await self.authorize_upstream()
+        if self.guardrail_epoch is not None:
+            async with self.engine.begin() as c:
+                await current_policy(c,self.guardrail_epoch)
         if self.history_hash is not None:
             async with self.engine.begin() as c:
                 items=await repository.history(c,UUID(self.job['id']),UUID(self.job['lease_token']))
@@ -55,14 +60,31 @@ class AnswerEngine:
         return result
 
     async def dispatch(self,payload,profile,stage,embedding=False):
+        async with self.engine.begin() as c:
+            policy=await current_policy(c,self.guardrail_epoch)
+        self.guardrail_epoch=policy['epoch']
+        if embedding:
+            validate=embedding_backend(self.config).embedding_result
+        elif stage=='summarization':
+            validate=lambda value:summary_result(value,profile['model'])
+        else:
+            envelope=json.loads(payload['messages'][1]['content'])
+            if stage=='query_resolution':
+                validate=lambda value:resolution_result(value,envelope['project_context'],profile['model'])
+            elif stage=='reranking':
+                validate=lambda value:ranking_result(value,[hit['chunk_id'] for hit in envelope['evidence']],profile['model'])
+            else:
+                validate=lambda value:answer_result(value,envelope['evidence'],profile['model'])
         return await dispatch(payload,embedding=embedding,profile_id=UUID(profile['id']),operation_key=str(self.job['id'])+':'+stage,actor_id=self.actor.user_id,project_id=self.project_id,
-            engine=self.engine,api_key=self.config.get(embedding_backend(self.config).API_KEY if embedding else 'GROQ_API_KEY'),authorize=self.authorize)
+            engine=self.engine,api_key=self.config.get(embedding_backend(self.config).API_KEY if embedding else 'GROQ_API_KEY'),authorize=self.authorize,validate_response=validate)
 
     async def context_history(self):
         if self.history is None:
             async with self.engine.begin() as c:
+                policy=await current_policy(c,self.guardrail_epoch)
+                self.guardrail_epoch=policy['epoch']
                 items=await repository.history(c,UUID(self.job['id']),UUID(self.job['lease_token']))
-            if any(item['status']=='blocked_policy' for item in items):
+            if any(release_turn(item)['status']=='blocked_policy' for item in items):
                 raise HostedError('context_blocked')
             self.history_hash=self.history_digest(items)
             completed=[item for item in items if item['status']=='completed']
@@ -81,15 +103,20 @@ class AnswerEngine:
                 async with self.engine.begin() as c:
                     saved=await repository.summary(c,UUID(self.job['id']),UUID(self.job['lease_token']),revision)
                 expected={'context_revision':revision,'through_sequence':older[-1]['sequence'],
-                          'history_hash':self.history_digest(older),'prompt_version':SUMMARY_PROMPT_VERSION}
-                valid=isinstance(saved,dict) and all(saved.get(key)==value for key,value in expected.items())
+                          'history_hash':self.history_digest(older),'prompt_version':SUMMARY_PROMPT_VERSION,'policy_epoch':self.guardrail_epoch}
+                covered=[]
+                if isinstance(saved,dict) and type(saved.get('through_sequence')) is int and isinstance(saved.get('text'),str):
+                    covered=[item for item in older if item['sequence']<=saved.get('through_sequence',0)]
+                valid=bool(covered) and all(saved.get(key)==expected[key] for key in ('context_revision','prompt_version','policy_epoch'))
+                valid=valid and covered[-1]['sequence']==saved.get('through_sequence') and self.history_digest(covered)==saved.get('history_hash')
                 assessment=assess_text(saved.get('text','')) if valid else None
-                valid=valid and bool(saved.get('text')) and assessment.complete and not assessment.credential_blocked and not assessment.injection_flagged
-                if not valid:
+                valid=valid and isinstance(saved.get('text'),str) and bool(saved['text']) and count_evidence_tokens(saved['text'])<=2000 and assessment.complete and not assessment.credential_blocked and not assessment.injection_flagged
+                pending=older[len(covered):] if valid else older
+                if pending:
                     profile=await self.profile(self.config.get('SUMMARY_PROFILE_ID'),'summarization')
-                    summary=''
+                    summary=saved['text'] if valid else ''
                     # Bound every request, including a single unusually large historical turn.
-                    serialized=json.dumps(older,ensure_ascii=False)
+                    serialized=json.dumps(pending,ensure_ascii=False)
                     for offset in range(0,len(serialized),24000):
                         payload=summary_request(self.job['project'],summary,serialized[offset:offset+24000],profile['model'])
                         summary=summary_result(await self.dispatch(payload,profile,'summarization'),profile['model'])
@@ -151,8 +178,8 @@ class AnswerEngine:
         profile=await self.profile(identity,'generation')
         wire=[{'chunk_id':str(hit['chunk_id']),'document_version_id':str(hit['document_version_id']),'quote':hit['quote']} for hit in selected]
         payload=answer_request(turn['message'],project,await self.context_history(),wire,profile['model'])
-        raw=await self.dispatch(payload,profile,'generation')
         try:
+            raw=await self.dispatch(payload,profile,'generation')
             result=answer_result(raw,wire,profile['model'])
         except HostedError as error:
             if str(error)=='invalid_answer_citations':

@@ -66,7 +66,7 @@ async def test_scan_pins_reads_to_one_commit_and_skips_source_files():
 async def test_same_commit_checks_access_without_tree_or_download():
     from docweave.services.repository_sync import scan_repository
     client, requests = fixture_client()
-    result = await scan_repository(client, "token", 42, "main", "web", previous_commit=SHA)
+    result = await scan_repository(client, "token", 42, "main", "web", previous_commit=SHA, previous_fingerprint="repo-direct-v3:" + "a" * 64)
     assert result == {"commit_sha": SHA, "scan": None, "unchanged": True}
     assert not any("/contents/" in request.url.path or "/trees/" in request.url.path for request in requests)
 
@@ -129,6 +129,30 @@ async def test_pnpm_ancestor_is_fetched_at_pinned_sha_and_scoped():
     assert not any('sibling/package.json' in request.url.path for request in requests)
 
 
+@pytest.mark.parametrize('manager', ['npm', 'pnpm'])
+async def test_nested_app_uses_nearest_ancestor_lock_and_reads_no_sibling_manifest(manager):
+    import json
+    from docweave.services.repository_sync import scan_repository
+    from tests.github.test_stack import PNPM
+    filename = 'package-lock.json' if manager == 'npm' else 'pnpm-lock.yaml'
+    lock = json.dumps({'lockfileVersion': 2, 'packages': {
+        'web': {'dependencies': {'react': '^19'}},
+        'node_modules/react': {'version': '19.1.0'},
+        'sibling': {'dependencies': {'react': '^18'}},
+        'sibling/node_modules/react': {'version': '18.3.1'},
+    }}).encode() if manager == 'npm' else PNPM
+    client, requests = fixture_client({
+        'apps/web/package.json': b'{"dependencies":{"react":"^19"}}',
+        'apps/' + filename: lock, filename: b'unrelated outer lock',
+        'apps/sibling/package.json': b'{"dependencies":{"react":"^18"}}',
+    })
+    result = await scan_repository(client, 'token', 42, 'main', 'apps/web')
+    assert result['scan'].complete, result['scan'].issues
+    assert [(dep.name, dep.resolved_version) for dep in result['scan'].dependencies] == [('react', '19.1.0')]
+    assert {request.url.path.removeprefix('/repositories/42/contents/') for request in requests
+        if '/contents/' in request.url.path} == {'apps/web/package.json', 'apps/' + filename}
+
+
 async def test_duplicate_tree_paths_cannot_silently_select_metadata():
     from docweave.services.repository_sync import scan_repository
     row = {'path': 'web/package.json', 'mode': '100644', 'type': 'blob', 'size': 2}
@@ -148,6 +172,22 @@ async def test_ancestor_locks_from_unselected_ecosystems_are_not_used(files, app
     result = await scan_repository(client, 'token', 42, 'main', application)
     assert result['scan'].complete, result['scan'].issues
     assert sum('/contents/' in request.url.path for request in requests) == 1
+
+
+@pytest.mark.parametrize('files,application', [
+    ({'apps/api/pyproject.toml': b'[project]\nname="api"\ndependencies=[]\n',
+      'uv.lock': b'version=1\n'}, 'apps/api'),
+    ({'apps/web/package.json': b'{}', 'yarn.lock': b'# yarn lockfile v1\n'}, 'apps/web'),
+    ({'pyproject.toml': b'[project]\nname="api"\ndependencies=[]\n',
+      'poetry.lock': b'# poetry lock'}, ''),
+    ({'Pipfile': b'[packages]\n', 'Pipfile.lock': b'{}'}, ''),
+])
+async def test_unsupported_workspace_layouts_remain_explicitly_incomplete(files, application):
+    from docweave.services.repository_sync import scan_repository
+    client, _ = fixture_client(files)
+    result = await scan_repository(client, 'token', 42, 'main', application)
+    assert not result['scan'].complete
+    assert result['scan'].issues
 
 
 @pytest.mark.parametrize("application_path", ["../web", "web/../app", "/web", "web\\app", "web//app"])

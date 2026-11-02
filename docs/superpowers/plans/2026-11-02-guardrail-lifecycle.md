@@ -8,12 +8,12 @@
 
 ## Execution and checks
 
-- [ ] Add failing scanner/lifecycle tests for policy activation, stale leases/review, immutable artifact corruption, private/shared review authority and citation/history invalidation.
-- [ ] Implement local LangChain normalization/detection with content-addressed revisions; retain the `assess_text` interface and safe findings.
-- [ ] Add policy/epoch, durable rescan jobs and content-free audit events. Replace hard-coded SQL revisions with current policy, verify parser bindings and current reviewer authority; activate policy atomically and hold stale assessments immediately.
-- [ ] Reconcile/recover bounded jobs on the existing queue, publish under current epoch/token/hash checks, retain compatible vectors, resume approved work/waits, and provide bounded operator audit/review/retry commands.
-- [ ] Fence hosted dispatch/recovery against policy changes; validate generated text before checkpointing, and recheck cached conversation history before each hosted stage.
-- [ ] Run focused then serial backend checks, migration/model checks and whitespace checks. Update operational docs with actual results and remaining acceptance limits.
+- [x] Add failing scanner/lifecycle tests for policy activation, stale leases/review, immutable artifact corruption, private/shared review authority and citation/history invalidation.
+- [x] Implement local LangChain normalization/detection with content-addressed revisions; retain the `assess_text` interface and safe findings.
+- [x] Add policy/epoch, durable rescan jobs and content-free audit events. Replace hard-coded SQL revisions with current policy, verify parser bindings and current reviewer authority; activate policy atomically and hold stale assessments immediately.
+- [x] Reconcile/recover bounded jobs on the existing queue, publish under current epoch/token/hash checks, retain compatible vectors, resume approved work/waits, and provide bounded operator audit/review/retry commands.
+- [x] Fence hosted dispatch/recovery against policy changes; validate generated text before checkpointing, and recheck cached conversation history before each hosted stage.
+- [x] Run focused then serial backend checks, migration/model checks and whitespace checks. Final serial backend verification: 664 passed in 254.57 seconds with warnings as errors; evidence is `logs/guardrail-final-20261103.xml`. Lock, compile, scanner/migration revision and documentation-link checks pass. Independent review findings were fixed and rechecked. Development rollout, paid-provider acceptance and full release evaluation remain separate.
 
 ## Review focus
 

@@ -57,6 +57,7 @@ async def test_provider_selection_is_explicit():
         embedding_backend({'EMBEDDING_PROVIDER':'other'})
 
 async def test_catalog_and_answer_callers_choose_openai_only_for_embeddings(monkeypatch):
+    from contextlib import asynccontextmanager
     from uuid import uuid4
     from docweave.services import catalog_embeddings, answer_engine
     calls=[]
@@ -65,6 +66,11 @@ async def test_catalog_and_answer_callers_choose_openai_only_for_embeddings(monk
         return {'model':'text-embedding-3-small','data':[{'index':0,'embedding':basis()}]}
     monkeypatch.setattr(catalog_embeddings,'dispatch',dispatch)
     monkeypatch.setattr(answer_engine,'dispatch',dispatch)
+    async def policy(*args): return {'epoch':1}
+    monkeypatch.setattr(answer_engine,'current_policy',policy)
+    class Engine:
+        @asynccontextmanager
+        async def begin(self): yield None
     config={'EMBEDDING_PROVIDER':'openai','OPENAI_API_KEY':'embedding-key','GROQ_API_KEY':'llm-key',
         'GEMINI_API_KEY':'legacy-key','EMBEDDING_PROFILE_ID':str(uuid4())}
     embed=catalog_embeddings.make_embedder({'id':str(uuid4())},uuid4(),engine=None,config=config)
@@ -72,9 +78,9 @@ async def test_catalog_and_answer_callers_choose_openai_only_for_embeddings(monk
     assert calls[-1][0]['input']==['public documentation']
     assert calls[-1][1]['api_key']=='embedding-key'
     engine=answer_engine.AnswerEngine({'id':str(uuid4()),'actor_id':str(uuid4()),'project':{'id':str(uuid4())}},
-        engine=None,read_engine=None,config=config,generation_id=uuid4(),authorize=None)
-    profile={'id':str(uuid4())}
+        engine=Engine(),read_engine=None,config=config,generation_id=uuid4(),authorize=None)
+    profile={'id':str(uuid4()),'model':'openai/gpt-oss-20b'}
     await engine.dispatch({'model':'text-embedding-3-small'},profile,'query_embedding',embedding=True)
     assert calls[-1][1]['api_key']=='embedding-key'
-    await engine.dispatch({'model':'openai/gpt-oss-20b'},profile,'generation')
+    await engine.dispatch({'model':'openai/gpt-oss-20b','messages':[{}, {'content':json.dumps({'evidence':[]})}]},profile,'generation')
     assert calls[-1][1]['api_key']=='llm-key'

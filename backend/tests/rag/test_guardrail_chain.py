@@ -27,6 +27,14 @@ def test_revision_is_bound_to_detector_configuration():
     assert len(guardrails.RULE_REVISION)==len('deterministic-')+64
 
 
+def test_retained_completed_turn_is_checked_under_current_rules():
+    from docweave.services.guardrails import release_turn
+    turn={'status':'completed','message':'Explain hooks','answer':'ghp_'+'a'*36,'citations':[]}
+    released=release_turn(turn)
+    assert released['status']=='blocked_policy' and released['answer'] is None and released['message']==''
+    assert turn['status']=='completed'
+
+
 @pytest.mark.anyio
 async def test_history_is_rechecked_after_it_was_cached(monkeypatch):
     from docweave.services.answer_engine import AnswerEngine
@@ -44,6 +52,9 @@ async def test_history_is_rechecked_after_it_was_cached(monkeypatch):
     async def history(*args):
         return items
     monkeypatch.setattr('docweave.services.answer_engine.repository.history',history)
+    async def policy(*args):
+        return {'epoch':1}
+    monkeypatch.setattr('docweave.services.answer_engine.current_policy',policy)
     monkeypatch.setattr('docweave.services.answer_engine.count_evidence_tokens',len)
     async def authorized():
         pass

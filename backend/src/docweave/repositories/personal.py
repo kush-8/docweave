@@ -72,7 +72,7 @@ async def recover_jobs(connection):
 async def retry_stalled(connection, identity):
     await connection.execute(text('SET LOCAL search_path=queue,pg_catalog'))
     job = await connection.scalar(text("""SELECT j.id FROM queue.procrastinate_jobs j WHERE j.id=:id
-        AND j.queue_name='personal' AND j.task_name IN ('docweave.personal','docweave.catalog','docweave.private_index') AND j.status='doing'
+        AND j.queue_name='personal' AND j.task_name IN ('docweave.personal','docweave.catalog','docweave.private_index','docweave.guardrail_rescan') AND j.status='doing'
         AND (j.worker_id IS NULL OR EXISTS(SELECT 1 FROM queue.procrastinate_workers w
             WHERE w.id=j.worker_id AND w.last_heartbeat<now()-interval '30 seconds')) FOR UPDATE OF j"""), {'id':identity})
     if job is None:
@@ -122,8 +122,8 @@ async def replace_processing_policy(connection,project,revision,processors):
 
 async def resource(connection,kind,identity):
     return await connection.scalar(text('SELECT app.personal_resource(:kind,:id)'),{'kind':kind,'id':identity})
-async def review_document(connection,document,version,digest,rules):
-    return await connection.scalar(text('SELECT app.personal_review_document(:document,:version,:hash,:rules)'),{'document':document,'version':version,'hash':digest,'rules':rules})
+async def review_document(connection,document,version,digest,rules,epoch):
+    return await connection.scalar(text('SELECT app.personal_review_document(:document,:version,:hash,:rules,:epoch)'),{'document':document,'version':version,'hash':digest,'rules':rules,'epoch':epoch})
 
-async def assessment(connection,document):
-    return await connection.scalar(text('SELECT app.personal_assessment_view(:id)'),{'id':document})
+async def assessment(connection,document,version=None):
+    return await connection.scalar(text('SELECT app.personal_version_assessment_view(:id,:version)'),{'id':document,'version':version})

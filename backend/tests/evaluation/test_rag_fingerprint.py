@@ -36,3 +36,6 @@ def test_default_source_fingerprint_covers_all_stages_and_provider_contracts():
     assert "backend/src/docweave/integrations/openai.py" in files
     assert "backend/src/docweave/integrations/provider_transport.py" in files
     assert "backend/src/docweave/integrations/groq.py" in files
+    assert "backend/src/docweave/core/guardrails.py" in files
+    assert "backend/src/docweave/services/guardrails.py" in files
+    assert "backend/src/docweave/services/personal_providers.py" in files

@@ -22,7 +22,10 @@ def safe_path(path):
 
 
 def metadata_path(path):
-    return safe_path(path) and (PurePosixPath(path).name in METADATA_NAMES or path.endswith((".txt", ".in")))
+    return safe_path(path) and not set(PurePosixPath(path).parts[:-1]) & {
+        'node_modules', 'vendor', '.venv', 'venv', '.git', '.hg', '.svn', '.yarn',
+        '.pnpm-store', 'dist', 'build', '.next', '.nuxt', '__pycache__', '.tox',
+    } and (PurePosixPath(path).name in METADATA_NAMES or path.endswith((".txt", ".in")))
 
 
 def valid_sha(sha):

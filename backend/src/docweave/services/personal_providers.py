@@ -9,11 +9,39 @@ from docweave.integrations.openai import embedding_post
 from docweave.rag.contracts import HostedError
 from docweave.core.guardrails import assess_text
 from docweave.repositories import personal_providers as repository
+from docweave.services.guardrails import current_policy
 
-async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project_id,engine,api_key,authorize,transport=None):
+
+def guard_payload(payload,embedding):
     assessment=assess_text(json.dumps(payload,ensure_ascii=False))
     if assessment.credential_blocked or not assessment.complete:
         raise HostedError('credential_blocked')
+    if not embedding:
+        for message in payload.get('messages',[]):
+            if message.get('role')!='user':
+                continue
+            try:
+                envelope=json.loads(message['content'])
+                if not isinstance(envelope,dict):
+                    raise ValueError
+            except (ValueError,TypeError,KeyError):
+                raise HostedError('invalid_prompt_envelope') from None
+            for key,value in envelope.items():
+                assessment=assess_text(json.dumps(value,ensure_ascii=False))
+                if not assessment.complete or assessment.credential_blocked or (key!='evidence' and assessment.injection_flagged):
+                    raise HostedError('context_blocked')
+
+
+def guard_response(result,validate_response=None):
+    assessment=assess_text(json.dumps(result,ensure_ascii=False))
+    if not assessment.complete or assessment.credential_blocked or assessment.injection_flagged:
+        raise HostedError('invalid_provider_output')
+    if validate_response is not None:
+        validate_response(result)
+
+
+async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project_id,engine,api_key,authorize,transport=None,validate_response=None):
+    guard_payload(payload,embedding)
     encoded=json.dumps(payload,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode()
     if len(encoded)>131072 or not api_key:
         raise HostedError('provider_unavailable')
@@ -27,12 +55,16 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
     await authorize()
     try:
         async with engine.begin() as c:
+            policy=await current_policy(c)
             reservation=await repository.resume(c,project_id,actor_id,profile_id,operation,body_hash,incoming,outgoing,hashlib.sha256(str(operation_key).encode()).hexdigest())
     except DBAPIError as error:
         code=getattr(error.orig,'sqlstate',None)
         raise HostedError('completion_unknown' if code=='DW014' else 'provider_unavailable') from None
     if 'response' in reservation:
+        guard_response(reservation['response'],validate_response)
         await authorize()
+        async with engine.begin() as c:
+            await current_policy(c,policy['epoch'])
         return reservation['response']
     expected=reservation['model']
     actual_model=payload.get('model','').removeprefix('models/')
@@ -41,6 +73,8 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
     if actual_model!=expected or (reservation['role']=='embedding') != embedding or reservation['provider']!=provider:
         raise HostedError('profile_mismatch')
     await authorize()
+    async with engine.begin() as c:
+        await current_policy(c,policy['epoch'])
     try:
         result=await embedding_post(encoded,api_key,transport=transport) if openai_embedding else await provider_post(embedding,encoded,api_key,transport=transport)
     except Exception:
@@ -54,7 +88,11 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
         async with engine.begin() as c:
             await repository.settle(c,UUID(reservation['id']),actual)
     await authorize()
+    guard_response(result,validate_response)
     async with engine.begin() as c:
+        await current_policy(c,policy['epoch'])
         await repository.checkpoint(c,UUID(reservation['id']),result)
     await authorize()
+    async with engine.begin() as c:
+        await current_policy(c,policy['epoch'])
     return result

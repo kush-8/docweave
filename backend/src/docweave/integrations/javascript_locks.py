@@ -4,6 +4,7 @@ from pathlib import PurePosixPath
 import re
 
 import yaml
+from docweave.rag.contracts import unique_keys
 
 FIELDS = (('dependencies', 'runtime'), ('devDependencies', 'development'), ('optionalDependencies', 'optional'))
 VERSION = re.compile(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?')
@@ -44,7 +45,7 @@ def pnpm_dependencies(raw, importer, manifest):
         raise ValueError('unsupported pnpm version')
     selected = data['importers'][importer or '.']
     packages, snapshots = data.get('packages', {}), data.get('snapshots', {})
-    result, pending, seen = [], [], set()
+    result, pending = [], []
     for field, role in FIELDS:
         declared, locked = manifest.get(field, {}), selected.get(field, {})
         if declared.keys() != locked.keys():
@@ -54,6 +55,19 @@ def pnpm_dependencies(raw, importer, manifest):
             if entry['specifier'] != constraint:
                 raise ValueError('stale pnpm specifier')
             pending.append((name, entry['version'], role, True))
+    declared_roots = tuple(pending)
+    for peer in manifest.get('peerDependencies', {}):
+        references = {reference for name, reference, _, _ in declared_roots if name == peer}
+        if not references:
+            for name, reference, _, _ in declared_roots:
+                snapshot = snapshots[name + '@' + reference]
+                for field in ('dependencies', 'optionalDependencies'):
+                    if peer in snapshot.get(field, {}):
+                        references.add(snapshot[field][peer])
+        if len(references) > 1:
+            raise ValueError('ambiguous pnpm peer resolution')
+        if references:
+            pending.append((peer, references.pop(), 'peer', True))
     while pending:
         name, reference, role, direct = pending.pop()
         if not NAME.fullmatch(name) or not isinstance(reference, str):
@@ -65,33 +79,29 @@ def pnpm_dependencies(raw, importer, manifest):
         result.append((name, version, role, direct))
         if len(result) > 10_000:
             raise ValueError('dependency bounds exceeded')
-        if (key, role) in seen:
-            continue
-        seen.add((key, role))
         package = packages[name + '@' + version]
         if package.get('patched') or name + '@' + version in data.get('patchedDependencies', {}):
             raise ValueError('patched pnpm package unsupported')
         resolution = package['resolution']
         if not resolution.get('integrity') or set(resolution) - {'integrity'}:
             raise ValueError('nonregistry pnpm resolution')
-        snapshot = snapshots[key]
-        for field in ('dependencies', 'optionalDependencies'):
-            for child, value in snapshot.get(field, {}).items():
-                pending.append((child, value, 'optional' if field == 'optionalDependencies' else role, False))
+        if not isinstance(snapshots[key], dict):
+            raise ValueError('invalid pnpm snapshot')
     return result
 
 
 def npm_dependencies(raw, importer, manifest):
-    data = json.loads(raw)
+    importer = '' if importer == '.' else importer
+    data = json.loads(raw, object_pairs_hook=unique_keys)
     if data.get('lockfileVersion') not in (2, 3):
         raise ValueError('unsupported npm version')
     packages = data['packages']
     selected = packages[importer]
-    pending, seen, result = [], set(), []
-    for field, role in FIELDS:
+    pending, result = [], []
+    for field, role in (*FIELDS, ('peerDependencies', 'peer')):
         if manifest.get(field, {}) != selected.get(field, {}):
             raise ValueError('stale npm importer')
-        pending.extend((importer, name, role, True, False) for name in manifest.get(field, {}))
+        pending.extend((importer, name, role, True, field == 'peerDependencies' and manifest.get('peerDependenciesMeta', {}).get(name, {}).get('optional') is True) for name in manifest.get(field, {}))
     while pending:
         location, name, role, direct, optional_peer = pending.pop()
         if not NAME.fullmatch(name):
@@ -101,6 +111,11 @@ def npm_dependencies(raw, importer, manifest):
             if parent.name != 'node_modules' and str(parent / 'node_modules' / name) in packages), None)
         if found is None:
             if optional_peer:
+                continue
+            if role == 'optional':
+                result.append((name, None, role, direct))
+                if len(result) > 10_000:
+                    raise ValueError('dependency bounds exceeded')
                 continue
             raise ValueError('missing npm resolution')
         package = packages[found]
@@ -113,13 +128,4 @@ def npm_dependencies(raw, importer, manifest):
         result.append((name, version, role, direct))
         if len(result) > 10_000:
             raise ValueError('dependency bounds exceeded')
-        if (found, role) in seen:
-            continue
-        seen.add((found, role))
-        for field in ('dependencies', 'optionalDependencies'):
-            pending.extend((found, child, 'optional' if field == 'optionalDependencies' else role, False, False)
-                for child in package.get(field, {}))
-        for child in package.get('peerDependencies', {}):
-            optional_peer = package.get('peerDependenciesMeta', {}).get(child, {}).get('optional') is True
-            pending.append((found, child, 'optional' if optional_peer else role, False, optional_peer))
     return result

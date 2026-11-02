@@ -4,17 +4,17 @@ from pathlib import PurePosixPath
 
 from docweave.core.errors import DomainError
 from docweave.integrations.github import METADATA_NAMES, metadata_path, safe_path
-from docweave.integrations.stack import parse_stack
+from docweave.integrations.stack import parse_stack, SCAN_REVISION
 
 
-async def scan_repository(client, token, repository_id, branch, application_path, previous_commit=None):
+async def scan_repository(client, token, repository_id, branch, application_path, previous_commit=None, previous_fingerprint=None):
     root = application_path
     if not isinstance(root, str) or (root and not safe_path(root)) or len(root.split("/")) > 8:
         raise DomainError("invalid_request")
     with client.request_budget(200):
         await client.repository(token, repository_id)
         commit = await client.head(token, repository_id, branch)
-        if commit == previous_commit:
+        if commit == previous_commit and isinstance(previous_fingerprint, str) and previous_fingerprint.startswith(SCAN_REVISION + ':'):
             await client.repository(token, repository_id)
             return {"commit_sha": commit, "scan": None, "unchanged": True}
         tree = await client.tree(token, repository_id, commit)
@@ -28,27 +28,30 @@ async def scan_repository(client, token, repository_id, branch, application_path
             issues.append("invalid repository tree")
         elif len({row['path'] for row in entries[:20_001]}) != len(entries[:20_001]):
             issues.append('duplicate repository tree paths')
-        if any(isinstance(row, dict) and isinstance(row.get("path"), str) and len(row["path"].split("/")) > 8 for row in entries[:20_001]):
+        if any(isinstance(row, dict) and metadata_path(row.get("path")) and len(row["path"].split("/")) > 8 for row in entries[:20_001]):
             issues.append("repository tree depth exceeded")
         files = {}
         if not issues:
             by_path = {row["path"]: row for row in entries}
             prefix = root + "/" if root else ""
-            pending = [prefix + name for name in sorted(METADATA_NAMES) if prefix + name in by_path]
+            pending = sorted(path for path in by_path if path.startswith(prefix)
+                and PurePosixPath(path).name in METADATA_NAMES and metadata_path(path))
             enclosing = set()
-            if root:
+            manifests = [path for path in pending if PurePosixPath(path).name in ('package.json', 'pyproject.toml', 'requirements.txt', 'Pipfile')]
+            for manifest in manifests:
+                folder = PurePosixPath(manifest).parent
                 for name in ('uv.lock', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'poetry.lock', 'Pipfile.lock'):
                     if name in ('package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'):
-                        if prefix + 'package.json' not in by_path:
+                        if str(folder / 'package.json') not in by_path:
                             continue
-                    elif not any(prefix + manifest in by_path for manifest in ('pyproject.toml', 'requirements.txt', 'Pipfile')):
+                    elif not any(str(folder / candidate) in by_path for candidate in ('pyproject.toml', 'requirements.txt', 'Pipfile')):
                         continue
-                    if prefix + name not in by_path:
-                        path = next((str(parent / name) for parent in PurePosixPath(root).parents
+                    if str(folder / name) not in by_path:
+                        path = next((str(parent / name) for parent in folder.parents
                             if str(parent / name) in by_path), None)
                         if path:
                             enclosing.add(path)
-                pending.extend(sorted(enclosing))
+            pending.extend(sorted(enclosing))
             seen = set()
             total = 0
             while pending:
@@ -87,7 +90,7 @@ async def scan_repository(client, token, repository_id, branch, application_path
                 files[path] = data
                 if PurePosixPath(path).name in ("yarn.lock", "poetry.lock", "Pipfile", "Pipfile.lock"):
                     issues.append("unsupported dependency metadata")
-                if path.endswith('pnpm-workspace.yaml') and prefix + 'pnpm-lock.yaml' not in by_path:
+                if path.endswith('pnpm-workspace.yaml') and str(PurePosixPath(path).parent / 'pnpm-lock.yaml') not in by_path:
                     issues.append('pnpm workspace requires a supported lock')
                 if path in enclosing and PurePosixPath(path).name not in ('package-lock.json', 'pnpm-lock.yaml'):
                     issues.append("enclosing workspace lock requires scoped parsing")

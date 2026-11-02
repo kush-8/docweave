@@ -46,6 +46,6 @@ async def test_github_project_upload_and_exact_version_review(github_login,tmp_p
         assert assessment.status_code==200,assessment.text
         body=assessment.json()
         assert body['injection_flagged'] and not body['credential_blocked']
-        review={key:body[key] for key in ('document_version_id','content_hash','rule_revision')}
+        review={key:body[key] for key in ('document_version_id','content_hash','rule_revision','policy_epoch')}
         assert (await client.post('/api/v1/documents/'+accepted['document_id']+'/review',json=review,headers=headers)).status_code==200
         assert (await client.post('/api/v1/documents/'+accepted['document_id']+'/review',json={**review,'content_hash':'0'*64},headers=headers)).status_code==422

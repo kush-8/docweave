@@ -9,6 +9,8 @@ from docweave.integrations.provider_transport import provider_post
 from docweave.rag.contracts import HostedError
 from docweave.rag.prompts import PROMPT_VERSION
 from docweave.repositories import compatibility as repository
+from docweave.services.personal_providers import guard_payload,guard_response
+from docweave.services.guardrails import current_policy
 
 
 def synthetic_request(name):
@@ -52,6 +54,7 @@ async def run_synthetic_probe(actor, project_id, name, operation_key, *, engine,
     body = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
     fingerprint = hashlib.sha256(body).hexdigest()
     embedding = name.startswith("gemini-")
+    guard_payload(payload,embedding)
     model = "gemini-embedding-2" if embedding else payload["model"]
     provider = "gemini" if embedding else "groq"
     backend = "google-generativelanguage" if embedding else "groq-cloud"
@@ -60,11 +63,15 @@ async def run_synthetic_probe(actor, project_id, name, operation_key, *, engine,
     if not isinstance(api_key, str) or not 1 <= len(api_key) <= 1024 or any(not 32 < ord(char) < 127 for char in api_key):
         raise HostedError("missing_or_invalid_api_key")
     async with tenant_session(engine, actor_id=actor.user_id, workspace_id=actor.workspace_id) as session:
+        policy=await current_policy(session)
         operation = await repository.claim_probe(session, operation_key, fingerprint, project_id, incoming, outgoing, model, provider, backend, role)
     if not operation["created"]:
         return operation["result"] or {"outcome": "completion_unknown", "failure": "previous_dispatch_unresolved"}
     try:
         data = await provider_post(embedding, body, api_key, transport=transport)
+        guard_response(data)
+        async with tenant_session(engine, actor_id=actor.user_id, workspace_id=actor.workspace_id) as session:
+            await current_policy(session,policy['epoch'])
         if embedding:
             values = embedding_result(data)
             result = {"outcome": "succeeded", "dimensions": len(values), "norm": math.sqrt(sum(value * value for value in values)),

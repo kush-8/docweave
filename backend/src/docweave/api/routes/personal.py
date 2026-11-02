@@ -13,9 +13,17 @@ from docweave.schemas.personal import PublisherLookupInput, PrivateSourceReviewI
 from docweave.services.catalog import documentation_coverage
 from docweave.services.source_review import seal_candidate, open_candidate, review_values
 from docweave.repositories import ingestion as ingestion_repository
-from docweave.rag.contracts import CONFIGURATION
+from docweave.rag.contracts import CONFIGURATION,HostedError
+from docweave.services.guardrails import current_policy
 
 router=APIRouter(prefix='/api/v1',tags=['Projects'])
+
+async def require_current_policy(session):
+    try:
+        await current_policy(session)
+    except HostedError:
+        raise DomainError('not_ready') from None
+
 
 async def project_access(request,user,identity):
     _,engine,client=github_service(request)
@@ -25,6 +33,11 @@ async def project_access(request,user,identity):
         raise HTTPException(404)
     if result['repository']:
         await client.repository(request.state.github_token,result['repository']['repository_id'])
+    async with domain_session(engine,UUID(user['id'])) as session:
+        await require_current_policy(session)
+        result=await repository.project(session,identity)
+    if result is None:
+        raise HTTPException(404)
     return result
 
 @router.get('/projects')
@@ -193,27 +206,33 @@ async def document_access(request,user,identity):
     await project_access(request,user,UUID(resource['project_id']))
 
 @router.get('/documents/{document_id}/assessment')
-async def document_assessment(document_id:UUID,request:Request,user=Depends(require_github_user)):
+async def document_assessment(document_id:UUID,request:Request,document_version_id:UUID|None=Query(None),user=Depends(require_github_user)):
     await document_access(request,user,document_id)
     _,engine,_=github_service(request)
     async with domain_session(engine,UUID(user['id'])) as session:
-        result=await repository.assessment(session,document_id)
+        await require_current_policy(session)
+        result=await repository.assessment(session,document_id,document_version_id)
     if result is None:
         raise HTTPException(404)
     return result
 
 @router.get('/documents/{document_id}/review')
-async def review_content(document_id:UUID,request:Request,offset:int=Query(0,ge=0,le=2000000),user=Depends(require_github_user)):
-    import json
+async def review_content(document_id:UUID,request:Request,offset:int=Query(0,ge=0,le=2000000),document_version_id:UUID|None=Query(None),user=Depends(require_github_user)):
     from docweave.api.dependencies.storage import storage
-    assessment=await document_assessment(document_id,request,user)
-    parsed=json.loads(storage(request).read(assessment['document_version_id']))
-    return {**assessment,'text':parsed['text'][offset:offset+16000],'next_offset':offset+16000 if len(parsed['text'])>offset+16000 else None}
+    from docweave.services.guardrails import review_page
+    assessment=await document_assessment(document_id,request,document_version_id,user)
+    try:
+        result=review_page(storage(request),assessment,offset)
+    except (OSError,ValueError,KeyError,TypeError,RecursionError):
+        raise DomainError('not_ready') from None
+    if await document_assessment(document_id,request,document_version_id,user)!=assessment:
+        raise DomainError('revision_conflict')
+    return result
 
 @router.post('/documents/{document_id}/review')
 async def review_document(document_id:UUID,body:DocumentReviewInput,request:Request,user=Depends(require_github_csrf)):
     await document_access(request,user,document_id)
     _,engine,_=github_service(request)
     async with domain_session(engine,UUID(user['id'])) as session:
-        await repository.review_document(session,document_id,body.document_version_id,body.content_hash,body.rule_revision)
+        await repository.review_document(session,document_id,body.document_version_id,body.content_hash,body.rule_revision,body.policy_epoch)
     return {'status':'approved_for_processing','document_version_id':body.document_version_id}

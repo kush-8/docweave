@@ -7,11 +7,14 @@ from pathlib import PurePosixPath
 import re
 import tomllib
 from docweave.integrations.javascript_locks import npm_dependencies, pnpm_dependencies
+from docweave.integrations.github import metadata_path
+from docweave.rag.contracts import unique_keys
 
 MAX_FILES = 128
 MAX_FILE_BYTES = 2_000_000
 MAX_TOTAL_BYTES = 8_000_000
 MAX_DEPENDENCIES = 10_000
+SCAN_REVISION = 'repo-direct-v3'
 _NAME = re.compile(r'^([A-Za-z0-9][A-Za-z0-9._-]*)(\[[A-Za-z0-9,._-]+\])?\s*([<>=!~].*)?$')
 
 
@@ -27,6 +30,7 @@ class Dependency:
     # Names alone do not establish public provenance; catalog policy must approve lookup.
     public_lookup_allowed: bool = False
     extras: tuple[str, ...] = ()
+    application_path: str = ''
 
 
 @dataclass(frozen=True)
@@ -41,7 +45,7 @@ def _safe_path(path: str) -> bool:
     return bool(path) and not path.startswith('/') and '\\' not in path and ':' not in path and all(part not in ('', '.', '..') for part in path.split('/'))
 
 
-def parse_stack(files: dict[str, bytes], application_path: str = '') -> StackScan:
+def _parse_application(files: dict[str, bytes], application_path: str = '') -> StackScan:
     """Parse supplied SHA-pinned files. Missing includes/unsupported formats fail closed.
 
     A fingerprint describes dependency facts only, and must only replace memory
@@ -139,44 +143,49 @@ def parse_stack(files: dict[str, bytes], application_path: str = '') -> StackSca
                     raise ValueError('custom uv sources require review')
             elif filename == 'uv.lock':
                 data = tomllib.loads(raw)
-                for package in data.get('package', []):
-                    source = package.get('source', {})
-                    if 'registry' not in source:
-                        if 'virtual' in source or 'editable' in source:
+                packages = data.get('package', [])
+                roots = [dep for dep in dependencies if dep.ecosystem == 'python' and dep.direct]
+                if not roots:
+                    for package in packages:
+                        if not set(package.get('source', {})) & {'virtual', 'editable'}:
                             continue
-                        raise ValueError('nonregistry uv source unsupported')
-                    add(package['name'], 'python', version=package['version'], direct=False)
+                        for reference in package.get('dependencies', []):
+                            requirement(reference['name'] + ('==' + reference['version'] if reference.get('version') else ''))
+                        for field, role in (('optional-dependencies', 'optional'), ('dev-dependencies', 'development')):
+                            for group in package.get(field, {}).values():
+                                for reference in group:
+                                    requirement(reference['name'] + ('==' + reference['version'] if reference.get('version') else ''), role)
+                    roots = [dep for dep in dependencies if dep.ecosystem == 'python' and dep.direct]
+                if not roots and packages:
+                    raise ValueError('Python lock has no declared project roots')
+                def locked_package(name, version=None):
+                    matches = [package for package in packages
+                        if re.sub(r'[-_.]+', '-', package['name']).lower() == name
+                        and (version is None or package['version'] == version)]
+                    if len(matches) != 1 or not isinstance(matches[0]['version'], str) or 'registry' not in matches[0].get('source', {}):
+                        raise ValueError('unresolved Python lock dependency')
+                    return matches[0]
+                for dep in roots:
+                    exact = dep.declared_constraint[2:] if dep.declared_constraint and re.fullmatch(r'==[^*,]+', dep.declared_constraint) else None
+                    package = locked_package(dep.name, exact)
+                    dependencies = [replace(item, resolved_version=package['version'], documentation_target=package['version'])
+                        if item.direct and item.ecosystem == 'python' and item.name == dep.name and item.role == dep.role else item
+                        for item in dependencies]
             elif filename == 'package.json':
-                data = json.loads(raw)
-                if data.get('workspaces'):
-                    raise ValueError('workspace dependency expansion unsupported')
+                data = json.loads(raw, object_pairs_hook=unique_keys)
                 for field, role in (('dependencies', 'runtime'), ('devDependencies', 'development'), ('optionalDependencies', 'optional'), ('peerDependencies', 'peer')):
                     for name, constraint in data.get(field, {}).items():
                         add(name, 'javascript', constraint, role)
                         if not re.fullmatch(r'[0-9v<>=~^*| .xX+-]+', constraint):
                             issues.append('nonregistry or unsupported JavaScript constraint')
-            elif filename == 'package-lock.json' and path == prefix + filename:
-                data = json.loads(raw)
-                if data.get('lockfileVersion') not in (2, 3) or not isinstance(data.get('packages'), dict):
-                    raise ValueError('unsupported npm lock format')
-                for location, package in data['packages'].items():
-                    if not location:
-                        continue
-                    if package.get('link') or 'node_modules/' not in location:
-                        raise ValueError('npm linked package unsupported')
-                    name = location.rsplit('node_modules/', 1)[1]
-                    add(name, 'javascript', version=package['version'], role='development' if package.get('dev') else 'runtime', direct=False)
             else:
                 importer = str(PurePosixPath(root or '.').relative_to(PurePosixPath(path).parent))
-                manifest = json.loads(usable[prefix + 'package.json'])
+                manifest = json.loads(usable[prefix + 'package.json'], object_pairs_hook=unique_keys)
                 locked = (pnpm_dependencies if filename == 'pnpm-lock.yaml' else npm_dependencies)(raw, importer, manifest)
                 direct_versions = {(name, role): version for name, version, role, direct in locked if direct}
                 dependencies = [replace(dep, resolved_version=direct_versions[(dep.name, dep.role)],
                     documentation_target=direct_versions[(dep.name, dep.role)])
                     if dep.ecosystem == 'javascript' and (dep.name, dep.role) in direct_versions else dep for dep in dependencies]
-                for name, version, role, direct in locked:
-                    if not direct:
-                        add(name, 'javascript', version=version, role=role, direct=False)
         except (ValueError, TypeError, KeyError, AttributeError, RecursionError) as error:
             # Never include parser exception text: repository input can contain credentials.
             reason = str(error) if type(error) is ValueError and str(error) in {
@@ -190,10 +199,7 @@ def parse_stack(files: dict[str, bytes], application_path: str = '') -> StackSca
     for dep in dependencies:
         if dep.resolved_version:
             resolved.setdefault((dep.ecosystem, dep.name), set()).add(dep.resolved_version)
-    if any(len(versions) > 1 for versions in resolved.values()):
-        issues.append('ambiguous resolved dependency versions')
     merged: list[Dependency] = []
-    direct_names = {(dep.ecosystem, dep.name) for dep in dependencies if dep.direct}
     for dep in dependencies:
         versions = resolved.get((dep.ecosystem, dep.name), set())
         if dep.direct and dep.resolved_version:
@@ -203,9 +209,36 @@ def parse_stack(files: dict[str, bytes], application_path: str = '') -> StackSca
             dep = replace(dep, resolved_version=version, documentation_target=version)
         elif dep.direct and len(versions) > 1:
             issues.append('ambiguous resolved dependency versions')
-        if dep.direct or (dep.ecosystem, dep.name) not in direct_names:
-            merged.append(dep)
+        merged.append(dep)
+    direct_versions = {(dep.ecosystem, dep.name, dep.role, dep.resolved_version) for dep in merged if dep.direct}
+    merged = [dep for dep in merged if dep.direct or (dep.ecosystem, dep.name, dep.role, dep.resolved_version) not in direct_versions]
     unique = {json.dumps(asdict(dep), sort_keys=True): dep for dep in merged}
     ordered = tuple(unique[key] for key in sorted(unique))
     fingerprint = hashlib.sha256(json.dumps([asdict(dep) for dep in ordered], sort_keys=True, separators=(',', ':')).encode()).hexdigest()
     return StackScan(ordered, not issues, tuple(sorted(set(issues))), fingerprint)
+
+
+def parse_stack(files: dict[str, bytes], application_path: str = '') -> StackScan:
+    """Discover metadata directories within scope, retaining each app's version identity."""
+    root = application_path.rstrip('/')
+    if (root and not _safe_path(root)) or any(not _safe_path(path) for path in files):
+        return _parse_application(files, application_path)
+    usable = {path: data for path, data in files.items() if metadata_path(path)}
+    prefix = root + '/' if root else ''
+    folders = sorted({'' if str(PurePosixPath(path).parent) == '.' else str(PurePosixPath(path).parent)
+        for path in usable if path.startswith(prefix)
+        and PurePosixPath(path).name in ('requirements.txt', 'pyproject.toml', 'uv.lock', 'package.json', 'Pipfile')})
+    if not folders:
+        return _parse_application(usable, root)
+    dependencies, issues = [], set()
+    for folder in folders:
+        scan = _parse_application(usable, folder)
+        issues.update(scan.issues)
+        dependencies.extend(replace(dep, application_path=folder) for dep in scan.dependencies)
+        if len(dependencies) > MAX_DEPENDENCIES:
+            issues.add('dependency bounds exceeded')
+            dependencies = dependencies[:MAX_DEPENDENCIES]
+            break
+    ordered = tuple(sorted(dependencies, key=lambda dep: json.dumps(asdict(dep), sort_keys=True)))
+    fingerprint = SCAN_REVISION + ':' + hashlib.sha256(json.dumps([asdict(dep) for dep in ordered], sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+    return StackScan(ordered, not issues, tuple(sorted(issues)), fingerprint)

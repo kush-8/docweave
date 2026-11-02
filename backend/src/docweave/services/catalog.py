@@ -97,6 +97,6 @@ def documentation_coverage(project, entries, generation):
         match = chosen or match_documentation(dependency, entries, generation, accepted_fallback_revision_ids=accepted)
         if not private and item['id'] in project.get('excluded_documentation', []):
             match = {'status': 'missing', 'entry': None, 'reason': 'documentation selection removed'}
-        result.append({'dependency_id': item['id'], 'technology': item['technology'], 'docs_target': item.get('docs_target'),
+        result.append({'dependency_id': item['id'], 'technology': item['technology'], 'docs_target': item.get('docs_target'), 'application_path': item.get('application_path', ''),
             **match, 'selected_revision_id': selection['revision_id'] if chosen else None, 'candidates': candidates})
     return result

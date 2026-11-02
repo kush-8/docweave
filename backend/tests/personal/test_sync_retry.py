@@ -38,12 +38,15 @@ async def test_blocked_chat_retry_is_async_deduplicated_and_authorized(github_lo
         return 'a' * 40
     github.repository, github.head = repository, head
     app = create_app(github_settings=settings, auth_engine=runtime, github_client=github)
+    app.state.runtime_config.pop('ANSWER_PROFILE_ID',None)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, raise_app_exceptions=False), base_url=settings.origin) as client:
         client.cookies.set('docweave_session', cookie)
         me = (await client.get('/api/v1/me')).json()
         headers = {'Origin': settings.origin, 'X-CSRF-Token': me['csrf_token']}
         project = (await client.post('/api/v1/projects', json={'repository_id': 42, 'goal': 'Help'}, headers=headers)).json()
-        chat = (await client.post(f"/api/v1/projects/{project['id']}/conversations", json={}, headers=headers)).json()
+        created=await client.post(f"/api/v1/projects/{project['id']}/conversations", json={}, headers=headers)
+        assert created.status_code==202,created.text
+        chat=created.json()
         path = f"/api/v1/conversations/{chat['id']}/sync-retry"
         async with owner.begin() as connection:
             await connection.execute(text("UPDATE app.personal_jobs SET status='completed' WHERE conversation_id=CAST(:id AS uuid)"), {'id': chat['id']})

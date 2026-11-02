@@ -1,10 +1,10 @@
 """Strict wire contracts; private context is data, never application instructions."""
 import json
+import tiktoken
 from docweave.integrations.groq import GROQ_MODELS
 from docweave.rag.prompts import structured_request
 from docweave.rag.contracts import HostedError,unique_keys
 from docweave.core.guardrails import assess_text
-from docweave.rag.tokenization import count_evidence_tokens
 
 SUMMARY_PROMPT_VERSION = 'conversation-summary-v1'
 
@@ -24,7 +24,10 @@ def summary_result(response, model):
     result = _content(response, model)
     if (not isinstance(result, dict) or set(result) != {'summary'} or
             not isinstance(result['summary'], str) or not result['summary'].strip() or
-            count_evidence_tokens(result['summary']) > 2000):
+            len(tiktoken.get_encoding('o200k_harmony').encode_ordinary(result['summary'])) > 2000):
+        raise HostedError('invalid_summary_output')
+    assessment = assess_text(result['summary'])
+    if not assessment.complete or assessment.credential_blocked or assessment.injection_flagged:
         raise HostedError('invalid_summary_output')
     return result['summary']
 
@@ -55,7 +58,11 @@ def _content(response,model):
         assessment=assess_text(content)
         if not assessment.complete or assessment.credential_blocked or assessment.injection_flagged:
             raise ValueError
-        return json.loads(content,object_pairs_hook=unique_keys)
+        result=json.loads(content,object_pairs_hook=unique_keys)
+        assessment=assess_text(json.dumps(result,ensure_ascii=False))
+        if not assessment.complete or assessment.credential_blocked or assessment.injection_flagged:
+            raise ValueError
+        return result
     except (ValueError,KeyError,TypeError):
         raise HostedError('invalid_answer_output') from None
 

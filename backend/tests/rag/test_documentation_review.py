@@ -35,3 +35,16 @@ def test_coverage_reuses_only_the_target_explicitly_accepted_by_this_project():
     assert documentation_coverage(project, [candidate], 'g1')[0]['status'] == 'ready'
     project['stack'][0]['docs_target'] = '1.3.0'
     assert documentation_coverage(project, [candidate], 'g1')[0]['status'] == 'pending_review'
+
+
+def test_repository_app_folders_keep_independent_documentation_acceptance():
+    candidate = entry(technology='react', ecosystem='javascript', docs_target='19.0.0',
+        coverage={'granularity': 'major', 'version': '19'})
+    project = {'stack': [
+        {'id': 'backend-react', 'technology': 'react', 'ecosystem': 'javascript', 'docs_target': '19.1.0', 'application_path': 'backend'},
+        {'id': 'client-react', 'technology': 'react', 'ecosystem': 'javascript', 'docs_target': '19.2.0', 'application_path': 'client'}],
+        'catalog_selections': [{'dependency_id': 'client-react', 'revision_id': 'r1',
+            'fallback_accepted': True, 'accepted_docs_target': '19.2.0'}]}
+    result = documentation_coverage(project, [candidate], 'g1')
+    assert [(item['application_path'], item['status']) for item in result] == [
+        ('backend', 'pending_review'), ('client', 'ready')]

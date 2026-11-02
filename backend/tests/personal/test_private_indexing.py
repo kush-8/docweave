@@ -103,6 +103,22 @@ async def test_private_index_uncertain_response_is_never_replayed(private_index,
         assert await connection.scalar(text('SELECT count(*) FROM app.cost_reservations'))==1
         assert await connection.scalar(text('SELECT count(*) FROM app.document_indexes'))==0
 
+
+async def test_rule_activation_during_embedding_retains_charge_without_publication(private_index,monkeypatch):
+    from docweave.core.guardrails import RULE_REVISION
+    c=private_index
+    async def provider(*args,**kwargs):
+        async with c['owner'].begin() as connection:
+            await connection.scalar(text('SELECT app.activate_guardrail_policy(:revision,1)'),{'revision':RULE_REVISION})
+        return {'embedding':{'values':[1.0]+[0.0]*767},'usageMetadata':{'promptTokenCount':1}}
+    monkeypatch.setattr('docweave.services.personal_providers.provider_post',provider)
+    await run(c)
+    assert await state(c)=='capacity'
+    async with c['owner'].connect() as connection:
+        assert await connection.scalar(text('SELECT count(*) FROM app.cost_reservations'))==1
+        assert await connection.scalar(text('SELECT response IS NULL FROM app.personal_provider_calls'))
+        assert await connection.scalar(text('SELECT count(*) FROM app.document_indexes'))==0
+
 async def test_private_index_recovery_reuses_recorded_response_and_original_charge(private_index,monkeypatch):
     c=private_index
     calls=[]
@@ -243,7 +259,7 @@ async def test_reconcile_discovers_prepared_artifact_when_generation_becomes_ava
     async with c['owner'].begin() as connection:
         await connection.execute(text('DELETE FROM app.private_index_jobs'))
         status=await connection.scalar(text('SELECT status FROM app.documents WHERE id=:id'),{'id':c['document']})
-        assert status=='awaiting_approval'  # Publication precedes the persisted guard assessment.
+        assert status=='awaiting_approval'  # Processing approval is independent of a clean guard assessment.
     assert await reconcile_private_indexes(c['worker'],None)==0
     assert await reconcile_private_indexes(c['worker'],c['generation'])==1
     async with c['owner'].connect() as connection:

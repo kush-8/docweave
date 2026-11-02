@@ -11,7 +11,7 @@ from .retrieval import IndexGeneration, DocumentIndex, Chunk
 
 from .conversations import Conversation, Turn, PersonalJob
 
-from .guardrails import DocumentAssessment
+from .guardrails import DocumentAssessment,GuardrailPolicy,GuardrailRescan,GuardrailEvent
 
 from .catalog_jobs import CatalogJob
 

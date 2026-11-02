@@ -36,7 +36,6 @@ def test_pnpm_ancestor_importer_does_not_mix_sibling_versions():
     b"lockfileVersion: '9.0'\nimporters: &alias {web: *alias}\n",
     b"!!python/object/apply:os.system ['echo private-marker']",
     PNPM.replace(b'version: 19.1.0', b'version: link:../private'),
-    PNPM.replace(b'react@19.1.0: {}', b'react@19.1.0: {dependencies: {missing: 1.0.0}}'),
 ])
 def test_pnpm_invalid_stale_or_unresolved_locks_are_incomplete(lock):
     scan = parse_stack({'web/package.json': b'{"dependencies":{"react":"^19"}}', 'pnpm-lock.yaml': lock}, 'web')
@@ -44,13 +43,13 @@ def test_pnpm_invalid_stale_or_unresolved_locks_are_incomplete(lock):
     assert 'private-marker' not in str(scan.issues)
 
 
-def test_pnpm_root_peer_suffix_and_transitive_graph_are_scoped():
+def test_pnpm_root_peer_suffix_resolves_only_the_direct_package():
     lock = PNPM.replace(b'  web:', b'  .:').replace(b'version: 19.1.0}', b'version: 19.1.0(peer@1.0.0)}')
     lock = lock.replace(b'  react@19.1.0: {}', b'  react@19.1.0(peer@1.0.0): {dependencies: {scheduler: 1.0.0}}\n  scheduler@1.0.0: {}')
     lock = lock.replace(b'packages:\n', b'packages:\n  scheduler@1.0.0: {resolution: {integrity: sha512-test}}\n')
     scan = parse_stack({'package.json': b'{"dependencies":{"react":"^19"}}', 'pnpm-lock.yaml': lock})
     assert scan.complete, scan.issues
-    assert {(d.name, d.resolved_version, d.direct) for d in scan.dependencies} == {('react', '19.1.0', True), ('scheduler', '1.0.0', False)}
+    assert {(d.name, d.resolved_version, d.direct) for d in scan.dependencies} == {('react', '19.1.0', True)}
 
 
 def test_npm_ancestor_uses_nearest_node_modules_and_ignores_siblings():
@@ -65,10 +64,56 @@ def test_npm_ancestor_uses_nearest_node_modules_and_ignores_siblings():
     files = {'web/package.json': b'{"dependencies":{"react":"^19"}}', 'package-lock.json': json.dumps(lock).encode()}
     scan = parse_stack(files, 'web')
     assert scan.complete, scan.issues
-    assert {(d.name, d.resolved_version, d.direct) for d in scan.dependencies} == {('react', '19.1.0', True), ('scheduler', '1.0.0', False)}
+    assert {(d.name, d.resolved_version, d.direct) for d in scan.dependencies} == {('react', '19.1.0', True)}
     lock['packages']['web']['dependencies']['react'] = '^18'
     files['package-lock.json'] = json.dumps(lock).encode()
     assert not parse_stack(files, 'web').complete
+
+
+@pytest.mark.parametrize('version', [2, 3])
+@pytest.mark.parametrize('root', ['', 'apps/web'])
+def test_npm_local_lock_checks_importer_and_resolves_only_declarations(version, root):
+    prefix = root + '/' if root else ''
+    manifest = {'dependencies': {'react': '^19'}, 'optionalDependencies': {'optional': '^1'}}
+    packages = {'': manifest,
+        'node_modules/react': {'version': '19.1.0', 'dependencies': {'scheduler': '^1'}},
+        'node_modules/scheduler': {'version': '1.0.0'},
+        'node_modules/optional': {'version': '1.2.0', 'optional': True},
+        'node_modules/unused': {'version': '2.0.0'}}
+    files = {prefix + 'package.json': json.dumps(manifest).encode(),
+        prefix + 'package-lock.json': json.dumps({'lockfileVersion': version, 'packages': packages}).encode()}
+    scan = parse_stack(files, root)
+    assert scan.complete, scan.issues
+    assert {(d.name, d.resolved_version, d.role, d.direct) for d in scan.dependencies} == {
+        ('react', '19.1.0', 'runtime', True),
+        ('optional', '1.2.0', 'optional', True)}
+    packages['']['dependencies'] = {'react': '^18'}
+    files[prefix + 'package-lock.json'] = json.dumps({'lockfileVersion': version, 'packages': packages}).encode()
+    assert not parse_stack(files, root).complete
+
+
+@pytest.mark.parametrize('package', [
+    {'version': '19.1.0', 'resolved': 'git+https://example.test/private#commit'},
+    {'version': 'file:../private'},
+    {'version': '19.1.0', 'link': True, 'resolved': '../private'},
+])
+def test_npm_local_lock_rejects_nonregistry_resolutions(package):
+    files = {'package.json': b'{"dependencies":{"react":"^19"}}',
+        'package-lock.json': json.dumps({'lockfileVersion': 3, 'packages': {
+            '': {'dependencies': {'react': '^19'}}, 'node_modules/react': package}}).encode()}
+    assert not parse_stack(files).complete
+
+
+@pytest.mark.parametrize('duplicate_manifest', [True, False])
+def test_duplicate_javascript_metadata_keys_cannot_claim_complete(duplicate_manifest):
+    manifest = b'{"dependencies":{"react":"^19"}}'
+    lock = b'{"lockfileVersion":3,"packages":{"":{"dependencies":{"react":"^19"}},"node_modules/react":{"version":"19.1.0"}}}'
+    if duplicate_manifest:
+        manifest = b'{"dependencies":{"react":"^18"},"dependencies":{"react":"^19"}}'
+    else:
+        lock = lock.replace(b'"version":"19.1.0"', b'"version":"18.3.1","version":"19.1.0"')
+    scan = parse_stack({'package.json': manifest, 'package-lock.json': lock})
+    assert not scan.complete
 
 
 def test_conflicting_package_managers_and_deep_yaml_do_not_claim_complete():
@@ -81,7 +126,7 @@ def test_conflicting_package_managers_and_deep_yaml_do_not_claim_complete():
     assert not parse_stack(files).complete
 
 
-def test_npm_ancestor_includes_installed_peers_and_allows_absent_optional_peers():
+def test_npm_ancestor_ignores_transitive_peer_dependencies():
     packages = {'web': {'dependencies': {'react-dom': '^19'}},
         'node_modules/react-dom': {'version': '19.1.0', 'peerDependencies': {'react': '^19', 'optional-peer': '*'},
             'peerDependenciesMeta': {'optional-peer': {'optional': True}}},
@@ -90,17 +135,51 @@ def test_npm_ancestor_includes_installed_peers_and_allows_absent_optional_peers(
         'package-lock.json': json.dumps({'lockfileVersion': 3, 'packages': packages}).encode()}
     scan = parse_stack(files, 'web')
     assert scan.complete, scan.issues
-    assert {(d.name, d.resolved_version) for d in scan.dependencies} == {('react-dom', '19.1.0'), ('react', '19.1.0')}
+    assert {(d.name, d.resolved_version) for d in scan.dependencies} == {('react-dom', '19.1.0')}
     del packages['node_modules/react']
     files['package-lock.json'] = json.dumps({'lockfileVersion': 3, 'packages': packages}).encode()
-    assert not parse_stack(files, 'web').complete
+    assert parse_stack(files, 'web').complete
 
 
-def test_pnpm_overlapping_direct_and_transitive_versions_stay_explicitly_incomplete():
+def test_npm_transitive_optional_and_required_branches_are_out_of_scope():
+    manifest = {'dependencies': {'compiler': '^1'}}
+    packages = {'': manifest,
+        'node_modules/compiler': {'version': '1.0.0', 'optionalDependencies': {'wasi': '^1', 'missing-optional': '^2'}},
+        'node_modules/wasi': {'version': '1.0.0', 'optional': True, 'dependencies': {'wasm-runtime': '^2'}}}
+    files = {'package.json': json.dumps(manifest).encode(),
+        'package-lock.json': json.dumps({'lockfileVersion': 3, 'packages': packages}).encode()}
+    scan = parse_stack(files)
+    assert scan.complete, scan.issues
+    assert {(dep.name, dep.resolved_version, dep.role) for dep in scan.dependencies} == {
+        ('compiler', '1.0.0', 'runtime')}
+    packages['node_modules/compiler']['dependencies'] = {'required-runtime': '^2'}
+    files['package-lock.json'] = json.dumps({'lockfileVersion': 3, 'packages': packages}).encode()
+    assert parse_stack(files).complete
+
+
+@pytest.mark.parametrize('optional', [False, True])
+def test_npm_declared_root_peers_resolve_and_respect_optional_peers(optional):
+    manifest = {'peerDependencies': {'react': '^19'}}
+    if optional:
+        manifest['peerDependenciesMeta'] = {'react': {'optional': True}}
+    packages = {'': manifest, 'node_modules/react': {'version': '19.1.0', 'dependencies': {'scheduler': '^1'}},
+                'node_modules/scheduler': {'version': '1.0.0'}}
+    files = {'package.json': json.dumps(manifest).encode(),
+        'package-lock.json': json.dumps({'lockfileVersion': 3, 'packages': packages}).encode()}
+    scan = parse_stack(files)
+    assert scan.complete, scan.issues
+    assert {(dep.name, dep.resolved_version, dep.role) for dep in scan.dependencies} == {
+        ('react', '19.1.0', 'peer')}
+    del packages['node_modules/react']
+    files['package-lock.json'] = json.dumps({'lockfileVersion': 3, 'packages': packages}).encode()
+    assert parse_stack(files).complete is optional
+
+
+def test_pnpm_transitive_version_does_not_replace_direct_version():
     lock = PNPM.replace(b'  web:', b'  .:').replace(b'  react@19.1.0: {}', b'  react@19.1.0: {dependencies: {react: 18.3.1}}')
     scan = parse_stack({'package.json': b'{"dependencies":{"react":"^19"}}', 'pnpm-lock.yaml': lock})
-    assert not scan.complete
-    assert 'ambiguous resolved dependency versions' in scan.issues
+    assert scan.complete, scan.issues
+    assert {(dep.resolved_version, dep.direct) for dep in scan.dependencies} == {('19.1.0', True)}
 
 
 def test_pnpm_patched_package_cannot_claim_ordinary_registry_coverage():
@@ -136,7 +215,7 @@ def test_application_scope_and_package_lock():
     scan = parse_stack({
         'package.json': b'{"dependencies":{"wrong":"1"}}',
         'web/package.json': b'{"dependencies":{"react":"^19"},"devDependencies":{"vite":"^7"}}',
-        'web/package-lock.json': b'{"lockfileVersion":3,"packages":{"":{},"node_modules/react":{"version":"19.1.0"},"node_modules/vite":{"version":"7.0.0","dev":true}}}',
+        'web/package-lock.json': b'{"lockfileVersion":3,"packages":{"":{"dependencies":{"react":"^19"},"devDependencies":{"vite":"^7"}},"node_modules/react":{"version":"19.1.0"},"node_modules/vite":{"version":"7.0.0","dev":true}}}',
     }, 'web')
     assert scan.complete
     assert {dep.name for dep in scan.dependencies} == {'react', 'vite'}
@@ -179,3 +258,53 @@ def test_requirements_reject_options_and_preserve_extras_in_fingerprint():
     plain = parse_stack({'requirements.txt': b'fastapi>=1'})
     extras = parse_stack({'requirements.txt': b'fastapi[standard]>=1'})
     assert plain.fingerprint != extras.fingerprint
+
+
+@pytest.mark.parametrize('manager', ['npm', 'pnpm'])
+def test_dependency_discovery_stops_at_direct_declarations(manager):
+    manifest = b'{"dependencies":{"a":"^1"}}'
+    if manager == 'npm':
+        lock = json.dumps({'lockfileVersion':3,'packages':{'':{'dependencies':{'a':'^1'}},
+            'node_modules/a':{'version':'1.0.0','dependencies':{'b':'^1'}},
+            'node_modules/b':{'version':'1.0.0','dependencies':{'c':'^1'}},
+            'node_modules/c':{'version':'1.0.0'}}}).encode()
+        name='package-lock.json'
+    else:
+        lock=b"lockfileVersion: '9.0'\nimporters: {'.': {dependencies: {a: {specifier: ^1, version: 1.0.0}}}}\npackages: {a@1.0.0: {resolution: {integrity: sha512-a}}, b@1.0.0: {resolution: {integrity: sha512-b}}, c@1.0.0: {resolution: {integrity: sha512-c}}}\nsnapshots: {a@1.0.0: {dependencies: {b: 1.0.0}}, b@1.0.0: {dependencies: {c: 1.0.0}}, c@1.0.0: {}}\n"
+        name='pnpm-lock.yaml'
+    scan=parse_stack({'package.json':manifest,name:lock})
+    assert scan.complete,scan.issues
+    assert {(d.name,d.direct) for d in scan.dependencies}=={('a',True)}
+
+
+def test_python_lock_stops_at_direct_declarations():
+    raw=b'version=1\n[[package]]\nname="a"\nversion="1.0.0"\nsource={registry="https://pypi.org/simple"}\ndependencies=[{name="b"}]\n[[package]]\nname="b"\nversion="1.0.0"\nsource={registry="https://pypi.org/simple"}\ndependencies=[{name="c"}]\n[[package]]\nname="c"\nversion="1.0.0"\nsource={registry="https://pypi.org/simple"}\n'
+    scan=parse_stack({'pyproject.toml':b'[project]\ndependencies=["a==1.0.0"]\n','uv.lock':raw})
+    assert scan.complete,scan.issues
+    assert {d.name for d in scan.dependencies}=={'a'}
+
+
+def test_python_exact_root_ignores_transitive_other_version():
+    raw=b'version=1\n[[package]]\nname="a"\nversion="1.0.0"\nsource={registry="https://pypi.org/simple"}\ndependencies=[{name="a",version="2.0.0"}]\n[[package]]\nname="a"\nversion="2.0.0"\nsource={registry="https://pypi.org/simple"}\n'
+    scan=parse_stack({'pyproject.toml':b'[project]\ndependencies=["a==1.0.0"]\n','uv.lock':raw})
+    assert scan.complete,scan.issues
+    assert {(d.resolved_version,d.direct) for d in scan.dependencies}=={('1.0.0',True)}
+
+
+def test_pnpm_direct_packages_are_stable_regardless_of_declaration_order():
+    lock=b"lockfileVersion: '9.0'\nimporters: {'.': {dependencies: {a: {specifier: ^1, version: 1.0.0}, b: {specifier: ^1, version: 1.0.0}}}}\npackages: {a@1.0.0: {resolution: {integrity: sha512-a}}, b@1.0.0: {resolution: {integrity: sha512-b}}, c@1.0.0: {resolution: {integrity: sha512-c}}}\nsnapshots: {a@1.0.0: {dependencies: {c: 1.0.0}}, b@1.0.0: {dependencies: {a: 1.0.0}}, c@1.0.0: {}}\n"
+    first=parse_stack({'package.json':b'{"dependencies":{"a":"^1","b":"^1"}}','pnpm-lock.yaml':lock})
+    second=parse_stack({'package.json':b'{"dependencies":{"b":"^1","a":"^1"}}','pnpm-lock.yaml':lock})
+    assert first.complete and second.complete
+    assert {d.name for d in first.dependencies}=={'a','b'}
+    assert first.fingerprint==second.fingerprint
+
+
+@pytest.mark.parametrize('field', ['dependencies', 'optional-dependencies', 'dev-dependencies'])
+def test_uv_virtual_root_keeps_explicit_reference_version(field):
+    refs='[{name="a",version="1.0.0"}]'
+    declaration=field+'='+refs if field=='dependencies' else field+'={test='+refs+'}'
+    raw=('version=1\n[[package]]\nname="project"\nversion="1.0.0"\nsource={virtual="."}\n'+declaration+'\n[[package]]\nname="a"\nversion="1.0.0"\nsource={registry="https://pypi.org/simple"}\ndependencies=[{name="a",version="2.0.0"}]\n[[package]]\nname="a"\nversion="2.0.0"\nsource={registry="https://pypi.org/simple"}\n').encode()
+    scan=parse_stack({'uv.lock':raw})
+    assert scan.complete,scan.issues
+    assert {(d.resolved_version,d.direct) for d in scan.dependencies}=={('1.0.0',True)}

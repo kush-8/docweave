@@ -13,6 +13,8 @@ def source_fingerprint(root=ROOT, paths=None):
         package = root / "backend" / "src" / "docweave"
         paths = [*package.joinpath("rag").rglob("*.py"), *package.joinpath("repositories", "rag").rglob("*.py"),
             *(package / 'integrations' / name for name in ('gemini.py','groq.py','openai.py','embeddings.py','provider_transport.py')),
+            package / 'core' / 'guardrails.py', package / 'integrations' / 'answers.py',
+            *(package / 'services' / name for name in ('guardrails.py','personal_providers.py','answer_engine.py')),
             root / 'backend' / 'uv.lock']
     files = {}
     for path in paths:

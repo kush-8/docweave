@@ -18,16 +18,18 @@ from docweave.services.personal_worker import run_personal_job
 from docweave.services.answer_engine import AnswerEngine
 from docweave.services.catalog_embeddings import make_embedder
 from docweave.services.private_indexing import run_private_index_job, reconcile_private_indexes
+from docweave.services.guardrails import run_rescan,reconcile_rescans
 
 
 async def recover_jobs(queue, engine, generation_id=None):
     stalled = await queue.job_manager.get_stalled_jobs(queue='personal')
     for job in stalled:
-        if job.task_name in ('docweave.personal', 'docweave.catalog', 'docweave.private_index'):
+        if job.task_name in ('docweave.personal', 'docweave.catalog', 'docweave.private_index', 'docweave.guardrail_rescan'):
             async with engine.begin() as connection:
                 await repository.retry_stalled(connection, job.id)
     async with engine.begin() as connection:
         await repository.recover_jobs(connection)
+    await reconcile_rescans(engine)
     if generation_id is not None:
         await reconcile_private_indexes(engine,generation_id)
 
@@ -55,6 +57,9 @@ async def run_worker(*,once=False):
     @queue.task(name='docweave.private_index',queue='personal',retry=False)
     async def private_index(job_id):
         await run_private_index_job(UUID(job_id),engine=engine,store=store,settings=settings,client=client,config=values)
+    @queue.task(name='docweave.guardrail_rescan',queue='personal',retry=False)
+    async def guardrail_rescan(job_id):
+        await run_rescan(UUID(job_id),engine=engine,store=store)
     try:
         async with queue.open_async():
             await recover_jobs(queue, engine, generation_id)

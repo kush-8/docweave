@@ -18,6 +18,8 @@ from docweave.repositories import public_pilot as repository
 from docweave.repositories.rag import indexing as index_repository
 from docweave.rag.indexing import index_input
 from docweave.rag.reranking import bounded_ranking_request
+from docweave.services.personal_providers import guard_payload,guard_response
+from docweave.services.guardrails import current_policy
 
 
 def quota_delay(headers):
@@ -114,6 +116,7 @@ class PublicPilot:
         return {"ordered_chunk_ids": result["ordered_chunk_ids"], "input_chunk_ids": identities}
 
     async def _dispatch(self, payload, embedding, *, document=None, chunk_ids=()):
+        guard_payload(payload,embedding)
         key = self.api_keys["gemini" if embedding else "groq"]
         if not isinstance(key, str) or not 1 <= len(key) <= 1024 or any(not 32 < ord(char) < 127 for char in key):
             raise HostedError("missing_or_invalid_api_key")
@@ -121,6 +124,7 @@ class PublicPilot:
         fingerprint = hashlib.sha256(body).hexdigest()
         actor = self.context["actor"]
         async with tenant_session(self.engine, actor_id=actor.user_id, workspace_id=actor.workspace_id) as session:
+            policy=await current_policy(session)
             await repository.authorize(session, self.context, document=document, chunk_ids=chunk_ids, rerank=not embedding)
             operation = await repository.claim(session, self.context, fingerprint, embedding)
         result = operation["result"]
@@ -133,9 +137,11 @@ class PublicPilot:
                         await asyncio.sleep(interval)
                         delay -= interval
                 async with tenant_session(self.engine, actor_id=actor.user_id, workspace_id=actor.workspace_id) as session:
+                    await current_policy(session,policy['epoch'])
                     await repository.authorize(session, self.context, document=document, chunk_ids=chunk_ids, rerank=not embedding)
                 limits = {}
                 data = await provider_post(embedding, body, key, transport=self.transport, observed_limits=limits)
+                guard_response(data)
                 if not embedding:
                     self._next_llm_at = time.monotonic() + quota_delay(limits)
                 if embedding:
@@ -152,5 +158,6 @@ class PublicPilot:
         if not result or result["outcome"] != "succeeded":
             raise HostedError("public_fixture_operation_unavailable")
         async with tenant_session(self.engine, actor_id=actor.user_id, workspace_id=actor.workspace_id) as session:
+            await current_policy(session,policy['epoch'])
             await repository.authorize(session, self.context, document=document, chunk_ids=chunk_ids, rerank=not embedding)
         return result

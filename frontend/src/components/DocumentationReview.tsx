@@ -6,7 +6,7 @@ import { ReferenceCatalog } from "@/components/ReferenceCatalog";
 
 type Entry = { revision_id: string; source_url: string; attribution: string; source_approved?: boolean; progress?: string | null; coverage: { granularity: string; version: string } };
 type Match = { status: string; reason: string; entry?: Entry | null };
-type Dependency = Match & { dependency_id: string; technology: string; docs_target?: string; selected_revision_id?: string; candidates: Match[] };
+type Dependency = Match & { dependency_id: string; technology: string; docs_target?: string; application_path?: string; selected_revision_id?: string; candidates: Match[] };
 type Coverage = { context_revision: number; items: Dependency[] };
 const labels: Record<string, string> = { ready: "Ready", waiting_for_sources: "Preparing documentation", missing: "Documentation missing", pending_review: "Approval required", capacity: "Waiting for capacity", failed: "Documentation processing failed", consent_required: "Processing permission required" };
 const reasons: Record<string, string> = {
@@ -62,8 +62,9 @@ export function DocumentationReview({ project, contextRevision, csrf }: { projec
       {notice && <p role="status">{notice}</p>}
       {!coverage && !error && <p role="status">Loading documentation coverage…</p>}
       {coverage && !coverage.items.length && <p>No dependencies have been detected yet. Start a chat to check the repository.</p>}
-      {coverage?.items.map((item) => <section key={item.dependency_id} aria-label={`${item.technology} documentation`} className="space-y-3 border-t border-input pt-4">
+      {coverage?.items.map((item) => <section key={item.dependency_id} aria-label={`${item.technology} documentation${item.application_path ? ` for ${item.application_path}` : ""}`} className="space-y-3 border-t border-input pt-4">
         <h2 className="font-medium">{item.technology} {item.docs_target ?? "· Version unresolved"}</h2>
+        {item.application_path && <p className="text-muted-foreground">{item.application_path}</p>}
         <p role="status">{labels[item.status] ?? "Documentation unavailable"}</p>
         {item.status === "waiting_for_sources" && item.entry?.progress && <p role="status" className="text-muted-foreground">{item.entry.progress}</p>}
         {reasons[item.reason] && <p className="text-muted-foreground">{reasons[item.reason]}</p>}

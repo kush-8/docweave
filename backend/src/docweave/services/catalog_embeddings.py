@@ -26,7 +26,7 @@ def make_embedder(job,token,*,engine,config):
             counter+=1
             payload=backend.embedding_request(body,'document')
             result=await dispatch(payload,embedding=True,profile_id=profile,operation_key='catalog:'+job['id']+':'+str(stage),actor_id=UUID('60000000-0000-4000-8000-000000000001'),project_id=None,
-                engine=engine,api_key=config[backend.API_KEY],authorize=authorize)
+                engine=engine,api_key=config[backend.API_KEY],authorize=authorize,validate_response=backend.embedding_result)
             vectors.append(backend.embedding_result(result))
         return vectors
     return embed

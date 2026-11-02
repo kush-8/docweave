@@ -2,6 +2,24 @@ import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mockApi } from "../support/api";
 
+test("repository dependencies show the app folder beside each version", async ({ page }) => {
+  await mockApi(page);
+  await page.route("**/api/v1/projects/p1/documentation", (route) => route.fulfill({ json: {
+    context_revision: 2, items: [
+      { dependency_id: "backend-react", technology: "React", docs_target: "18.3.1", application_path: "backend", status: "missing", candidates: [] },
+      { dependency_id: "client-react", technology: "React", docs_target: "19.1.0", application_path: "client", status: "missing", candidates: [] },
+    ],
+  } }));
+  await page.goto("/?project=p1&conversation=c1");
+  await page.getByText("Project documentation", { exact: true }).click();
+  const backend = page.getByRole("region", { name: "React documentation for backend", exact: true });
+  const client = page.getByRole("region", { name: "React documentation for client", exact: true });
+  await expect(backend.getByRole("heading", { name: "React 18.3.1", exact: true })).toBeVisible();
+  await expect(backend.getByText("backend", { exact: true })).toBeVisible();
+  await expect(client.getByRole("heading", { name: "React 19.1.0", exact: true })).toBeVisible();
+  await expect(client.getByText("client", { exact: true })).toBeVisible();
+});
+
 test("documentation review accepts a version fallback explicitly and preserves the draft", async ({ page }) => {
   await mockApi(page);
   const entry = { revision_id: "revision-1", source_url: "https://docs.example.org/v1/guide.md", attribution: "Publisher", coverage: { granularity: "major", version: "1" } };

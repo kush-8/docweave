@@ -66,7 +66,7 @@ async def run_private_index_job(job_id,*,engine,store,settings,client,config,emb
                 key=hashlib.sha256(operation.encode()).hexdigest()
                 result=await dispatch(backend.embedding_request(body,'document'),embedding=True,profile_id=profile,
                     operation_key=operation,actor_id=UUID(job['actor_id']),project_id=UUID(job['project_id']),
-                    engine=engine,api_key=config[backend.API_KEY],authorize=authorize)
+                    engine=engine,api_key=config[backend.API_KEY],authorize=authorize,validate_response=backend.embedding_result)
                 vectors.append(backend.embedding_result(result))
             return vectors
         await authorize()

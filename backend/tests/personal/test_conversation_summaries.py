@@ -19,17 +19,23 @@ class Engine:
 
 @pytest.fixture
 def memory(monkeypatch):
+    async def policy(*args):
+        return {'epoch':1}
+    monkeypatch.setattr('docweave.services.answer_engine.current_policy',policy)
     items = [{'sequence': n, 'status': 'completed', 'message': 'Earlier question ' * 900,
               'answer': 'Earlier answer ' * 900, 'context_revision': 1} for n in range(1, 5)]
     stored = []
     calls = []
     async def history(*args):
         return items
+    async def policy(*args):
+        return {'epoch': 1}
     async def summary(*args):
         if len(args) == 5:
             stored[:] = [args[-1]]
         return stored[0] if stored else None
     monkeypatch.setattr('docweave.services.answer_engine.repository.history', history)
+    monkeypatch.setattr('docweave.services.answer_engine.current_policy', policy)
     monkeypatch.setattr('docweave.services.answer_engine.repository.summary', summary, raising=False)
     async def authorize():
         pass
@@ -77,6 +83,31 @@ async def test_summary_rebuilds_when_covered_history_or_prompt_changes(memory):
     count = len(calls)
     await pipeline().context_history()
     assert len(calls) > count
+
+
+async def test_growing_history_compacts_only_newly_covered_turns(memory):
+    items, stored, calls, pipeline = memory
+    await pipeline().context_history()
+    text = stored[0]['text']
+    count = len(calls)
+    items.append(dict(items[-1], sequence=5))
+    await pipeline().context_history()
+    assert len(calls) > count
+    data = json.loads(calls[count]['messages'][1]['content'])
+    assert data['previous_summary'] == text
+    assert '"sequence": 1' not in data['conversation_context']
+
+
+@pytest.mark.parametrize('change', [{'through_sequence': 'invalid'}, {'text': 7},
+    {'text': 'Authorization: Bearer liveSecret123456789'}, {'text': ''}, {'policy_epoch': 0}])
+async def test_invalid_summary_is_rebuilt_from_history(memory, change):
+    items, stored, calls, pipeline = memory
+    await pipeline().context_history()
+    stored[0].update(change)
+    count = len(calls)
+    await pipeline().context_history()
+    assert len(calls) > count
+    assert json.loads(calls[count]['messages'][1]['content'])['previous_summary'] == ''
 
 
 async def test_blocked_history_cannot_reuse_summary_and_cached_history_is_rechecked(memory):

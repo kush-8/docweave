@@ -804,6 +804,23 @@
               "format": "uuid",
               "title": "Document Id"
             }
+          },
+          {
+            "name": "document_version_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Document Version Id"
+            }
           }
         ],
         "responses": {
@@ -861,6 +878,23 @@
               "minimum": 0,
               "default": 0,
               "title": "Offset"
+            }
+          },
+          {
+            "name": "document_version_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Document Version Id"
             }
           }
         ],
@@ -2386,6 +2420,11 @@
             "minLength": 1,
             "pattern": "^[^\\x00]*[^\\s\\x00][^\\x00]*$",
             "title": "Rule Revision"
+          },
+          "policy_epoch": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Policy Epoch"
           }
         },
         "additionalProperties": false,
@@ -2393,7 +2432,8 @@
         "required": [
           "document_version_id",
           "content_hash",
-          "rule_revision"
+          "rule_revision",
+          "policy_epoch"
         ],
         "title": "DocumentReviewInput"
       },

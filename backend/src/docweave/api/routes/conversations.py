@@ -1,10 +1,11 @@
 from uuid import UUID
 from fastapi import APIRouter,Depends,HTTPException,Request,Response
 from docweave.api.routes.github_auth import github_service,require_github_user,require_github_csrf
-from docweave.api.routes.personal import project_access
+from docweave.api.routes.personal import project_access,require_current_policy
 from docweave.db.sessions import domain_session
 from docweave.repositories import personal as repository
 from docweave.schemas.personal import ConversationCreate,TurnCreate
+from docweave.services.guardrails import release_turn
 
 router=APIRouter(prefix='/api/v1',tags=['Conversations'])
 
@@ -57,14 +58,16 @@ async def turns(conversation_id:UUID,request:Request,user=Depends(require_github
     await conversation_access(request,user,conversation_id)
     _,engine,_=github_service(request)
     async with domain_session(engine,UUID(user['id'])) as session:
-        return {'items':await repository.turns(session,conversation_id),'next_cursor':None}
+        await require_current_policy(session)
+        return {'items':[release_turn(item) for item in await repository.turns(session,conversation_id)],'next_cursor':None}
 
 @router.post('/conversations/{conversation_id}/turns',status_code=202)
 async def append_turn(conversation_id:UUID,body:TurnCreate,request:Request,user=Depends(require_github_csrf)):
     await conversation_access(request,user,conversation_id)
     _,engine,_=github_service(request)
     async with domain_session(engine,UUID(user['id'])) as session:
-        return await repository.append_turn(session,conversation_id,body.idempotency_key,body.message)
+        await require_current_policy(session)
+        return release_turn(await repository.append_turn(session,conversation_id,body.idempotency_key,body.message))
 
 @router.get('/turns/{turn_id}')
 async def turn(turn_id:UUID,request:Request,user=Depends(require_github_user)):
@@ -74,7 +77,12 @@ async def turn(turn_id:UUID,request:Request,user=Depends(require_github_user)):
     if result is None:
         raise HTTPException(404)
     await conversation_access(request,user,UUID(result['conversation_id']))
-    return result
+    async with domain_session(engine,UUID(user['id'])) as session:
+        await require_current_policy(session)
+        result=await repository.turn(session,turn_id)
+    if result is None:
+        raise HTTPException(404)
+    return release_turn(result)
 
 
 @router.get('/turns/{turn_id}/citations/{citation_id}')
@@ -82,6 +90,7 @@ async def citation(turn_id:UUID,citation_id:str,request:Request,user=Depends(req
     await turn(turn_id,request,user)
     _,engine,_=github_service(request)
     async with domain_session(engine,UUID(user['id'])) as session:
+        await require_current_policy(session)
         result=await repository.citation(session,turn_id,citation_id)
     if not result:
         raise HTTPException(404)

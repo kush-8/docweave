@@ -14,6 +14,7 @@ from docweave.services.turn_readiness import decide_turn_readiness
 from docweave.services.project_memory import update_memory
 from docweave.services.repository_sync import scan_repository
 from docweave.repositories import personal as repository, catalog as catalog_repository
+from docweave.services.guardrails import current_policy
 
 
 async def prepare_answer(turn,project,dependency_states,*,answerer=None,resolver=None):
@@ -64,6 +65,7 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
             await connection.commit()
             async with connection.begin():
                 current=await repository.job_context(connection,job_id,UUID(job['lease_token']))
+                policy=await current_policy(connection)
             if current is None:
                 return
             job.update(current)
@@ -79,14 +81,14 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
             repo=project['repository']
             await client.repository(access,repo['repository_id'])
             if job['kind']=='sync':
-                result=await scan_repository(client,access,repo['repository_id'],repo['branch'],repo['application_path'],previous_commit=repo.get('commit_sha'))
+                result=await scan_repository(client,access,repo['repository_id'],repo['branch'],repo['application_path'],previous_commit=repo.get('commit_sha'),previous_fingerprint=job.get('stack_fingerprint'))
                 if result['unchanged']:
                     memory={'stack':project['stack'],'stack_fingerprint':job.get('stack_fingerprint'), 'last_commit_sha':result['commit_sha'],'context_revision':project['context_revision']}
                 else:
                     if not result['scan'].complete:
                         output={'status':'failed','progress':'Dependency metadata is incomplete: '+ '; '.join(result['scan'].issues[:8])+'. Correct the metadata or application folder, then retry repository synchronization.'}
                         return
-                    memory=update_memory(project_id,project['stack'],job.get('stack_fingerprint'),project['context_revision'],result['scan'],result['commit_sha'])
+                    memory=update_memory(project_id,project['stack'],job.get('stack_fingerprint'),project['context_revision'],result['scan'],result['commit_sha'],application_path=repo['application_path'])
                 output={'status':'ready','expected_revision':project['context_revision'],**memory}
             else:
                 async with connection.begin():
@@ -114,6 +116,7 @@ async def run_personal_job(job_id,*,engine,settings,client,answerer=None,resolve
                     resolver=pipeline.resolve
                 output=await prepare_answer(job['turn'],project,states,answerer=answerer,resolver=resolver)
             output.setdefault('expected_revision',project['context_revision'])
+            output['expected_policy_epoch']=policy['epoch']
             await client.repository(access,repo['repository_id'])
         except asyncio.CancelledError:
             interrupted = True
