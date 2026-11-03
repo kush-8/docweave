@@ -23,7 +23,7 @@ from docweave.services.private_indexing import run_private_index_job, reconcile_
 from docweave.services.guardrails import run_rescan,reconcile_rescans
 from docweave.services.ingestion import reconcile_artifacts
 from docweave.services.deletions import assert_reconciled
-from docweave.services.retention import overdue, mark
+from docweave.services.retention import overdue, mark, assert_current
 
 
 async def recover_jobs(queue, engine, generation_id=None, *, store=None, backup_root=None):
@@ -64,15 +64,19 @@ async def run_worker(*,once=False):
         return AnswerEngine(job,engine=engine,read_engine=read_engine,config=values,generation_id=generation_id,authorize=authorize)
     @queue.task(name='docweave.personal',queue='personal',retry=False)
     async def process(job_id):
+        await assert_current(engine, artifact_root=store.root)
         await run_personal_job(UUID(job_id),engine=engine,settings=settings,client=client,generation_id=generation_id,answerer_factory=answerer_factory)
     @queue.task(name='docweave.catalog',queue='personal',lock='public-catalog',retry=False)
     async def catalog(job_id):
+        await assert_current(engine, artifact_root=store.root)
         await run_catalog_job(UUID(job_id),engine=engine,store=store,embedder_factory=lambda job,token:make_embedder(job,token,engine=engine,config=values))
     @queue.task(name='docweave.private_index',queue='personal',retry=False)
     async def private_index(job_id):
+        await assert_current(engine, artifact_root=store.root)
         await run_private_index_job(UUID(job_id),engine=engine,store=store,settings=settings,client=client,config=values)
     @queue.task(name='docweave.guardrail_rescan',queue='personal',retry=False)
     async def guardrail_rescan(job_id):
+        await assert_current(engine, artifact_root=store.root)
         await run_rescan(UUID(job_id),engine=engine,store=store)
     async def reconcile():
         try:
@@ -96,11 +100,13 @@ async def run_worker(*,once=False):
                 while True:
                     await asyncio.sleep(10)
                     await assert_reconciled(engine, artifact_root=store.root)
-                    await reconcile()
+                    if not await reconcile():
+                        raise ValueError('Retention cleanup failed; restart after repairing the reported backup')
             async with asyncio.TaskGroup() as tasks:
                 maintenance = tasks.create_task(maintain())
                 await queue.run_worker_async(queues=['personal'],wait=not once,concurrency=1,
-                    install_signal_handlers=False,update_heartbeat_interval=10,stalled_worker_timeout=30)
+                    install_signal_handlers=False,update_heartbeat_interval=10,stalled_worker_timeout=30,
+                    shutdown_graceful_timeout=0)
                 maintenance.cancel()
     finally:
         await engine.dispose()

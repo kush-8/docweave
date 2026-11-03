@@ -24,6 +24,8 @@ async def test_github_project_upload_and_exact_version_review(github_login,tmp_p
     github.head=head
     app=create_app(github_settings=settings,auth_engine=runtime,github_client=github)
     app.state.ingestion_store=ArtifactStore(tmp_path)
+    from docweave.services.retention import mark
+    mark(runtime,True,artifact_root=app.state.ingestion_store.root)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app,raise_app_exceptions=False),base_url=settings.origin) as client:
         client.cookies.set('docweave_session',cookie)
         me=await client.get('/api/v1/me')

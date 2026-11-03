@@ -16,7 +16,7 @@ DocWeave is a personal GitHub-linked technical-documentation assistant and AI en
 
 GitHub tokens and sessions stay server-side and encrypted. Private content is isolated by owner/project; shared catalog rows contain public documentation only. Recheck upstream access, scope, source/version, processing consent and guardrail eligibility before hosted processing, continuation and release. Credentials are nonwaivably blocked; reviewed injection examples remain untrusted evidence. Paid calls require verified immutable profiles and global spending admission. Never automatically replay uncertain paid completion.
 
-Source-fetch allowlists, DNS pinning, no private network targets, strict parsers, structured prompts, exact citation validation and version-bound review remain required. Explicit deletion immediately fences use; live-data cleanup within 24 running-service hours and seven-day backup expiry are acceptance requirements still needing complete operational verification. Referenced snapshots persist until deletion and current access always gates citation reads.
+Source-fetch allowlists, DNS pinning, no private network targets, strict parsers, structured prompts, exact citation validation and version-bound review remain required. Explicit deletion immediately fences use; live-data cleanup within 24 running-service hours and seven-day backup expiry are acceptance requirements. Current verification is recorded in the [retention acceptance report](reports/2026-11-03-retention-acceptance.md). Referenced snapshots persist until deletion and current access always gates citation reads.
 
 ## Completion criteria
 

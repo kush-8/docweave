@@ -1,0 +1,11 @@
+# Release evaluation work
+
+- [x] Release Recall@10: reviewed frozen spans, all-case denominators, exact quote/offset checks and offline regressions. Final evaluation suite:65 passed; this implements scoring, not actual benchmark execution or semantic acceptance.
+- [ ] Finish isolated corpus/project/access/version provisioning. All150 physical states now have SQL/retrieval/HTTP checks, including owner-readable private citations and upstream revocation. Four SQLAlchemy answer cases remain blocked by their frozen source's credential URI; source curation and ordinary full turn execution remain unfinished. See `docs/reports/2026-11-03-release-case-provisioning.md`.
+- [x] Explicit history/follow-up/context-change fixtures: pending v3 binds six sequences across both splits and two context changes; actual HTTP/job/selected-provider paths preserve history/latest revision and replay without extra calls. Grader facts/outcomes and readable case IDs stay out of requests.81 evaluation tests and separate actual-corpus checks pass; no semantic-quality claim. See `docs/reports/2026-11-03-release-history-fixtures.md`.
+- [x] Complete offline workload dry run and freeze configuration/capture identities. All156 turns captured against the actual29-source snapshot;584 intercepted requests/zero-cost reservations, replay adds none. Sealed private archive and runbook;105 evaluation tests pass across full-run and remaining-regression checks. Four source blockers stay explicit, quality/readiness false. See `docs/reports/2026-11-03-release-offline-workload.md`.
+- [ ] Concrete conservative paid budget and separate user authority. Depends on frozen workload; no paid execution before authority.
+- [ ] Actual label/span human review, authorized full execution, measured PRD metrics and two separate 30-output human reviews. Depends on preceding steps.
+- [ ] Verify every release gate, apply truthful readiness, and deliberately activate private processing when authorized. Depends on complete release evidence.
+
+Checkpoint after each implementation slice: focused tests, appropriate integration verification and independent review where required. Keep development processing disabled and never replay uncertain paid operations.

@@ -8,12 +8,13 @@ from urllib.parse import urlsplit
 
 from pydantic import Field, PrivateAttr, model_validator
 from docweave.rag.contracts import unique_keys
-from docweave.schemas.common import StrictInput, Nonblank
+from docweave.schemas.common import StrictInput, Nonblank, ContextText
 
 
 class ProjectContext(StrictInput):
     technology: Nonblank
     docs_target: Nonblank
+    constraints: ContextText = Field(default='', max_length=4000)
 
 
 class ReleaseCase(StrictInput):
@@ -26,11 +27,17 @@ class ReleaseCase(StrictInput):
     sources: list[str] = Field(max_length=10)
     project_context: ProjectContext
     expected_outcome: Literal['answered', 'abstained', 'blocked_policy', 'needs_clarification']
+    history: list[Nonblank] = Field(default_factory=list, max_length=8)
+    constraints_after_history: ContextText | None = Field(default=None, max_length=4000)
 
     @model_validator(mode='after')
     def validate_expectations(self):
         if not self.query.strip() or '\x00' in self.query:
             raise ValueError('Invalid question')
+        if any(len(question) > 4096 for question in self.history):
+            raise ValueError('Oversized history question')
+        if self.constraints_after_history is not None and not self.history:
+            raise ValueError('A context change requires prior conversation turns')
         if self.kind == 'answerable':
             if not self.required_facts or not self.sources or self.expected_outcome != 'answered':
                 raise ValueError('Answerable cases require factual labels and sources')
@@ -89,7 +96,7 @@ def review_packets(dataset, captures):
         cases.sort(key=lambda case: hashlib.sha256((dataset._sha256 + ':' + case.id).encode()).digest())
         packets[split] = {'dataset_sha256': dataset._sha256, 'captures_sha256': captured_hash,
             'label_review': dataset.human_label_review, 'human_review': 'pending', 'semantic_quality_evidence': False,
-            'items': [{'scenario': case.model_dump(), 'capture': copy.deepcopy(captures[case.id]), 'ratings': None}
+            'items': [{'scenario': case.model_dump(exclude_none=True), 'capture': copy.deepcopy(captures[case.id]), 'ratings': None}
                       for case in cases[:30]]}
     return packets
 

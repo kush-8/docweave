@@ -46,7 +46,7 @@ async def assert_current(engine, *, artifact_root=None, since=None):
     if (set(state) != {'format', 'ok', 'completed'} or state['format'] != 'retention-health-v1'
         or state['ok'] is not True or type(state['completed']) not in (int, float)
         or not math.isfinite(state['completed']) or not 0 <= time.monotonic()-state['completed'] <= 30
-        or since is not None and state['completed'] < since):
+        or since is not None and state['completed'] <= since):
         raise ValueError('Successful current retention maintenance is required')
 
 

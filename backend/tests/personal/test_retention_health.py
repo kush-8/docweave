@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 import json
 import time
 
@@ -51,3 +52,16 @@ async def test_health_cannot_be_reused_by_another_database_or_storage_root(engin
     engine.url = engine.url.set(database='other_isolated_database')
     with pytest.raises(OSError):
         await retention.assert_current(engine, artifact_root=tmp_path / 'one')
+
+
+async def test_startup_waits_for_maintenance_after_startup(engine):
+    retention.mark(engine, True)
+    startup = asyncio.create_task(retention.wait_current(engine))
+    try:
+        await asyncio.sleep(0.2)
+        assert not startup.done()
+        retention.mark(engine, True)
+        await asyncio.wait_for(startup, 1)
+    finally:
+        startup.cancel()
+        await asyncio.gather(startup, return_exceptions=True)

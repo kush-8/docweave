@@ -50,7 +50,29 @@ from sqlalchemy import text,make_url
 from docweave.workers import personal
 from docweave.db.engine import make_engine
 personal.ROOT=Path(os.environ['RETENTION_TEST_ROOT'])
+if os.environ.get('RETENTION_ADMISSION_PROJECT'):
+    original_worker=personal.procrastinate.App.run_worker_async
+    async def inject_before_consumption(self,**kwargs):
+        from uuid import UUID
+        observer=make_engine(make_url(os.environ['RETENTION_OBSERVER_URL']))
+        try:
+            async with observer.begin() as connection:
+                await connection.execute(text("INSERT INTO app.conversations(project_id,status,deleted_at,summary) VALUES(:project,'deleted',now()-interval '2 days','{\"text\":\"Synthetic overdue payload\"}')"),{'project':UUID(os.environ['RETENTION_ADMISSION_PROJECT'])})
+        finally: await observer.dispose()
+        return await original_worker(self,**kwargs)
+    personal.procrastinate.App.run_worker_async=inject_before_consumption
 async def observe(job_id,**kwargs):
+    if os.environ.get('RETENTION_ACTIVE')=='true':
+        from docweave.repositories import personal as repository
+        async with kwargs['engine'].begin() as connection:
+            assert await repository.claim_job(connection,job_id) is not None
+        Path(os.environ['RETENTION_RESULT']).write_text(json.dumps({'active':str(job_id)}))
+        try: await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            Path(os.environ['RETENTION_RESULT']).write_text(json.dumps({'cancelled':str(job_id)}))
+            raise
+    if os.environ.get('RETENTION_RECOVERY_RESULT'):
+        Path(os.environ['RETENTION_RECOVERY_RESULT']).write_text(str(job_id))
     url=make_url(os.environ['RETENTION_OBSERVER_URL'])
     assert (url.host,url.port,url.database)==('127.0.0.1',55433,'docweave_test')
     engine=make_engine(url)
@@ -116,6 +138,29 @@ async def test_private_requests_are_held_until_overdue_cleanup_finishes(collecti
     await old_chats(c, 1)
     response = await c['admin'].get(f'/api/v1/projects/{c["project"]}')
     assert response.status_code == 503
+
+
+async def test_queued_work_rechecks_cleanup_before_claim_and_recovers_original_intent(collections, tmp_path):
+    from docweave.db.sessions import domain_session
+    from docweave.repositories import personal
+    c = collections
+    async with domain_session(c['runtime'], UUID(c['user']['id'])) as connection:
+        chat = await personal.create_conversation(connection, UUID(c['project']), None)
+    async with c['owner'].connect() as connection:
+        identity = await connection.scalar(text('SELECT id FROM app.personal_jobs WHERE conversation_id=:id'), {'id': UUID(chat['id'])})
+    store = tmp_path / 'artifacts'
+    store.mkdir()
+    environment = worker_environment(tmp_path, store)
+    first = await child({**environment, 'RETENTION_ADMISSION_PROJECT': c['project']})
+    assert first.returncode == 0, 'Pre-claim rejection failed; inspect private stderr'
+    assert not Path(environment['RETENTION_RESULT']).exists()
+    async with c['owner'].connect() as connection:
+        assert await connection.scalar(text('SELECT status FROM app.personal_jobs WHERE id=:id'), {'id': identity}) == 'queued'
+        assert await connection.scalar(text("SELECT count(*) FROM queue.procrastinate_jobs WHERE task_name='docweave.personal' AND args->>'job_id'=:id AND status='failed'"), {'id': str(identity)}) == 1
+    recovered = tmp_path / 'recovered-admission.txt'
+    second = await child({**environment, 'RETENTION_RECOVERY_RESULT': str(recovered)})
+    assert second.returncode == 0, 'Post-cleanup recovery failed; inspect private stderr'
+    assert recovered.read_text() == str(identity)
 
 
 async def test_sweep_erases_checkpoint_only_tombstones_without_losing_claims(collections):
@@ -211,9 +256,11 @@ async def test_sealed_backup_lock_reports_pending_then_restart_finishes_expiry(i
     reports = [json.loads(line) for line in first.stdout.decode().splitlines() if line.startswith('{"backup_retention"')]
     assert reports == [{'backup_retention': [{'backup': folder.name, 'status': 'retry_pending'}]}]
     assert folder.exists()
+    assert (await c['admin'].get(f'/api/v1/projects/{c["project"]}')).status_code == 503
     second = await child(environment)
     assert second.returncode == 0
     assert not folder.exists()
+    assert (await c['admin'].get(f'/api/v1/projects/{c["project"]}')).status_code == 200
     async with c['owner'].connect() as connection:
         assert list((await connection.execute(text('SELECT to_jsonb(r) FROM app.cost_reservations r ORDER BY id'))).scalars()) == before
 
@@ -253,6 +300,73 @@ async def test_running_worker_drains_overdue_backlog_on_next_maintenance_tick(co
             await asyncio.to_thread(process.wait, 5)
 
 
+@pytest.mark.skipif(sys.platform != 'win32', reason='Exercises actual Windows backup-file sharing lock')
+@pytest.mark.parametrize('active', [False, True])
+async def test_periodic_backup_failure_stops_queue_until_successful_restart(ingestion, tmp_path, active):
+    from datetime import datetime, timedelta, timezone
+    from docweave.db.sessions import domain_session
+    from docweave.repositories import personal
+    from docweave.storage.backups import enroll_backup
+    c = ingestion
+    before = await protected_claim(c)
+    environment = {**worker_environment(tmp_path, c['store'].root), 'RETENTION_WAIT': 'true', 'RETENTION_ACTIVE': str(active).lower()}
+    with (tmp_path / 'failed-maintenance.log').open('wb') as log:
+        process = subprocess.Popen([sys.executable, '-c', WORKER], env=environment, cwd=REPO_ROOT,
+            stdout=log, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
+        try:
+            async with asyncio.timeout(15):
+                while True:
+                    assert process.poll() is None
+                    async with c['owner'].connect() as connection:
+                        if await connection.scalar(text("SELECT EXISTS(SELECT 1 FROM queue.procrastinate_workers WHERE last_heartbeat>clock_timestamp()-interval '10 seconds')")):
+                            break
+                    await asyncio.sleep(0.1)
+            if active:
+                async with domain_session(c['runtime'], UUID(c['user']['id'])) as connection:
+                    await personal.create_conversation(connection, UUID(c['project']), None)
+                async with asyncio.timeout(10):
+                    while not Path(environment['RETENTION_RESULT']).exists():
+                        await asyncio.sleep(0.1)
+                original = json.loads(Path(environment['RETENTION_RESULT']).read_text())['active']
+            backups = Path(environment['RETENTION_TEST_ROOT']) / 'backups'
+            folder = backups / 'synthetic-periodic-backup'
+            folder.mkdir()
+            dump = folder / 'development.dump'
+            dump.write_bytes(b'Synthetic recovery fixture')
+            (folder / 'acceptance.json').write_text(json.dumps({'restored_before_migration': True,
+                'rows_match_rehearsal': True, 'artifacts_preserved': True,
+                'backup_sha256': hashlib.sha256(dump.read_bytes()).hexdigest()}))
+            enroll_backup(backups, folder.name, created_at=datetime.now(timezone.utc)-timedelta(days=8))
+            with dump.open('rb'):
+                async with asyncio.timeout(20):
+                    while process.poll() is None:
+                        await asyncio.sleep(0.1)
+                assert process.returncode != 0
+                assert (await c['admin'].get(f'/api/v1/projects/{c["project"]}')).status_code == 503
+                if active:
+                    assert json.loads(Path(environment['RETENTION_RESULT']).read_text()) == {'cancelled': original}
+                    async with c['owner'].begin() as connection:
+                        assert await connection.scalar(text("SELECT status FROM app.personal_jobs WHERE id=:id"), {'id': UUID(original)}) == 'running'
+                        await connection.execute(text("UPDATE app.personal_jobs SET lease_expires_at=now()-interval '1 second' WHERE id=:id"), {'id': UUID(original)})
+                else:
+                    async with domain_session(c['runtime'], UUID(c['user']['id'])) as connection:
+                        await personal.create_conversation(connection, UUID(c['project']), None)
+                    assert not Path(environment['RETENTION_RESULT']).exists()
+            recovered = tmp_path / 'recovered-job.txt'
+            result = await child({**environment, 'RETENTION_WAIT': 'false', 'RETENTION_ACTIVE': 'false', 'RETENTION_RECOVERY_RESULT': str(recovered)})
+            assert result.returncode == 0, 'Restart after periodic failure failed; inspect private stderr'
+            assert Path(environment['RETENTION_RESULT']).exists()
+            assert not folder.exists()
+            if active:
+                assert recovered.read_text() == original
+            async with c['owner'].connect() as connection:
+                assert list((await connection.execute(text('SELECT to_jsonb(r) FROM app.cost_reservations r ORDER BY id'))).scalars()) == before
+        finally:
+            if process.poll() is None:
+                process.kill()
+            await asyncio.to_thread(process.wait, 5)
+
+
 async def test_document_deletion_erases_private_embedding_checkpoint_and_title(private_index, monkeypatch):
     c = private_index
     c['data']['app'].state.ingestion_store = c['store']
@@ -269,5 +383,36 @@ async def test_document_deletion_erases_private_embedding_checkpoint_and_title(p
     async with c['owner'].connect() as connection:
         assert await connection.scalar(text('SELECT count(*) FROM app.personal_provider_calls WHERE response IS NOT NULL')) == 0
         assert await connection.scalar(text('SELECT title FROM app.documents WHERE id=:id'), {'id': c['document']}) == 'Deleted document'
+        assert list((await connection.execute(text('SELECT to_jsonb(r) FROM app.cost_reservations r ORDER BY id'))).scalars()) == before
+        assert list((await connection.execute(text("SELECT to_jsonb(c)-'response' FROM app.personal_provider_calls c ORDER BY operation_hash"))).scalars()) == identities
+
+
+async def test_startup_erases_legacy_deleted_document_and_fresh_restored_artifacts(private_index, monkeypatch, tmp_path_factory):
+    c = private_index
+    async def provider(*args, **kwargs):
+        return {'embedding': {'values': [1.0]+[0.0]*767}}
+    monkeypatch.setattr('docweave.services.personal_providers.provider_post', provider)
+    await run(c)
+    async with c['owner'].begin() as connection:
+        before = list((await connection.execute(text('SELECT to_jsonb(r) FROM app.cost_reservations r ORDER BY id'))).scalars())
+        identities = list((await connection.execute(text("SELECT to_jsonb(c)-'response' FROM app.personal_provider_calls c ORDER BY operation_hash"))).scalars())
+        assert await connection.scalar(text('SELECT count(*) FROM app.personal_provider_calls WHERE response IS NOT NULL')) == 1
+        await connection.execute(text('ALTER TABLE app.documents DISABLE TRIGGER erase_deleted_document_payload'))
+        await connection.execute(text("UPDATE app.documents SET deleted_at=now()-interval '2 days',status='deleted' WHERE id=:id"), {'id': c['document']})
+        await connection.execute(text('ALTER TABLE app.documents ENABLE TRIGGER erase_deleted_document_payload'))
+        await connection.execute(text('UPDATE app.provider_profiles SET enabled=false'))
+        await connection.execute(text('UPDATE app.index_generations SET enabled=false'))
+        artifacts = list((await connection.execute(text('SELECT id FROM app.document_versions WHERE document_id=:id UNION SELECT id FROM app.ingestion_jobs WHERE document_id=:id'), {'id': c['document']})).scalars())
+    # Restored files have fresh mtimes but their recorded deletion takes precedence over write grace.
+    for identity in artifacts:
+        (c['store'].root / str(identity)).write_bytes(b'Synthetic restored deleted payload')
+    environment = worker_environment(tmp_path_factory.mktemp('legacy-retention-worker'), c['store'].root)
+    result = await child(environment)
+    assert result.returncode == 0, 'Isolated legacy retention worker failed; inspect private stderr'
+    assert all(not (c['store'].root / str(identity)).exists() for identity in artifacts)
+    async with c['owner'].connect() as connection:
+        assert await connection.scalar(text('SELECT count(*) FROM app.personal_provider_calls WHERE response IS NOT NULL')) == 0
+        assert await connection.scalar(text('SELECT title FROM app.documents WHERE id=:id'), {'id': c['document']}) == 'Deleted document'
+        assert await connection.scalar(text('SELECT status FROM app.private_index_jobs WHERE id=:id'), {'id': c['job']}) == 'deleted'
         assert list((await connection.execute(text('SELECT to_jsonb(r) FROM app.cost_reservations r ORDER BY id'))).scalars()) == before
         assert list((await connection.execute(text("SELECT to_jsonb(c)-'response' FROM app.personal_provider_calls c ORDER BY operation_hash"))).scalars()) == identities

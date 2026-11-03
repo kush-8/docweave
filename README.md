@@ -4,7 +4,7 @@ A personal, GitHub-linked technical documentation assistant and AI engineering p
 
 Sign in with GitHub, connect a repository/branch/application folder, provide a short goal, and start project-bound chats. New chats check commit-pinned dependency metadata. Trusted, version-matching public documentation can be indexed once and reused across projects; repository facts, uploads and conversations remain private.
 
-Current checkpoint: the personal API, workers, shared catalog/index scope, guardrail boundaries and frontend are implemented and exercised with disposable PostgreSQL and mocked provider HTTP. The full refactor is **not yet release-complete**. Deployed retention acceptance and full release evaluation remain; see [tasks](docs/tasks.md).
+Current checkpoint: the personal API, workers, shared catalog/index scope, guardrail boundaries and frontend are implemented and exercised with disposable PostgreSQL and mocked provider HTTP. Deployed retention acceptance passes. The full refactor is **not yet release-complete**: full release evaluation and deliberate private activation remain; see [tasks](docs/tasks.md).
 
 Retrieval remains hybrid: keyword search (native full text/BM25) plus vector search (exact/HNSW), RRF fusion and Groq reranking. The personal worker currently defaults to BM25 plus exact vector search; these are provisional operational choices, not a claim of a benchmark winner. OpenAI embeddings through LangChain, Groq LLM roles, processor consent, source/version eligibility, credential blocking and citation validation remain. Existing Gemini generations remain explicitly selectable. Semantic answer caching is not enabled.
 
@@ -27,7 +27,7 @@ docweave/
   backups/             # Ignored private backups
 ```
 
-The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Authorized development migration is verified through `0044_retire_product_rpcs`; private restore-tested backups retain old data and the current pre-upgrade state. Empty invitation/manual-documentation queues and twenty unused SQL routines are retired; active financial/operator/restoration structures remain. Five bounded synthetic OpenAI/Groq checks and one separately approved summary check passed; private processing remains disabled. See [retention](docs/runbooks/retention.md) and [release evaluation](docs/runbooks/release-evaluation.md) for remaining gates.
+The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Authorized development migration is verified through `0045_retention_acceptance`; private restore-tested backups retain old data and the current pre-upgrade state. Empty invitation/manual-documentation queues and twenty unused SQL routines are retired; active financial/operator/restoration structures remain. Five bounded synthetic OpenAI/Groq checks and one separately approved summary check passed; private processing remains disabled. See [retention](docs/runbooks/retention.md) and [release evaluation](docs/runbooks/release-evaluation.md) for remaining gates.
 
 ## Run and verify
 

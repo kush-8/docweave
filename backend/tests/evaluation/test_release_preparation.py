@@ -26,13 +26,55 @@ def test_release_draft_preserves_100_50_split_and_pending_review(tmp_path):
     assert sum(case.split == 'held_out' for case in dataset.cases) == 50
 
 
-@pytest.mark.parametrize('revision', ['v1', 'v2'])
+def test_release_sequence_keeps_history_and_current_constraints_separate_from_labels(tmp_path):
+    from docweave.evaluation.release import load_release_dataset
+    value = draft()
+    value['cases'][0].update(history=['What did our earlier design assume?'], constraints_after_history='Use the revised design.')
+    value['cases'][0]['project_context']['constraints'] = 'Earlier design.'
+    case = load_release_dataset(save(tmp_path, value)).cases[0]
+    assert case.history == ['What did our earlier design assume?']
+    assert case.project_context.constraints == 'Earlier design.'
+    assert case.constraints_after_history == 'Use the revised design.'
+
+
+@pytest.mark.parametrize('mutation', ['empty', 'oversized', 'too_many', 'change_without_history', 'nul'])
+def test_release_sequence_rejects_unusable_history(tmp_path, mutation):
+    from docweave.evaluation.release import load_release_dataset
+    value = draft()
+    case = value['cases'][0]
+    case['history'] = ['A prior question']
+    if mutation == 'empty': case['history'] = [' ']
+    elif mutation == 'oversized': case['history'] = ['x'*4097]
+    elif mutation == 'too_many': case['history'] *= 9
+    elif mutation == 'change_without_history':
+        case['history'] = []
+        case['constraints_after_history'] = 'A new design'
+    else: case['constraints_after_history'] = 'Bad\x00context'
+    with pytest.raises(ValueError): load_release_dataset(save(tmp_path, value))
+
+
+@pytest.mark.parametrize('revision', ['v1', 'v2', 'v3'])
 def test_proposed_benchmark_loads_as_a_draft_with_both_splits(revision):
     from tests.paths import BACKEND_ROOT
     from docweave.evaluation.release import load_release_dataset
     dataset = load_release_dataset(BACKEND_ROOT / f'eval/fixtures/release-draft-{revision}.json')
     assert len(dataset.cases) == 150
     assert {case.split for case in dataset.cases} == {'development', 'held_out'}
+
+
+def test_history_draft_preserves_case_families_sources_and_factual_labels():
+    from tests.paths import BACKEND_ROOT
+    from docweave.evaluation.release import load_release_dataset
+    previous = load_release_dataset(BACKEND_ROOT/'eval/fixtures/release-draft-v2.json')
+    current = load_release_dataset(BACKEND_ROOT/'eval/fixtures/release-draft-v3.json')
+    before = {case.id: case for case in previous.cases}
+    assert current.human_label_review == 'pending'
+    assert sum(bool(case.history) for case in current.cases) == 6
+    assert sum(case.constraints_after_history is not None for case in current.cases) == 2
+    for split in ('development', 'held_out'):
+        assert sum(bool(case.history) and case.split == split for case in current.cases) == 3
+    for case in current.cases:
+        assert (case.family_id, case.split, case.required_facts, case.sources) == (before[case.id].family_id, before[case.id].split, before[case.id].required_facts, before[case.id].sources)
 
 
 @pytest.mark.parametrize('mutation', ['count', 'duplicate_id', 'leaked_family', 'duplicate_query', 'facts', 'url', 'outcome'])
@@ -50,7 +92,7 @@ def test_release_dataset_rejects_unusable_inputs(tmp_path, mutation):
 
 
 def test_human_review_packets_are_separate_reproducible_and_bound_to_captures(tmp_path):
-    from docweave.evaluation.release import load_release_dataset, review_packets
+    from docweave.evaluation.release import load_release_dataset, review_packets, ReleaseCase
     dataset = load_release_dataset(save(tmp_path, draft()))
     captures = {case.id: {'answer_kind': 'answered', 'answer': {'answer': 'An observed answer', 'citations': []}}
                 for case in dataset.cases}
@@ -62,6 +104,7 @@ def test_human_review_packets_are_separate_reproducible_and_bound_to_captures(tm
         assert len(packet['items']) == 30 and packet['human_review'] == 'pending'
         assert packet['semantic_quality_evidence'] is False
         assert all(item['scenario']['split'] == split and item['ratings'] is None for item in packet['items'])
+        assert all(ReleaseCase.model_validate(item['scenario']) for item in packet['items'])
         ids += [item['scenario']['id'] for item in packet['items']]
     assert len(set(ids)) == 60
     captures['case-0']['answer']['answer'] = 'Changed output'
@@ -84,13 +127,15 @@ def test_offline_cli_writes_pending_packets_without_dispatch(tmp_path, monkeypat
     assert 'human review remains pending' in capsys.readouterr().out
 
 
-@pytest.mark.parametrize('mutation', ['query', 'facts', 'context'])
+@pytest.mark.parametrize('mutation', ['query', 'facts', 'context', 'history', 'context_change'])
 def test_review_packets_reject_modified_loaded_labels(tmp_path, mutation):
     from docweave.evaluation.release import load_release_dataset, review_packets
     dataset = load_release_dataset(save(tmp_path, draft()))
     captures = {case.id: {} for case in dataset.cases}
     if mutation == 'query': dataset.cases[0].query = 'A changed question'
     elif mutation == 'facts': dataset.cases[0].required_facts.append('An unreviewed label')
+    elif mutation == 'history': dataset.cases[0].history.append('A changed earlier question')
+    elif mutation == 'context_change': dataset.cases[0].constraints_after_history = 'A different context'
     else: dataset.cases[0].project_context.docs_target = 'Different target'
     with pytest.raises(ValueError, match='changed'): review_packets(dataset, captures)
 

@@ -1,11 +1,12 @@
 """Evaluation turns through the ordinary HTTP authority and durable-job boundaries."""
 import time
+import hashlib
 from uuid import UUID, uuid5
 
 
 async def execute_http_turn(case, *, client, headers, conversation_id, execute_job):
     conversation_id = UUID(str(conversation_id))
-    result = {'case_id': case.id, 'semantic_quality_evidence': False}
+    result = {'case_id': case.id, 'query_sha256': hashlib.sha256(case.query.encode()).hexdigest(), 'semantic_quality_evidence': False}
     started = time.perf_counter()
     response = await client.post(f'/api/v1/conversations/{conversation_id}/turns',
         json={'message': case.query, 'idempotency_key': str(uuid5(conversation_id, case.id))}, headers=headers)
@@ -16,6 +17,7 @@ async def execute_http_turn(case, *, client, headers, conversation_id, execute_j
     else:
         turn = response.json()
         turn_id = UUID(turn['id'])
+        result['turn_id'] = str(turn_id)
         pipeline = None
         if turn['status'] in ('queued', 'waiting_for_sources'):
             try:
