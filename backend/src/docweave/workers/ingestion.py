@@ -7,6 +7,7 @@ from docweave.db.engine import make_engine
 from docweave.storage.artifacts import ArtifactStore
 from docweave.integrations.parser import container_parse
 from docweave.services.ingestion import reconcile_artifacts, run_ingestion
+from docweave.services.deletions import assert_reconciled
 from docweave.core.settings import storage_root, database_url
 
 
@@ -33,10 +34,12 @@ async def run_worker(url, store, *, wait=True, parser=container_parse):
     async def maintain():
         while True:
             await asyncio.sleep(10)
+            await assert_reconciled(engine, artifact_root=store.root)
             await recover_jobs(queue, engine)
             await reconcile_artifacts(engine, store)
 
     try:
+        await assert_reconciled(engine, artifact_root=store.root)
         async with queue.open_async():
             await recover_jobs(queue, engine)
             await reconcile_artifacts(engine, store)

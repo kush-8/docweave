@@ -13,9 +13,18 @@ pytestmark=pytest.mark.anyio
 def admitted(monkeypatch):
     state={'epoch':1,'calls':0,'settled':0,'checkpoints':[]}
     class Engine:
+        from docweave.core.settings import database_url
+        url = database_url('TEST_DATABASE_URL')
         @asynccontextmanager
         async def begin(self):
             yield None
+        connect = begin
+    from docweave.services.retention import mark
+    mark(Engine(), True)
+    async def receipt_hashes(connection):
+        return set()
+    async def retention_overdue(connection):
+        return False
     async def fence(connection,epoch=None):
         if epoch is not None and epoch!=state['epoch']:
             raise HostedError('guardrail_changed')
@@ -34,6 +43,8 @@ def admitted(monkeypatch):
     async def authorize():
         pass
     monkeypatch.setattr('docweave.repositories.guardrails.fence',fence)
+    monkeypatch.setattr('docweave.repositories.deletions.receipt_hashes',receipt_hashes)
+    monkeypatch.setattr('docweave.repositories.retention.overdue',retention_overdue)
     monkeypatch.setattr('docweave.services.personal_providers.repository.resume',resume)
     monkeypatch.setattr('docweave.services.personal_providers.repository.settle',settle)
     monkeypatch.setattr('docweave.services.personal_providers.repository.checkpoint',checkpoint)

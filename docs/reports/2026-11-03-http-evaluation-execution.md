@@ -10,7 +10,7 @@ The [accounting reader](../../backend/src/docweave/evaluation/costs.py) requires
 
 ## Recovery correction found during verification
 
-The first complete run had712passes and one ingestion-recovery failure. The same test passed alone. Recovery used host UTC for `retry_at` while PostgreSQL evaluates queue due times. Advancing the worker clock by one hour deterministically reproduced an undrained job with the same observed state. Recovery now obtains both eligibility and immediate retry time from PostgreSQL, without changing queue future-scheduling semantics. The skewed-clock test and seven HTTP/RAG checks pass. Final combined verification is recorded in `logs/http-execution-final-20261103.xml` when complete.
+The first complete run had712passes and one ingestion-recovery failure. The same test passed alone. Recovery used host UTC for `retry_at` while PostgreSQL evaluates queue due times. Advancing the worker clock by one hour deterministically reproduced an undrained job with the same observed state. Recovery now obtains both eligibility and immediate retry time from PostgreSQL, without changing queue future-scheduling semantics. The skewed-clock test and seven HTTP/RAG checks pass. Final combined verification passed all713tests in227.40s with warnings as errors. Independently inspected `logs/http-execution-final-20261103.xml`:713tests, zero failures/errors/skips.
 
 ## Separately authorized live summary check
 

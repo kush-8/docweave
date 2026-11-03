@@ -55,7 +55,12 @@ async def append_turn(connection, conversation_id, key, message):
     return await connection.scalar(text('SELECT app.personal_append_turn(:id,:key,:message)'), {'id':conversation_id,'key':key,'message':message})
 
 async def delete_conversation(connection, identity):
-    return await connection.scalar(text('SELECT app.personal_delete_conversation(:id)'), {'id':identity})
+    from docweave.repositories.deletions import record_deletion
+    context = await conversation(connection, identity)
+    result = await connection.scalar(text('SELECT app.personal_delete_conversation(:id)'), {'id':identity})
+    if result and context is not None:
+        await record_deletion(connection, 'conversation', identity, context['project_id'])
+    return result
 
 async def claim_job(connection, identity):
     return await connection.scalar(text('SELECT app.personal_claim_job(:id)'), {'id':identity})

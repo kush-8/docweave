@@ -77,9 +77,10 @@ async def run_ingestion(job_id, *, engine, store, parser=container_parse, fetche
 async def reconcile_artifacts(engine, store, *, grace_seconds=300):
     async with engine.connect() as connection:
         retained = set(str(identity) for identity in (await repository.retained_artifacts(connection)).scalars())
+        deleted = set(str(identity) for identity in (await repository.deleted_artifacts(connection)).scalars())
     for path in store.root.iterdir():
         try:
-            if path.is_file() and path.name not in retained and time.time() - path.stat().st_mtime >= grace_seconds:
+            if path.is_file() and path.name not in retained and (path.name in deleted or time.time() - path.stat().st_mtime >= grace_seconds):
                 try:
                     UUID(path.name)
                 except ValueError:

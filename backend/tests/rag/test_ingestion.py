@@ -58,6 +58,8 @@ async def ingestion(collections, tmp_path):
     c = collections
     c["store"] = ArtifactStore(tmp_path / "private")
     c["data"]["app"].state.ingestion_store = c["store"]
+    from docweave.services.retention import mark
+    mark(c['runtime'], True, artifact_root=c['store'].root)
     c["worker"] = make_engine(database_url("TEST_WORKER_DATABASE_URL"))
     try:
         yield c
@@ -400,9 +402,11 @@ async def test_artifact_reconciliation_preserves_referenced_snapshots_and_remove
     assert c["store"].path((await metadata(c, accepted))["active_version_id"]).exists()
 
 
-async def test_personal_worker_maintenance_removes_old_orphans_and_keeps_live_and_recent_bytes(ingestion):
+async def test_personal_worker_maintenance_removes_old_orphans_and_keeps_live_and_recent_bytes(ingestion, tmp_path):
+    from datetime import datetime, timedelta, timezone
     from types import SimpleNamespace
     from docweave.workers.personal import recover_jobs
+    from docweave.storage.backups import enroll_backup
     c = ingestion
     accepted = (await upload(c)).json()
     await work(c, accepted['job_id'])
@@ -413,7 +417,17 @@ async def test_personal_worker_maintenance_removes_old_orphans_and_keeps_live_an
     async def stalled(**kwargs):
         return []
     queue = SimpleNamespace(job_manager=SimpleNamespace(get_stalled_jobs=stalled))
-    await recover_jobs(queue, c['worker'], store=c['store'])
+    backups = tmp_path / "backups"
+    backups.mkdir()
+    expired = backups / "expired"
+    expired.mkdir()
+    (expired / "development.dump").write_bytes(b"Synthetic backup")
+    (expired / "acceptance.json").write_text(json.dumps({
+        "restored_before_migration": True, "rows_match_rehearsal": True,
+        "artifacts_preserved": True, "backup_sha256": hashlib.sha256(b"Synthetic backup").hexdigest()}))
+    enroll_backup(backups, expired.name, created_at=datetime.now(timezone.utc) - timedelta(days=8))
+    await recover_jobs(queue, c['worker'], store=c['store'], backup_root=backups)
+    assert not expired.exists()
     assert not c['store'].path(orphan).exists()
     assert c['store'].path(recent).exists()
     assert c['store'].path((await metadata(c, accepted))['active_version_id']).exists()

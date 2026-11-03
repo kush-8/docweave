@@ -25,3 +25,8 @@ def database_url(name: str) -> URL:
 def storage_root():
     values = {**dotenv_values(ROOT / ".env"), **os.environ}
     return Path(values.get("INGESTION_STORAGE_ROOT") or ROOT / "storage").resolve()
+
+
+def deletion_root():
+    values = {**dotenv_values(ROOT / ".env"), **os.environ}
+    return Path(values.get("DELETION_JOURNAL_ROOT") or ROOT / "deletions").absolute()

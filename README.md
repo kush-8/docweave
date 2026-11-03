@@ -4,7 +4,7 @@ A personal, GitHub-linked technical documentation assistant and AI engineering p
 
 Sign in with GitHub, connect a repository/branch/application folder, provide a short goal, and start project-bound chats. New chats check commit-pinned dependency metadata. Trusted, version-matching public documentation can be indexed once and reused across projects; repository facts, uploads and conversations remain private.
 
-Current checkpoint: the personal API, workers, shared catalog/index scope, guardrail boundaries and frontend are implemented and exercised with disposable PostgreSQL and mocked provider HTTP. The full refactor is **not yet release-complete**. Real account verification, post-reset accounting/schema review and the remaining product/reliability work are listed in the [checkpoint report](docs/reports/2026-11-01-personal-projects-checkpoint.md).
+Current checkpoint: the personal API, workers, shared catalog/index scope, guardrail boundaries and frontend are implemented and exercised with disposable PostgreSQL and mocked provider HTTP. The full refactor is **not yet release-complete**. Deployed retention acceptance and full release evaluation remain; see [tasks](docs/tasks.md).
 
 Retrieval remains hybrid: keyword search (native full text/BM25) plus vector search (exact/HNSW), RRF fusion and Groq reranking. The personal worker currently defaults to BM25 plus exact vector search; these are provisional operational choices, not a claim of a benchmark winner. OpenAI embeddings through LangChain, Groq LLM roles, processor consent, source/version eligibility, credential blocking and citation validation remain. Existing Gemini generations remain explicitly selectable. Semantic answer caching is not enabled.
 
@@ -27,11 +27,13 @@ docweave/
   backups/             # Ignored private backups
 ```
 
-The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Authorized development migration is verified through `0041_chat_cleanup`; private restore-tested backups retain old data and the current pre-upgrade state. A reference audit retains active financial/operator/restoration structures and identifies obsolete SQL retirement candidates; these are not a collaboration product. Five bounded synthetic OpenAI/Groq checks passed under explicit approval; private processing remains disabled. See the [latest release checkpoint](docs/reports/2026-11-03-release-checkpoint.md) for remaining evaluation and retention gates.
+The current production application contains no workspace/member/invitation/grant routes, Google/email login or Keycloak/Mailpit services. Retired handlers, test application, identity configuration and obsolete SaaS endpoint tests are deleted. Authorized development migration is verified through `0044_retire_product_rpcs`; private restore-tested backups retain old data and the current pre-upgrade state. Empty invitation/manual-documentation queues and twenty unused SQL routines are retired; active financial/operator/restoration structures remain. Five bounded synthetic OpenAI/Groq checks and one separately approved summary check passed; private processing remains disabled. See [retention](docs/runbooks/retention.md) and [release evaluation](docs/runbooks/release-evaluation.md) for remaining gates.
 
 ## Run and verify
 
 See the [personal-project runbook](docs/runbooks/personal-projects.md) before enabling accounts or migrating existing data. Copy `.env.example` only when creating a new environment; preserve an existing `.env`. Configure a GitHub App with read-only Contents and Metadata permissions, selected repositories, the correct callback and a backend-only client secret/encryption key.
+
+After migrations, a brand-new installation must provision its external erasure journal once with `python -m docweave.deletions --initialize` in the backend source environment (`PYTHONPATH=backend/src`). An existing installation or restore must retain the latest journal; never initialize an empty replacement. API/worker startup and protected processing fail closed until it is reconciled. Follow the [restore procedure](docs/runbooks/retention.md) before starting a restored service.
 
 ```powershell
 uv sync --project backend --locked

@@ -38,6 +38,9 @@ async def private_index(collections,tmp_path):
     assert accepted.status_code==202,accepted.text
     worker=make_engine(database_url('TEST_WORKER_DATABASE_URL'))
     store=ArtifactStore(tmp_path)
+    app.state.ingestion_store=store
+    from docweave.services.retention import mark
+    mark(c['runtime'],True,artifact_root=store.root)
     async def fetcher(selection):
         return b'# Example\nUse the method.','text/markdown'
     try:

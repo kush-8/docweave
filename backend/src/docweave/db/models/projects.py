@@ -1,6 +1,6 @@
 from uuid import UUID
-from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, ForeignKeyConstraint, Integer, Text, UniqueConstraint, text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, Integer, Text, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from docweave.db.base import Base, Record
 
@@ -34,19 +34,3 @@ class Project(Record, Base):
     architecture_notes: Mapped[str | None] = mapped_column(Text)
     environment: Mapped[str | None] = mapped_column(Text)
     constraints: Mapped[str | None] = mapped_column(Text)
-
-
-class DocumentationRequest(Record, Base):
-    __tablename__ = "documentation_requests"
-    __table_args__ = (
-        ForeignKeyConstraint(["project_id", "workspace_id"], ["app.projects.id", "app.projects.workspace_id"], ondelete="RESTRICT"),
-        CheckConstraint("state IN ('pending_review','superseded')", name="valid_state"),
-        CheckConstraint("context_revision >= 1", name="positive_context_revision"),
-        CheckConstraint("reason IN ('version_unresolved','source_catalog_unavailable')", name="valid_reason"),
-    )
-    workspace_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), index=True)
-    project_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), index=True)
-    requested_by: Mapped[UUID] = mapped_column(ForeignKey("app.users.id", ondelete="RESTRICT"))
-    context_revision: Mapped[int] = mapped_column(Integer)
-    state: Mapped[str] = mapped_column(Text)
-    reason: Mapped[str] = mapped_column(Text)

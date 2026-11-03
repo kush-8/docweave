@@ -8,6 +8,8 @@ from docweave.core.security import csrf_token, digest
 from docweave.repositories import auth as repository
 from docweave.schemas.auth import CurrentUser
 from docweave.services.github_auth import begin_login, complete_login, session_context
+from docweave.services.deletions import assert_reconciled
+from docweave.services.retention import assert_current
 
 
 router = APIRouter(prefix="/api/v1", tags=["Authentication"])
@@ -26,6 +28,13 @@ async def require_github_user(request: Request, session_cookie_value=Security(se
         raise HTTPException(401)
     settings, engine, client = github_service(request)
     user, token = await session_context(settings, engine, client, cookie)
+    if request.url.path not in ('/api/v1/me', '/api/v1/auth/logout'):
+        try:
+            store = getattr(request.app.state, 'ingestion_store', None)
+            await assert_reconciled(engine, artifact_root=store.root if store is not None else None)
+            await assert_current(engine, artifact_root=store.root if store is not None else None)
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            raise HTTPException(503, detail='deletion_reconciliation_required') from None
     request.state.github_token = token
     user["csrf_token"] = csrf_token(settings, cookie)
     return user

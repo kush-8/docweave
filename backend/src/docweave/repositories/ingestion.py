@@ -43,6 +43,10 @@ async def retained_artifacts(connection):
     return await connection.execute(text("SELECT id FROM app.ingestion_artifacts()"))
 
 
+async def deleted_artifacts(connection):
+    return await connection.execute(text('SELECT id FROM app.deleted_ingestion_artifacts()'))
+
+
 async def resource_workspace(connection, values):
     return await connection.scalar(text("SELECT app.ingestion_resource(:kind,:id)"), values)
 
@@ -70,7 +74,12 @@ async def list_versions(connection, values):
 
 
 async def delete_document(connection, values):
-    return await connection.scalar(text("SELECT app.delete_ingestion_document(:id)"), values)
+    from docweave.repositories.personal import resource
+    from docweave.repositories.deletions import record_deletion
+    context = await resource(connection, 'document', values['id'])
+    result = await connection.scalar(text("SELECT app.delete_ingestion_document(:id)"), values)
+    await record_deletion(connection, 'document', values['id'], context['project_id'], result['artifacts'])
+    return result
 
 
 async def get_job(connection, values):
@@ -100,7 +109,12 @@ async def get_source(connection, values):
 
 
 async def delete_source(connection, values):
-    return await connection.scalar(text("SELECT app.delete_ingestion_source(:id)"), values)
+    from docweave.repositories.personal import resource
+    from docweave.repositories.deletions import record_deletion
+    context = await resource(connection, 'source', values['id'])
+    result = await connection.scalar(text("SELECT app.delete_ingestion_source(:id)"), values)
+    await record_deletion(connection, 'source', values['id'], context['project_id'], result['artifacts'])
+    return result
 
 
 async def assess_version(connection,version,assessment):

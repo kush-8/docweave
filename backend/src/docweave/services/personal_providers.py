@@ -10,6 +10,8 @@ from docweave.rag.contracts import HostedError
 from docweave.core.guardrails import assess_text
 from docweave.repositories import personal_providers as repository
 from docweave.services.guardrails import current_policy
+from docweave.services.deletions import assert_reconciled
+from docweave.services.retention import assert_current
 
 
 def guard_payload(payload,embedding):
@@ -41,6 +43,16 @@ def guard_response(result,validate_response=None):
 
 
 async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project_id,engine,api_key,authorize,transport=None,validate_response=None):
+    async def checked_authorize():
+        await authorize()
+        try:
+            await assert_reconciled(engine)
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            raise HostedError('deletion_reconciliation_required') from None
+        try:
+            await assert_current(engine)
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            raise HostedError('retention_reconciliation_required') from None
     guard_payload(payload,embedding)
     encoded=json.dumps(payload,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode()
     if len(encoded)>131072 or not api_key:
@@ -52,7 +64,7 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
         raise HostedError('invalid_output_bound')
     body_hash=hashlib.sha256(encoded).hexdigest()
     operation=hashlib.sha256((str(operation_key)+':'+body_hash).encode()).hexdigest()
-    await authorize()
+    await checked_authorize()
     try:
         async with engine.begin() as c:
             policy=await current_policy(c)
@@ -62,7 +74,7 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
         raise HostedError('completion_unknown' if code=='DW014' else 'provider_unavailable') from None
     if 'response' in reservation:
         guard_response(reservation['response'],validate_response)
-        await authorize()
+        await checked_authorize()
         async with engine.begin() as c:
             await current_policy(c,policy['epoch'])
         return reservation['response']
@@ -72,7 +84,7 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
     provider='openai' if openai_embedding else 'gemini' if embedding else 'groq'
     if actual_model!=expected or (reservation['role']=='embedding') != embedding or reservation['provider']!=provider:
         raise HostedError('profile_mismatch')
-    await authorize()
+    await checked_authorize()
     async with engine.begin() as c:
         await current_policy(c,policy['epoch'])
     try:
@@ -87,12 +99,12 @@ async def dispatch(payload,*,embedding,profile_id,operation_key,actor_id,project
         actual=(Decimal(in_count)*Decimal(reservation['input_rate'])+Decimal(out_count)*Decimal(reservation['output_rate']))/1000000+Decimal(reservation['fixed_usd'])
         async with engine.begin() as c:
             await repository.settle(c,UUID(reservation['id']),actual)
-    await authorize()
+    await checked_authorize()
     guard_response(result,validate_response)
     async with engine.begin() as c:
         await current_policy(c,policy['epoch'])
         await repository.checkpoint(c,UUID(reservation['id']),result)
-    await authorize()
+    await checked_authorize()
     async with engine.begin() as c:
         await current_policy(c,policy['epoch'])
     return result

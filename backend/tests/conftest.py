@@ -3,6 +3,12 @@ from httpx import ASGITransport
 from httpx import AsyncClient
 
 
+@pytest.fixture(autouse=True)
+def isolated_deletion_journal(tmp_path_factory, monkeypatch):
+    root = tmp_path_factory.mktemp('deletion-journal')
+    monkeypatch.setenv('DELETION_JOURNAL_ROOT', str(root))
+
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"

@@ -17,6 +17,8 @@ from docweave.core.github_settings import GitHubSettings
 from docweave.core.settings import database_url
 from docweave.db.engine import make_engine
 from docweave.integrations.github import GitHubClient
+from docweave.services.deletions import assert_reconciled
+from docweave.services.retention import wait_current
 
 def create_app(*,github_settings=None,auth_engine=None,github_client=None):
     settings=github_settings or GitHubSettings.load()
@@ -24,9 +26,14 @@ def create_app(*,github_settings=None,auth_engine=None,github_client=None):
     client=github_client or (GitHubClient(settings) if settings else None)
     @asynccontextmanager
     async def lifespan(app):
-        yield
-        if engine is not None and auth_engine is None:
-            await engine.dispose()
+        try:
+            if engine is not None:
+                await assert_reconciled(engine)
+                await wait_current(engine)
+            yield
+        finally:
+            if engine is not None and auth_engine is None:
+                await engine.dispose()
     app=FastAPI(title='DocWeave API',version='0.2.0',description='Personal GitHub-linked documentation assistant.',lifespan=lifespan)
     app.state.github=(settings,engine,client) if settings else None
     app.state.runtime_config={**dotenv_values(ROOT / ".env"),**os.environ}

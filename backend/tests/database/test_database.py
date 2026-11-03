@@ -147,6 +147,7 @@ async def databases(test_urls):
     try:
         async with owner.begin() as connection:
             # Versioned profiles are immutable; this guarded disposable reset names every dependent table.
+            await connection.execute(text('DELETE FROM app.deletion_receipts'))
             await connection.execute(text("TRUNCATE app.private_index_jobs,app.catalog_jobs,app.personal_jobs,app.turns,app.conversations,app.personal_provider_calls,app.compatibility_operations,app.compatibility_requests,app.cost_reservations,app.provider_profiles"))
             await connection.execute(text("DELETE FROM app.workspace_allowances"))
             await connection.execute(text("TRUNCATE app.guardrail_events,app.guardrail_rescans,app.private_index_jobs,app.catalog_jobs,app.personal_jobs,app.turns,app.conversations,app.project_catalog_selections,app.document_assessments,app.chunks,app.document_indexes,app.index_generations,app.ingestion_jobs,app.document_versions,app.documents,app.sources,app.documentation_selections,app.collection_processor_approvals,app.collection_grants,app.collections,app.public_catalog_revisions"))
@@ -155,7 +156,7 @@ async def databases(test_urls):
             await connection.execute(text("TRUNCATE queue.procrastinate_jobs,queue.procrastinate_events,queue.procrastinate_workers RESTART IDENTITY CASCADE"))
             for table in ("auth_sessions", "auth_flows", "auth_rate_limits"):
                 await connection.execute(text(f"DELETE FROM app.{table}" + (" WHERE issuer <> 'docweave:service'" if table == "users" else "")))
-            for table in ("collection_processor_approvals", "project_processor_approvals", "collection_grants", "documentation_requests", "collections", "invitations", "projects", "memberships", "workspaces", "users"):
+            for table in ("collection_processor_approvals", "project_processor_approvals", "collection_grants", "collections", "projects", "memberships", "workspaces", "users"):
                 await connection.execute(text(f"DELETE FROM app.{table}" + (" WHERE issuer <> 'docweave:service'" if table == "users" else "")))
             await connection.execute(text("UPDATE app.processors SET enabled=false"))
             await connection.execute(text("INSERT INTO app.users(id,issuer,subject,display_name) VALUES ('60000000-0000-4000-8000-000000000001','docweave:service','public-catalog-v1','Public documentation worker') ON CONFLICT(id) DO NOTHING"))
@@ -166,6 +167,8 @@ async def databases(test_urls):
                 await connection.execute(text("INSERT INTO app.memberships (workspace_id,user_id,role) VALUES (:workspace,:actor,'owner')"), {"workspace": workspace, "actor": actor})
                 await connection.execute(text("INSERT INTO app.projects (id,workspace_id,name,goal) VALUES (:id,:workspace,:name,'Learn retrieval')"), {"id": project, "workspace": workspace, "name": name})
                 await connection.execute(text("INSERT INTO app.collections(project_id,workspace_id,name,is_default) VALUES (:p,:w,'Default',true)"), {"p": project, "w": workspace})
+        from docweave.services.retention import mark
+        mark(runtime, True)  # Component fixtures start with healthy maintenance; process tests exercise the real worker.
         yield owner, runtime
     finally:
         await owner.dispose()

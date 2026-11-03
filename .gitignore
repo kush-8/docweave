@@ -10,6 +10,8 @@
 /storage/
 /uploads/
 /backups/
+/deletions/
+/.retention-*.json
 /secrets/
 *.db
 *.sqlite
